@@ -1,0 +1,824 @@
+export const facturas: Factura[] = [
+    {
+        "id": 1,
+        "id_miembro": 260,
+        "fecha": "2026-06-17",
+        "mes_cuota": "2026-06-01",
+        "pendiente": "25.00"
+    },
+    {
+        "id": 2,
+        "id_miembro": 83,
+        "fecha": "2026-06-17",
+        "mes_cuota": "2026-06-01",
+        "pendiente": "25.00"
+    },
+    {
+        "id": 3,
+        "id_miembro": 99,
+        "fecha": "2026-06-17",
+        "mes_cuota": "2026-06-01",
+        "pendiente": "25.00"
+    },
+    {
+        "id": 4,
+        "id_miembro": 102,
+        "fecha": "2026-06-17",
+        "mes_cuota": "2026-06-01",
+        "pendiente": "25.00"
+    },
+    {
+        "id": 5,
+        "id_miembro": 119,
+        "fecha": "2026-06-17",
+        "mes_cuota": "2026-06-01",
+        "pendiente": "25.00"
+    },
+    {
+        "id": 6,
+        "id_miembro": 268,
+        "fecha": "2026-06-17",
+        "mes_cuota": "2026-06-01",
+        "pendiente": "25.00"
+    },
+    {
+        "id": 7,
+        "id_miembro": 127,
+        "fecha": "2026-06-17",
+        "mes_cuota": "2026-06-01",
+        "pendiente": "25.00"
+    },
+    {
+        "id": 8,
+        "id_miembro": 327,
+        "fecha": "2026-06-17",
+        "mes_cuota": "2026-06-01",
+        "pendiente": "25.00"
+    },
+    {
+        "id": 9,
+        "id_miembro": 252,
+        "fecha": "2026-06-17",
+        "mes_cuota": "2026-06-01",
+        "pendiente": "25.00"
+    },
+    {
+        "id": 10,
+        "id_miembro": 324,
+        "fecha": "2026-06-17",
+        "mes_cuota": "2026-06-01",
+        "pendiente": "25.00"
+    },
+    {
+        "id": 11,
+        "id_miembro": 266,
+        "fecha": "2026-06-17",
+        "mes_cuota": "2026-06-01",
+        "pendiente": "25.00"
+    },
+    {
+        "id": 12,
+        "id_miembro": 214,
+        "fecha": "2026-06-17",
+        "mes_cuota": "2026-06-01",
+        "pendiente": "25.00"
+    },
+    {
+        "id": 13,
+        "id_miembro": 261,
+        "fecha": "2026-06-17",
+        "mes_cuota": "2026-06-01",
+        "pendiente": "25.00"
+    },
+    {
+        "id": 14,
+        "id_miembro": 5,
+        "fecha": "2026-06-17",
+        "mes_cuota": "2026-06-01",
+        "pendiente": "25.00"
+    },
+    {
+        "id": 15,
+        "id_miembro": 35,
+        "fecha": "2026-06-17",
+        "mes_cuota": "2026-06-01",
+        "pendiente": "25.00"
+    },
+    {
+        "id": 16,
+        "id_miembro": 16,
+        "fecha": "2026-06-17",
+        "mes_cuota": "2026-06-01",
+        "pendiente": "25.00"
+    },
+    {
+        "id": 17,
+        "id_miembro": 103,
+        "fecha": "2026-06-17",
+        "mes_cuota": "2026-06-01",
+        "pendiente": "25.00"
+    },
+    {
+        "id": 18,
+        "id_miembro": 62,
+        "fecha": "2026-06-17",
+        "mes_cuota": "2026-06-01",
+        "pendiente": "25.00"
+    },
+    {
+        "id": 19,
+        "id_miembro": 94,
+        "fecha": "2026-06-17",
+        "mes_cuota": "2026-06-01",
+        "pendiente": "25.00"
+    },
+    {
+        "id": 20,
+        "id_miembro": 123,
+        "fecha": "2026-06-17",
+        "mes_cuota": "2026-06-01",
+        "pendiente": "25.00"
+    },
+    {
+        "id": 21,
+        "id_miembro": 12,
+        "fecha": "2026-06-17",
+        "mes_cuota": "2026-06-01",
+        "pendiente": "25.00"
+    },
+    {
+        "id": 22,
+        "id_miembro": 25,
+        "fecha": "2026-06-17",
+        "mes_cuota": "2026-06-01",
+        "pendiente": "25.00"
+    },
+    {
+        "id": 23,
+        "id_miembro": 388,
+        "fecha": "2026-06-17",
+        "mes_cuota": "2026-06-01",
+        "pendiente": "25.00"
+    },
+    {
+        "id": 24,
+        "id_miembro": 81,
+        "fecha": "2026-06-17",
+        "mes_cuota": "2026-06-01",
+        "pendiente": "25.00"
+    },
+    {
+        "id": 25,
+        "id_miembro": 4,
+        "fecha": "2026-06-17",
+        "mes_cuota": "2026-06-01",
+        "pendiente": "25.00"
+    },
+    {
+        "id": 26,
+        "id_miembro": 23,
+        "fecha": "2026-06-17",
+        "mes_cuota": "2026-06-01",
+        "pendiente": "25.00"
+    },
+    {
+        "id": 27,
+        "id_miembro": 43,
+        "fecha": "2026-06-17",
+        "mes_cuota": "2026-06-01",
+        "pendiente": "25.00"
+    },
+    {
+        "id": 28,
+        "id_miembro": 54,
+        "fecha": "2026-06-17",
+        "mes_cuota": "2026-06-01",
+        "pendiente": "25.00"
+    },
+    {
+        "id": 29,
+        "id_miembro": 242,
+        "fecha": "2026-06-17",
+        "mes_cuota": "2026-06-01",
+        "pendiente": "25.00"
+    },
+    {
+        "id": 30,
+        "id_miembro": 224,
+        "fecha": "2026-06-17",
+        "mes_cuota": "2026-06-01",
+        "pendiente": "25.00"
+    },
+    {
+        "id": 31,
+        "id_miembro": 217,
+        "fecha": "2026-06-17",
+        "mes_cuota": "2026-06-01",
+        "pendiente": "25.00"
+    },
+    {
+        "id": 32,
+        "id_miembro": 236,
+        "fecha": "2026-06-17",
+        "mes_cuota": "2026-06-01",
+        "pendiente": "25.00"
+    },
+    {
+        "id": 33,
+        "id_miembro": 88,
+        "fecha": "2026-06-17",
+        "mes_cuota": "2026-06-01",
+        "pendiente": "25.00"
+    },
+    {
+        "id": 34,
+        "id_miembro": 284,
+        "fecha": "2026-06-17",
+        "mes_cuota": "2026-06-01",
+        "pendiente": "25.00"
+    },
+    {
+        "id": 35,
+        "id_miembro": 46,
+        "fecha": "2026-06-17",
+        "mes_cuota": "2026-06-01",
+        "pendiente": "25.00"
+    },
+    {
+        "id": 36,
+        "id_miembro": 399,
+        "fecha": "2026-06-17",
+        "mes_cuota": "2026-06-01",
+        "pendiente": "25.00"
+    },
+    {
+        "id": 37,
+        "id_miembro": 289,
+        "fecha": "2026-06-17",
+        "mes_cuota": "2026-06-01",
+        "pendiente": "25.00"
+    },
+    {
+        "id": 38,
+        "id_miembro": 269,
+        "fecha": "2026-06-17",
+        "mes_cuota": "2026-06-01",
+        "pendiente": "25.00"
+    },
+    {
+        "id": 39,
+        "id_miembro": 299,
+        "fecha": "2026-06-17",
+        "mes_cuota": "2026-06-01",
+        "pendiente": "25.00"
+    },
+    {
+        "id": 40,
+        "id_miembro": 206,
+        "fecha": "2026-06-17",
+        "mes_cuota": "2026-06-01",
+        "pendiente": "25.00"
+    },
+    {
+        "id": 41,
+        "id_miembro": 75,
+        "fecha": "2026-06-17",
+        "mes_cuota": "2026-06-01",
+        "pendiente": "25.00"
+    },
+    {
+        "id": 42,
+        "id_miembro": 285,
+        "fecha": "2026-06-17",
+        "mes_cuota": "2026-06-01",
+        "pendiente": "25.00"
+    },
+    {
+        "id": 43,
+        "id_miembro": 181,
+        "fecha": "2026-06-17",
+        "mes_cuota": "2026-06-01",
+        "pendiente": "25.00"
+    },
+    {
+        "id": 44,
+        "id_miembro": 272,
+        "fecha": "2026-06-17",
+        "mes_cuota": "2026-06-01",
+        "pendiente": "25.00"
+    },
+    {
+        "id": 45,
+        "id_miembro": 61,
+        "fecha": "2026-06-17",
+        "mes_cuota": "2026-06-01",
+        "pendiente": "25.00"
+    },
+    {
+        "id": 46,
+        "id_miembro": 65,
+        "fecha": "2026-06-17",
+        "mes_cuota": "2026-06-01",
+        "pendiente": "25.00"
+    },
+    {
+        "id": 47,
+        "id_miembro": 363,
+        "fecha": "2026-06-17",
+        "mes_cuota": "2026-06-01",
+        "pendiente": "25.00"
+    },
+    {
+        "id": 48,
+        "id_miembro": 106,
+        "fecha": "2026-06-17",
+        "mes_cuota": "2026-06-01",
+        "pendiente": "25.00"
+    },
+    {
+        "id": 49,
+        "id_miembro": 30,
+        "fecha": "2026-06-17",
+        "mes_cuota": "2026-06-01",
+        "pendiente": "25.00"
+    },
+    {
+        "id": 50,
+        "id_miembro": 52,
+        "fecha": "2026-06-17",
+        "mes_cuota": "2026-06-01",
+        "pendiente": "25.00"
+    },
+    {
+        "id": 51,
+        "id_miembro": 310,
+        "fecha": "2026-06-17",
+        "mes_cuota": "2026-06-01",
+        "pendiente": "25.00"
+    },
+    {
+        "id": 52,
+        "id_miembro": 376,
+        "fecha": "2026-06-17",
+        "mes_cuota": "2026-06-01",
+        "pendiente": "25.00"
+    },
+    {
+        "id": 53,
+        "id_miembro": 368,
+        "fecha": "2026-06-17",
+        "mes_cuota": "2026-06-01",
+        "pendiente": "25.00"
+    },
+    {
+        "id": 54,
+        "id_miembro": 233,
+        "fecha": "2026-06-17",
+        "mes_cuota": "2026-06-01",
+        "pendiente": "25.00"
+    },
+    {
+        "id": 55,
+        "id_miembro": 198,
+        "fecha": "2026-06-17",
+        "mes_cuota": "2026-06-01",
+        "pendiente": "25.00"
+    },
+    {
+        "id": 56,
+        "id_miembro": 152,
+        "fecha": "2026-06-17",
+        "mes_cuota": "2026-06-01",
+        "pendiente": "25.00"
+    },
+    {
+        "id": 57,
+        "id_miembro": 414,
+        "fecha": "2026-06-17",
+        "mes_cuota": "2026-06-01",
+        "pendiente": "25.00"
+    },
+    {
+        "id": 58,
+        "id_miembro": 377,
+        "fecha": "2026-06-17",
+        "mes_cuota": "2026-06-01",
+        "pendiente": "25.00"
+    },
+    {
+        "id": 59,
+        "id_miembro": 71,
+        "fecha": "2026-06-17",
+        "mes_cuota": "2026-06-01",
+        "pendiente": "25.00"
+    },
+    {
+        "id": 60,
+        "id_miembro": 334,
+        "fecha": "2026-06-17",
+        "mes_cuota": "2026-06-01",
+        "pendiente": "25.00"
+    },
+    {
+        "id": 61,
+        "id_miembro": 89,
+        "fecha": "2026-06-17",
+        "mes_cuota": "2026-06-01",
+        "pendiente": "25.00"
+    },
+    {
+        "id": 62,
+        "id_miembro": 159,
+        "fecha": "2026-06-17",
+        "mes_cuota": "2026-06-01",
+        "pendiente": "25.00"
+    },
+    {
+        "id": 63,
+        "id_miembro": 253,
+        "fecha": "2026-06-17",
+        "mes_cuota": "2026-06-01",
+        "pendiente": "25.00"
+    },
+    {
+        "id": 64,
+        "id_miembro": 301,
+        "fecha": "2026-06-17",
+        "mes_cuota": "2026-06-01",
+        "pendiente": "25.00"
+    },
+    {
+        "id": 65,
+        "id_miembro": 329,
+        "fecha": "2026-06-17",
+        "mes_cuota": "2026-06-01",
+        "pendiente": "25.00"
+    },
+    {
+        "id": 66,
+        "id_miembro": 291,
+        "fecha": "2026-06-17",
+        "mes_cuota": "2026-06-01",
+        "pendiente": "25.00"
+    },
+    {
+        "id": 67,
+        "id_miembro": 387,
+        "fecha": "2026-06-17",
+        "mes_cuota": "2026-06-01",
+        "pendiente": "25.00"
+    },
+    {
+        "id": 68,
+        "id_miembro": 8,
+        "fecha": "2026-06-17",
+        "mes_cuota": "2026-06-01",
+        "pendiente": "25.00"
+    },
+    {
+        "id": 69,
+        "id_miembro": 31,
+        "fecha": "2026-06-17",
+        "mes_cuota": "2026-06-01",
+        "pendiente": "25.00"
+    },
+    {
+        "id": 70,
+        "id_miembro": 174,
+        "fecha": "2026-06-17",
+        "mes_cuota": "2026-06-01",
+        "pendiente": "25.00"
+    },
+    {
+        "id": 71,
+        "id_miembro": 37,
+        "fecha": "2026-06-17",
+        "mes_cuota": "2026-06-01",
+        "pendiente": "25.00"
+    },
+    {
+        "id": 72,
+        "id_miembro": 328,
+        "fecha": "2026-06-17",
+        "mes_cuota": "2026-06-01",
+        "pendiente": "25.00"
+    },
+    {
+        "id": 73,
+        "id_miembro": 142,
+        "fecha": "2026-06-17",
+        "mes_cuota": "2026-06-01",
+        "pendiente": "25.00"
+    },
+    {
+        "id": 74,
+        "id_miembro": 160,
+        "fecha": "2026-06-17",
+        "mes_cuota": "2026-06-01",
+        "pendiente": "25.00"
+    },
+    {
+        "id": 75,
+        "id_miembro": 411,
+        "fecha": "2026-06-17",
+        "mes_cuota": "2026-06-01",
+        "pendiente": "25.00"
+    },
+    {
+        "id": 76,
+        "id_miembro": 413,
+        "fecha": "2026-06-17",
+        "mes_cuota": "2026-06-01",
+        "pendiente": "25.00"
+    },
+    {
+        "id": 77,
+        "id_miembro": 262,
+        "fecha": "2026-06-17",
+        "mes_cuota": "2026-06-01",
+        "pendiente": "25.00"
+    },
+    {
+        "id": 78,
+        "id_miembro": 69,
+        "fecha": "2026-06-17",
+        "mes_cuota": "2026-06-01",
+        "pendiente": "25.00"
+    },
+    {
+        "id": 79,
+        "id_miembro": 396,
+        "fecha": "2026-06-17",
+        "mes_cuota": "2026-06-01",
+        "pendiente": "25.00"
+    },
+    {
+        "id": 80,
+        "id_miembro": 1,
+        "fecha": "2026-06-17",
+        "mes_cuota": "2026-06-01",
+        "pendiente": "25.00"
+    },
+    {
+        "id": 81,
+        "id_miembro": 271,
+        "fecha": "2026-06-17",
+        "mes_cuota": "2026-06-01",
+        "pendiente": "25.00"
+    },
+    {
+        "id": 82,
+        "id_miembro": 98,
+        "fecha": "2026-06-17",
+        "mes_cuota": "2026-06-01",
+        "pendiente": "25.00"
+    },
+    {
+        "id": 83,
+        "id_miembro": 390,
+        "fecha": "2026-06-17",
+        "mes_cuota": "2026-06-01",
+        "pendiente": "25.00"
+    },
+    {
+        "id": 84,
+        "id_miembro": 393,
+        "fecha": "2026-06-17",
+        "mes_cuota": "2026-06-01",
+        "pendiente": "25.00"
+    },
+    {
+        "id": 85,
+        "id_miembro": 137,
+        "fecha": "2026-06-17",
+        "mes_cuota": "2026-06-01",
+        "pendiente": "25.00"
+    },
+    {
+        "id": 86,
+        "id_miembro": 185,
+        "fecha": "2026-06-17",
+        "mes_cuota": "2026-06-01",
+        "pendiente": "25.00"
+    },
+    {
+        "id": 87,
+        "id_miembro": 255,
+        "fecha": "2026-06-17",
+        "mes_cuota": "2026-06-01",
+        "pendiente": "25.00"
+    },
+    {
+        "id": 88,
+        "id_miembro": 407,
+        "fecha": "2026-06-17",
+        "mes_cuota": "2026-06-01",
+        "pendiente": "25.00"
+    },
+    {
+        "id": 89,
+        "id_miembro": 171,
+        "fecha": "2026-06-17",
+        "mes_cuota": "2026-06-01",
+        "pendiente": "25.00"
+    },
+    {
+        "id": 90,
+        "id_miembro": 57,
+        "fecha": "2026-06-17",
+        "mes_cuota": "2026-06-01",
+        "pendiente": "25.00"
+    },
+    {
+        "id": 91,
+        "id_miembro": 378,
+        "fecha": "2026-06-17",
+        "mes_cuota": "2026-06-01",
+        "pendiente": "25.00"
+    },
+    {
+        "id": 92,
+        "id_miembro": 141,
+        "fecha": "2026-06-17",
+        "mes_cuota": "2026-06-01",
+        "pendiente": "25.00"
+    },
+    {
+        "id": 93,
+        "id_miembro": 278,
+        "fecha": "2026-06-17",
+        "mes_cuota": "2026-06-01",
+        "pendiente": "25.00"
+    },
+    {
+        "id": 94,
+        "id_miembro": 124,
+        "fecha": "2026-06-17",
+        "mes_cuota": "2026-06-01",
+        "pendiente": "25.00"
+    },
+    {
+        "id": 95,
+        "id_miembro": 385,
+        "fecha": "2026-06-17",
+        "mes_cuota": "2026-06-01",
+        "pendiente": "25.00"
+    },
+    {
+        "id": 96,
+        "id_miembro": 228,
+        "fecha": "2026-06-17",
+        "mes_cuota": "2026-06-01",
+        "pendiente": "25.00"
+    },
+    {
+        "id": 97,
+        "id_miembro": 421,
+        "fecha": "2026-06-17",
+        "mes_cuota": "2026-06-01",
+        "pendiente": "25.00"
+    },
+    {
+        "id": 98,
+        "id_miembro": 371,
+        "fecha": "2026-06-17",
+        "mes_cuota": "2026-06-01",
+        "pendiente": "25.00"
+    },
+    {
+        "id": 99,
+        "id_miembro": 405,
+        "fecha": "2026-06-17",
+        "mes_cuota": "2026-06-01",
+        "pendiente": "25.00"
+    },
+    {
+        "id": 100,
+        "id_miembro": 9,
+        "fecha": "2026-06-17",
+        "mes_cuota": "2026-06-01",
+        "pendiente": "25.00"
+    },
+    {
+        "id": 101,
+        "id_miembro": 203,
+        "fecha": "2026-06-17",
+        "mes_cuota": "2026-06-01",
+        "pendiente": "25.00"
+    },
+    {
+        "id": 102,
+        "id_miembro": 309,
+        "fecha": "2026-06-17",
+        "mes_cuota": "2026-06-01",
+        "pendiente": "25.00"
+    },
+    {
+        "id": 103,
+        "id_miembro": 202,
+        "fecha": "2026-06-17",
+        "mes_cuota": "2026-06-01",
+        "pendiente": "25.00"
+    },
+    {
+        "id": 104,
+        "id_miembro": 221,
+        "fecha": "2026-06-17",
+        "mes_cuota": "2026-06-01",
+        "pendiente": "25.00"
+    },
+    {
+        "id": 105,
+        "id_miembro": 379,
+        "fecha": "2026-06-17",
+        "mes_cuota": "2026-06-01",
+        "pendiente": "25.00"
+    },
+    {
+        "id": 106,
+        "id_miembro": 199,
+        "fecha": "2026-06-17",
+        "mes_cuota": "2026-06-01",
+        "pendiente": "25.00"
+    },
+    {
+        "id": 107,
+        "id_miembro": 402,
+        "fecha": "2026-06-17",
+        "mes_cuota": "2026-06-01",
+        "pendiente": "25.00"
+    },
+    {
+        "id": 108,
+        "id_miembro": 423,
+        "fecha": "2026-06-17",
+        "mes_cuota": "2026-06-01",
+        "pendiente": "25.00"
+    },
+    {
+        "id": 109,
+        "id_miembro": 389,
+        "fecha": "2026-06-17",
+        "mes_cuota": "2026-06-01",
+        "pendiente": "25.00"
+    },
+    {
+        "id": 110,
+        "id_miembro": 412,
+        "fecha": "2026-06-17",
+        "mes_cuota": "2026-06-01",
+        "pendiente": "25.00"
+    },
+    {
+        "id": 111,
+        "id_miembro": 404,
+        "fecha": "2026-06-17",
+        "mes_cuota": "2026-06-01",
+        "pendiente": "25.00"
+    },
+    {
+        "id": 112,
+        "id_miembro": 125,
+        "fecha": "2026-06-17",
+        "mes_cuota": "2026-06-01",
+        "pendiente": "25.00"
+    },
+    {
+        "id": 113,
+        "id_miembro": 403,
+        "fecha": "2026-06-17",
+        "mes_cuota": "2026-06-01",
+        "pendiente": "25.00"
+    },
+    {
+        "id": 114,
+        "id_miembro": 422,
+        "fecha": "2026-06-17",
+        "mes_cuota": "2026-06-01",
+        "pendiente": "25.00"
+    },
+    {
+        "id": 115,
+        "id_miembro": 408,
+        "fecha": "2026-06-17",
+        "mes_cuota": "2026-06-01",
+        "pendiente": "25.00"
+    }
+];
+
+export const pagos: Pago[] = [
+    {
+        "id": 1,
+        "fecha": "2026-03-06",
+        "monto": "25.00",
+        "monto_bs": "15500.00",
+        "tasa_cambio": "550.00",
+        "metodo_pago": "Zelle",
+        "factura_ugavi": 109881,
+        "factura_fondo": 112212,
+        "referencia": "brlmoijenaijemk",
+        "estado": "Vigente"
+    }
+];
+
+export const vinculacion_pagos: VinculacionPago[] = [];

@@ -1,0 +1,1 @@
+DB::statement('ALTER TABLE vinculacion ADD COLUMN presidente BOOLEAN DEFAULT false'); DB::statement('CREATE UNIQUE INDEX unique_presidente_per_miembro ON vinculacion (id_miembro) WHERE presidente = true'); echo 'Ok';
