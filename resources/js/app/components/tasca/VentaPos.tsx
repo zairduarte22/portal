@@ -50,32 +50,38 @@ export function VentaPos() {
     setQuantityInput(1);
   };
 
-  const confirmAddProducto = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedProduct) return;
-    if (quantityInput <= 0) return alert("La cantidad debe ser mayor a 0");
-    if (quantityInput > selectedProduct.stock) return alert(`Stock insuficiente. Quedan ${selectedProduct.stock}`);
-
+  const addProductoToCart = (prod: any, qty: number = 1) => {
+    if (qty <= 0) return alert("La cantidad debe ser mayor a 0");
     const currentDetalles = venta.detalles || [];
-    const existing = currentDetalles.find((d: any) => d.id_producto === selectedProduct.id);
+    const existing = currentDetalles.find((d: any) => d.id_producto === prod.id);
+    const existingQty = existing ? existing.cantidad : 0;
     
-    const qty = quantityInput;
+    if (existingQty + qty > prod.stock) {
+        return alert(`Stock insuficiente. Quedan ${prod.stock}`);
+    }
+
     const newDetalles = existing 
       ? currentDetalles.map((d: any) => {
-          if (d.id_producto === selectedProduct.id) {
+          if (d.id_producto === prod.id) {
             const newQty = d.cantidad + qty;
             return { ...d, cantidad: newQty, subtotal: parseFloat(d.precio_unitario) * newQty };
           }
           return d;
         })
       : [...currentDetalles, { 
-          id_producto: selectedProduct.id, 
+          id_producto: prod.id, 
           cantidad: qty, 
-          precio_unitario: selectedProduct.precio, 
-          subtotal: parseFloat(selectedProduct.precio) * qty 
+          precio_unitario: prod.precio, 
+          subtotal: parseFloat(prod.precio) * qty 
         }];
 
     updateDetalles(newDetalles);
+  };
+
+  const confirmAddProducto = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedProduct) return;
+    addProductoToCart(selectedProduct, quantityInput);
     setSelectedProduct(null);
   };
 
@@ -224,10 +230,25 @@ export function VentaPos() {
             <div className="relative">
               <Search className="absolute left-3 top-3 text-gray-400" size={18} />
               <input
-                type="text" placeholder="Buscar producto..."
+                type="text" placeholder="Buscar producto o escanear código..." autoFocus
                 className="w-full pl-10 pr-4 py-2 rounded-xl border bg-background"
                 value={search} onChange={(e) => setSearch(e.target.value)}
                 disabled={isReadOnly}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && search.trim() !== '') {
+                    // Buscar coincidencia exacta por código de barras
+                    const matchByBarcode = productos.find(p => p.codigo_barras === search.trim());
+                    if (matchByBarcode) {
+                      addProductoToCart(matchByBarcode, 1);
+                      setSearch("");
+                    } 
+                    // O si solo hay un producto filtrado en la lista
+                    else if (filteredProd.length === 1) {
+                      addProductoToCart(filteredProd[0], 1);
+                      setSearch("");
+                    }
+                  }
+                }}
               />
             </div>
           </div>

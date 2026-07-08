@@ -373,4 +373,108 @@ class InventarioTascaController extends Controller
         LoteTasca::destroy($id);
         return response()->json(['message' => 'Eliminado']);
     }
+
+    public function reporteInventario(Request $request)
+    {
+        $formato = $request->query('formato', 'pdf');
+        $insumos = InsumoTasca::with(['lotesActivos'])->orderBy('nombre')->get();
+        
+        $data = [];
+        $totalValorizado = 0;
+        
+        foreach ($insumos as $ins) {
+            $stockTotal = $ins->stock_total;
+            $valorInsumo = 0;
+            foreach ($ins->lotesActivos as $lote) {
+                $valorInsumo += $lote->stock_actual * $lote->costo_unitario;
+            }
+            $totalValorizado += $valorInsumo;
+            
+            $data[] = [
+                'nombre' => $ins->nombre,
+                'categoria' => $ins->categoria ?? 'S/C',
+                'stock' => $stockTotal,
+                'valor' => $valorInsumo
+            ];
+        }
+        
+        if ($formato === 'excel' || $formato === 'csv') {
+            $html = '<html xmlns:x="urn:schemas-microsoft-com:office:excel">';
+            $html .= '<head><meta charset="utf-8"><!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>Inventario</x:Name><x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]--></head>';
+            $html .= '<body>';
+            $html .= '<table border="1">';
+            $html .= '<tr>';
+            $html .= '<th style="background-color:#4CAF50; color:white;">Producto / Insumo</th>';
+            $html .= '<th style="background-color:#4CAF50; color:white;">Categoría</th>';
+            $html .= '<th style="background-color:#4CAF50; color:white;">Stock Total (Unidades)</th>';
+            $html .= '<th style="background-color:#4CAF50; color:white;">Valorización (USD)</th>';
+            $html .= '</tr>';
+            
+            foreach ($data as $row) {
+                $html .= '<tr>';
+                $html .= '<td>' . htmlspecialchars($row['nombre']) . '</td>';
+                $html .= '<td>' . htmlspecialchars($row['categoria']) . '</td>';
+                $html .= '<td>' . $row['stock'] . '</td>';
+                $html .= '<td>' . number_format($row['valor'], 2, '.', '') . '</td>';
+                $html .= '</tr>';
+            }
+            
+            $html .= '<tr>';
+            $html .= '<td colspan="2"></td>';
+            $html .= '<td style="font-weight:bold;">TOTAL GENERAL</td>';
+            $html .= '<td style="font-weight:bold;">' . number_format($totalValorizado, 2, '.', '') . '</td>';
+            $html .= '</tr>';
+            
+            $html .= '</table>';
+            $html .= '</body></html>';
+            
+            return response($html)
+                ->header('Content-Type', 'application/vnd.ms-excel; charset=UTF-8')
+                ->header('Content-Disposition', 'attachment; filename="Inventario_Tasca_'.date('Ymd').'.xls"');
+        }
+        
+        $pdf = new \TCPDF('P', 'mm', 'LETTER');
+        $pdf->SetMargins(15, 15, 15);
+        $pdf->SetTitle('Reporte de Inventario Tasca');
+        $pdf->setPrintHeader(false);
+        $pdf->setPrintFooter(false);
+        $pdf->AddPage();
+        
+        $html = "
+            <div style='text-align:center; font-family: Helvetica, sans-serif;'>
+                <h2 style='font-size: 16px; margin-bottom:2px;'>Unión de Ganaderos del Municipio Rosario de Perijá - TASCA</h2>
+                <h1 style='font-size:18px; margin-bottom:5px; color:#1e40af;'>REPORTE DE INVENTARIO VALORIZADO</h1>
+                <h4 style='font-size:12px; color:#555;'>Fecha de Emisión: " . date('d/m/Y h:i A') . "</h4>
+            </div>
+            <hr style='border: 0.5px solid #ccc; margin: 10px 0;'>
+            <table style='width: 100%; border-collapse: collapse; font-family: Helvetica, sans-serif; font-size: 11px;'>
+                <tr style='background-color:#f0f0f0;'>
+                    <th style='border-bottom: 2px solid #ccc; font-weight:bold; padding: 6px; text-align:left;'>Producto / Insumo</th>
+                    <th style='border-bottom: 2px solid #ccc; font-weight:bold; padding: 6px; text-align:left;'>Categoría</th>
+                    <th style='border-bottom: 2px solid #ccc; font-weight:bold; padding: 6px; text-align:right;'>Stock (Unid/ml)</th>
+                    <th style='border-bottom: 2px solid #ccc; font-weight:bold; padding: 6px; text-align:right;'>Valorización (USD)</th>
+                </tr>
+        ";
+        
+        foreach ($data as $row) {
+            $html .= "<tr>
+                <td style='border-bottom: 1px solid #eee; padding: 4px;'>{$row['nombre']}</td>
+                <td style='border-bottom: 1px solid #eee; padding: 4px;'>{$row['categoria']}</td>
+                <td style='border-bottom: 1px solid #eee; padding: 4px; text-align:right;'>{$row['stock']}</td>
+                <td style='border-bottom: 1px solid #eee; padding: 4px; text-align:right;'>$" . number_format($row['valor'], 2) . "</td>
+            </tr>";
+        }
+        
+        $html .= "
+                <tr style='background-color:#e0f2fe; font-weight:bold;'>
+                    <td colspan='3' style='padding:6px; text-align:right; font-size:12px;'>VALOR TOTAL DEL INVENTARIO (USD):</td>
+                    <td style='padding:6px; text-align:right; font-size:12px;'>$" . number_format($totalValorizado, 2) . "</td>
+                </tr>
+            </table>
+        ";
+        
+        $pdf->writeHTML($html, true, false, true, false, '');
+        return response($pdf->Output('Inventario_Tasca_'.date('Ymd').'.pdf', 'I'))
+            ->header('Content-Type', 'application/pdf');
+    }
 }

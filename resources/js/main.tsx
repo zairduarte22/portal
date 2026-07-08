@@ -15,13 +15,14 @@ window.fetch = async (...args) => {
   const match = document.cookie.match(new RegExp('(^|;\\s*)(XSRF-TOKEN)=([^;]*)'));
   const csrfToken = match ? decodeURIComponent(match[3]) : null;
 
+  const headers = new Headers(config.headers);
+  headers.set('Accept', 'application/json');
+
   if (csrfToken && !['GET', 'HEAD', 'OPTIONS'].includes(config.method?.toUpperCase() || 'GET')) {
-    config.headers = {
-      ...config.headers,
-      'X-XSRF-TOKEN': csrfToken,
-      'Accept': 'application/json',
-    };
+    headers.set('X-XSRF-TOKEN', csrfToken);
   }
+  
+  config.headers = headers;
 
   return originalFetch(resource, config);
 };

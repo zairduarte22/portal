@@ -164,6 +164,7 @@ Route::prefix('tasca')->group(function () {
 
     // Inventario Avanzado (Insumos y Lotes)
     Route::get('/insumos', [\App\Http\Controllers\InventarioTascaController::class, 'getInsumos']);
+    Route::get('/insumos/reporte', [\App\Http\Controllers\InventarioTascaController::class, 'reporteInventario']);
     Route::post('/insumos', [\App\Http\Controllers\InventarioTascaController::class, 'storeInsumo']);
     Route::put('/insumos/{id}', [\App\Http\Controllers\InventarioTascaController::class, 'updateInsumo']);
     Route::delete('/insumos/{id}', [\App\Http\Controllers\InventarioTascaController::class, 'destroyInsumo']);

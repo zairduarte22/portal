@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Package, Beaker, Archive, Layers, Bell, AlertTriangle } from "lucide-react";
+import { Package, Beaker, Archive, Layers, Bell, AlertTriangle, FileText, Download } from "lucide-react";
 import ProductosTab from "./tabs/ProductosTab";
 import LotesTab from "./tabs/LotesTab";
 import GastosTab from "./tabs/GastosTab";
@@ -63,18 +63,37 @@ export function GestionTascaPanel() {
           </p>
         </div>
         
-        <div className="relative">
+        <div className="flex items-center gap-3">
           <button 
-            onClick={() => setShowNotifications(!showNotifications)}
-            className="p-2 bg-white border border-gray-200 rounded-full hover:bg-gray-50 transition-colors relative"
+            onClick={() => window.open('/api/tasca/insumos/reporte?formato=pdf', '_blank')}
+            className="flex items-center gap-2 px-3 py-2 text-sm font-bold bg-white border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors shadow-sm"
+            title="Descargar Reporte en PDF"
           >
-            <Bell size={20} className="text-gray-600" />
-            {expiringLotes.length > 0 && (
-              <span className="absolute top-0 right-0 -mt-1 -mr-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white shadow-sm ring-2 ring-white">
-                {expiringLotes.length}
-              </span>
-            )}
+            <FileText size={18} className="text-red-500" />
+            PDF
           </button>
+          
+          <button 
+            onClick={() => window.open('/api/tasca/insumos/reporte?formato=excel', '_blank')}
+            className="flex items-center gap-2 px-3 py-2 text-sm font-bold bg-white border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors shadow-sm"
+            title="Descargar Reporte en Excel (CSV)"
+          >
+            <Download size={18} className="text-green-600" />
+            Excel
+          </button>
+
+          <div className="relative ml-2">
+            <button 
+              onClick={() => setShowNotifications(!showNotifications)}
+              className="p-2 bg-white border border-gray-200 rounded-full hover:bg-gray-50 transition-colors relative shadow-sm"
+            >
+              <Bell size={20} className="text-gray-600" />
+              {expiringLotes.length > 0 && (
+                <span className="absolute top-0 right-0 -mt-1 -mr-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white shadow-sm ring-2 ring-white">
+                  {expiringLotes.length}
+                </span>
+              )}
+            </button>
           
           {showNotifications && (
             <div className="absolute right-0 mt-2 w-80 bg-white border rounded-xl shadow-xl z-50 overflow-hidden">
@@ -118,6 +137,7 @@ export function GestionTascaPanel() {
               </div>
             </div>
           )}
+          </div>
         </div>
       </div>
 

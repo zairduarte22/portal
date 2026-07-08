@@ -411,6 +411,23 @@ class TascaController extends Controller
             }
         }
 
+        // 2. Facturación del Periodo (Excluyendo Anuladas y Pendientes sin finalizar)
+        $ventasPeriodo = VentaTasca::with('miembro')
+            ->whereBetween('fecha', [$startDate, $endDate])
+            ->whereIn('estado', ['Pagada', 'Credito', 'Parcial'])
+            ->get();
+            
+        $totalFacturado = $ventasPeriodo->sum(function($v) { return $v->total - $v->descuento; });
+        // Asegurar que el pendiente y crédito sumen lo mismo
+        $totalPendiente = $ventasPeriodo->whereIn('estado', ['Credito', 'Parcial'])->sum('pendiente');
+        $totalContado = $totalFacturado - $totalPendiente;
+
+        // Facturas a crédito para listado
+        $ventasCredito = $ventasPeriodo->whereIn('estado', ['Credito', 'Parcial'])->filter(function($v) {
+            return $v->pendiente > 0;
+        });
+        $totalCreditoOtorgado = 0;
+
         if ($formato === 'ticket') {
             // Un ticket típicamente es de 80mm de ancho. Le daremos una altura grande y el sistema lo recorta
             $pdf = new \TCPDF('P', 'mm', array(80, 297));
@@ -446,38 +463,70 @@ class TascaController extends Controller
                     <span style='font-size: 9px;'>Tlf: 02634511191</span><br>
                     <span style='font-size: 8px;'>Av. 18 de Octubre Local UGAVI N° 57000 Sector Aurora. Villa del Rosario Municipio Rosario de Perijá</span><br>
                     ----------------------------------------<br>
-                    <strong style='font-size: 12px;'>REPORTE DE VENTAS TASCA</strong><br>
+                    <strong style='font-size: 12px;'>REPORTE DE CIERRE DE CAJA</strong><br>
                     <span style='font-size: 9px;'>Fechas: {$rangoTexto}</span><br>
                     ----------------------------------------
                 </div>
-                <h3 style='font-size:{$fontSizeSub}; font-family: {$fontFamily}; margin-bottom: 2px; text-align:center;'>Ingresos por Ventas</h3>
-                <table style='{$tableStyle}'>
-                    <tr>
-                        <th style='{$thStyle} text-align:left;'>Método</th>
-                        <th style='{$thStyle} text-align:right;'>USD</th>
-                        <th style='{$thStyle} text-align:right;'>Bs</th>
-                    </tr>
             ";
+            $separador = "<div style='text-align:center; font-family: {$fontFamily}; margin-top:10px;'>----------------------------------------</div>";
         } else {
             $html = "
                 <div style='text-align:center; font-family: {$fontFamily};'>
                     <h2 style='font-size: 16px; margin-bottom:2px;'>Unión de Ganaderos del Municipio Rosario de Perijá - TASCA</h2>
                     <p style='font-size: 12px; margin: 2px 0;'>RIF: J-07002231-0 | Tlf: 02634511191</p>
                     <p style='font-size: 10px; margin: 2px 0 10px 0;'>Av. 18 de Octubre Local UGAVI N° 57000 Sector Aurora. Villa del Rosario Municipio Rosario de Perijá</p>
-                    <h1 style='font-size:{$fontSizeTitle}; margin-bottom:5px;'>REPORTE DE VENTAS TASCA</h1>
+                    <h1 style='font-size:{$fontSizeTitle}; margin-bottom:5px;'>REPORTE DE CIERRE DE CAJA</h1>
                     <h4 style='font-size:{$fontSizeSub}; color:#555; margin-top:0;'>Fechas: {$rangoTexto}</h4>
                 </div>
                 <hr style='border: 0.5px solid #ccc; margin: 10px 0;'>
-                
-                <h3 style='font-size:{$fontSizeSub}; font-family: {$fontFamily}; color: #333;'>Ingresos por Ventas (Periodo Seleccionado)</h3>
-                <table style='{$tableStyle}'>
-                    <tr>
-                        <th style='{$thStyle} text-align:left;'>Método de Pago</th>
-                        <th style='{$thStyle} text-align:right;'>Total (USD)</th>
-                        <th style='{$thStyle} text-align:right;'>Exacto (Bs)</th>
-                    </tr>
+            ";
+            $separador = "<hr style='border: 0.5px dotted #ccc; margin: 15px 0;'>";
+        }
+
+        // --- SECCIÓN 1: RESUMEN DE FACTURACIÓN ---
+        $html .= "
+            <h3 style='font-size:{$fontSizeSub}; font-family: {$fontFamily}; margin-bottom: 5px; text-align:center; color:#1e40af;'>RESUMEN DE FACTURACIÓN</h3>
+            <table style='{$tableStyle}'>
+                <tr>
+                    <td style='{$tdStyle} text-align:left;'>Ventas al Contado (Pagado)</td>
+                    <td style='{$tdStyle} text-align:right;'>$" . number_format($totalContado, 2) . "</td>
+                </tr>
+                <tr>
+                    <td style='{$tdStyle} text-align:left;'>Ventas a Crédito (Pendiente)</td>
+                    <td style='{$tdStyle} text-align:right;'>$" . number_format($totalPendiente, 2) . "</td>
+                </tr>
+        ";
+
+        if ($formato === 'ticket') {
+            $html .= "
+                <tr style='font-weight:bold;'>
+                    <td style='padding:4px; border-top:1px dashed #333;'>TOTAL FACTURADO</td>
+                    <td style='padding:4px; border-top:1px dashed #333; text-align:right;'>$" . number_format($totalFacturado, 2) . "</td>
+                </tr>
+            </table>
+            ";
+        } else {
+            $html .= "
+                <tr style='font-weight:bold; background-color:#e0f2fe;'>
+                    <td style='padding:4px;'>TOTAL FACTURADO (Ventas Reales)</td>
+                    <td style='padding:4px; text-align:right;'>$" . number_format($totalFacturado, 2) . "</td>
+                </tr>
+            </table>
             ";
         }
+
+        $html .= $separador;
+
+        // --- SECCIÓN 2: INGRESOS RECIBIDOS (DINERO EN CAJA) ---
+        $html .= "
+            <h3 style='font-size:{$fontSizeSub}; font-family: {$fontFamily}; margin-bottom: 5px; text-align:center; color:#2e7d32;'>DETALLE DE INGRESOS (DINERO RECIBIDO)</h3>
+            <table style='{$tableStyle}'>
+                <tr>
+                    <th style='{$thStyle} text-align:left;'>Método (Ventas Nuevas)</th>
+                    <th style='{$thStyle} text-align:right;'>Total (USD)</th>
+                    <th style='{$thStyle} text-align:right;'>Exacto (Bs)</th>
+                </tr>
+        ";
 
         if (empty($ingresosVentasNuevas)) {
             $html .= "<tr><td colspan='3' style='text-align:center; {$tdStyle}'>No hay ingresos.</td></tr>";
@@ -491,42 +540,32 @@ class TascaController extends Controller
         if ($formato === 'ticket') {
             $html .= "
                     <tr style='font-weight:bold;'>
-                        <td style='padding:4px; border-top:1px dashed #333;'>SUB TOTAL</td>
+                        <td style='padding:4px; border-top:1px dashed #333;'>SUBTOTAL</td>
                         <td style='padding:4px; border-top:1px dashed #333; text-align:right;'>$" . number_format($totalVentasNuevasUsd, 2) . "</td>
                         <td style='padding:4px; border-top:1px dashed #333; text-align:right;'>Bs " . number_format($totalVentasNuevasBs, 2) . "</td>
                     </tr>
                 </table>
-
-                <div style='text-align:center; font-family: {$fontFamily}; margin-top:10px;'>
-                    ----------------------------------------
-                </div>
-                <h3 style='font-size:{$fontSizeSub}; font-family: {$fontFamily}; margin-bottom: 2px; text-align:center;'>Abonos a Créditos</h3>
-                <table style='{$tableStyle}'>
-                    <tr>
-                        <th style='{$thStyle} text-align:left;'>Método</th>
-                        <th style='{$thStyle} text-align:right;'>USD</th>
-                        <th style='{$thStyle} text-align:right;'>Bs</th>
-                    </tr>
             ";
         } else {
             $html .= "
-                    <tr style='background-color:#e0f7fa; font-weight:bold;'>
-                        <td style='padding:4px;'>SUBTOTAL VENTAS</td>
+                    <tr style='background-color:#f1f8e9; font-weight:bold;'>
+                        <td style='padding:4px;'>SUBTOTAL INGRESOS NUEVOS</td>
                         <td style='padding:4px; text-align:right;'>$" . number_format($totalVentasNuevasUsd, 2) . "</td>
                         <td style='padding:4px; text-align:right;'>Bs " . number_format($totalVentasNuevasBs, 2) . "</td>
                     </tr>
                 </table>
-
-                <br>
-                <h3 style='font-size:{$fontSizeSub}; font-family: {$fontFamily}; color: #333;'>Abonos a Créditos (Deudas Anteriores)</h3>
-                <table style='{$tableStyle}'>
-                    <tr>
-                        <th style='{$thStyle} text-align:left;'>Método de Pago</th>
-                        <th style='{$thStyle} text-align:right;'>Total (USD)</th>
-                        <th style='{$thStyle} text-align:right;'>Exacto (Bs)</th>
-                    </tr>
             ";
         }
+
+        $html .= "
+            <br>
+            <table style='{$tableStyle}'>
+                <tr>
+                    <th style='{$thStyle} text-align:left;'>Método (Abonos a Deudas)</th>
+                    <th style='{$thStyle} text-align:right;'>Total (USD)</th>
+                    <th style='{$thStyle} text-align:right;'>Exacto (Bs)</th>
+                </tr>
+        ";
 
         if (empty($ingresosAbonos)) {
             $html .= "<tr><td colspan='3' style='text-align:center; {$tdStyle}'>No hay abonos.</td></tr>";
@@ -540,7 +579,7 @@ class TascaController extends Controller
         if ($formato === 'ticket') {
             $html .= "
                     <tr style='font-weight:bold;'>
-                        <td style='padding:4px; border-top:1px dashed #333;'>SUB TOTAL</td>
+                        <td style='padding:4px; border-top:1px dashed #333;'>SUBTOTAL</td>
                         <td style='padding:4px; border-top:1px dashed #333; text-align:right;'>$" . number_format($totalAbonosUsd, 2) . "</td>
                         <td style='padding:4px; border-top:1px dashed #333; text-align:right;'>Bs " . number_format($totalAbonosBs, 2) . "</td>
                     </tr>
@@ -559,7 +598,7 @@ class TascaController extends Controller
                         <td style='text-align:right; padding-bottom:2px;'>Bs " . number_format($totalVentasNuevasBs + $totalAbonosBs, 2) . "</td>
                     </tr>
                     <tr style='font-size:{$fontSizeSub}; font-weight:bold;'>
-                        <td style='text-align:left; padding-bottom:2px;'>GENERAL (EQ. USD):</td>
+                        <td style='text-align:left; padding-bottom:2px;'>TOTAL INGRESADO:</td>
                         <td style='text-align:right; padding-bottom:2px;'>$" . number_format($totalVentasNuevasUsd + $totalAbonosUsd, 2) . "</td>
                     </tr>
                 </table>
@@ -583,12 +622,49 @@ class TascaController extends Controller
                         <td style='text-align:left; padding-bottom:10px;'>TOTAL RECIBIDO (BOLÍVARES):</td>
                         <td style='text-align:right; padding-bottom:10px;'>Bs " . number_format($totalVentasNuevasBs + $totalAbonosBs, 2) . "</td>
                     </tr>
-                    <tr style='font-size:{$fontSizeTitle}; font-weight:bold; background-color:#1e40af; color:#ffffff;'>
-                        <td style='text-align:left; padding:8px;'>TOTAL GENERAL (Equiv. USD):</td>
+                    <tr style='font-size:{$fontSizeTitle}; font-weight:bold; background-color:#22c55e; color:#ffffff;'>
+                        <td style='text-align:left; padding:8px;'>TOTAL GENERAL INGRESADO (USD):</td>
                         <td style='text-align:right; padding:8px;'>$" . number_format($totalVentasNuevasUsd + $totalAbonosUsd, 2) . "</td>
                     </tr>
                 </table>
             ";
+        }
+
+        // --- SECCIÓN 3: CUENTAS POR COBRAR (CRÉDITOS OTORGADOS) ---
+        if ($ventasCredito->count() > 0) {
+            $html .= $separador;
+            $html .= "
+                <h3 style='font-size:{$fontSizeSub}; font-family: {$fontFamily}; margin-bottom: 2px; text-align:center; color: #b45309;'>CUENTAS POR COBRAR (Créditos Otorgados)</h3>
+                <table style='{$tableStyle}'>
+                    <tr>
+                        <th style='{$thStyle} text-align:left;'>Cliente / Comprobante</th>
+                        <th style='{$thStyle} text-align:right;'>Pendiente (USD)</th>
+                    </tr>
+            ";
+            foreach ($ventasCredito as $vc) {
+                if ($vc->pendiente > 0) {
+                    $totalCreditoOtorgado += $vc->pendiente;
+                    $nombreCliente = $vc->miembro ? $vc->miembro->razon_social : "Factura #".$vc->id;
+                    $html .= "<tr><td style='{$tdStyle}'>{$nombreCliente}</td><td style='{$tdStyle} text-align:right;'>$" . number_format($vc->pendiente, 2) . "</td></tr>";
+                }
+            }
+            if ($formato === 'ticket') {
+                $html .= "
+                        <tr style='font-weight:bold;'>
+                            <td style='padding:4px; border-top:1px dashed #333;'>TOTAL A CRÉDITO</td>
+                            <td style='padding:4px; border-top:1px dashed #333; text-align:right;'>$" . number_format($totalCreditoOtorgado, 2) . "</td>
+                        </tr>
+                    </table>
+                ";
+            } else {
+                $html .= "
+                        <tr style='background-color:#fef3c7; font-weight:bold;'>
+                            <td style='padding:4px;'>TOTAL A CRÉDITO</td>
+                            <td style='padding:4px; text-align:right;'>$" . number_format($totalCreditoOtorgado, 2) . "</td>
+                        </tr>
+                    </table>
+                ";
+            }
         }
 
         $pdf->writeHTML($html, true, false, true, false, '');

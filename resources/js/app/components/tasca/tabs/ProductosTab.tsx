@@ -308,25 +308,28 @@ export default function ProductosTab() {
                 <div className="space-y-3">
                   {presentaciones.map((pres, idx) => (
                     <div key={idx} className="grid grid-cols-12 gap-2 items-center bg-white p-2 rounded-lg border shadow-sm">
-                      <div className="col-span-5">
-                        <label className="block text-xs font-medium text-gray-500">Nombre</label>
+                      <div className="col-span-4">
+                        <label className="block text-xs font-medium text-gray-500">Nombre Presentación</label>
                         <input required type="text" className="w-full p-1.5 text-sm rounded border focus:ring-1 focus:ring-purple-500"
-                          value={pres.nombre} onChange={e => updatePresentacion(idx, "nombre", e.target.value)} />
+                          value={pres.nombre} onChange={e => updatePresentacion(idx, "nombre", e.target.value)} 
+                          placeholder="Ej: Trago, Botella, Six-Pack" />
                       </div>
                       <div className="col-span-2">
-                        <label className="block text-xs font-medium text-gray-500">Unidades</label>
+                        <label className="block text-xs font-medium text-gray-500">Unidades de Descuento</label>
                         <input required type="number" step="0.01" min="0.01" className="w-full p-1.5 text-sm rounded border focus:ring-1 focus:ring-purple-500"
-                          value={pres.medida_descuento} onChange={e => updatePresentacion(idx, "medida_descuento", e.target.value)} />
+                          value={pres.medida_descuento} onChange={e => updatePresentacion(idx, "medida_descuento", e.target.value)} 
+                          title="Cuántas unidades físicas resta del inventario al vender esta presentación" />
                       </div>
                       <div className="col-span-2">
-                        <label className="block text-xs font-medium text-gray-500">Precio ($)</label>
+                        <label className="block text-xs font-medium text-gray-500">Precio Venta ($)</label>
                         <input required type="number" step="0.01" min="0" className="w-full p-1.5 text-sm rounded border focus:ring-1 focus:ring-purple-500"
                           value={pres.precio} onChange={e => updatePresentacion(idx, "precio", e.target.value)} />
                       </div>
-                      <div className="col-span-2">
-                        <label className="block text-xs font-medium text-gray-500">Código</label>
-                        <input type="text" className="w-full p-1.5 text-sm rounded border focus:ring-1 focus:ring-purple-500"
-                          value={pres.codigo_barras || ""} onChange={e => updatePresentacion(idx, "codigo_barras", e.target.value)} />
+                      <div className="col-span-3">
+                        <label className="block text-xs font-bold text-blue-600">Código de Barras</label>
+                        <input type="text" className="w-full p-1.5 text-sm rounded border-blue-300 focus:ring-1 focus:ring-blue-500"
+                          value={pres.codigo_barras || ""} onChange={e => updatePresentacion(idx, "codigo_barras", e.target.value)} 
+                          placeholder="Escanea o escribe" />
                       </div>
                       <div className="col-span-1 flex justify-center items-end pb-1">
                         <button type="button" onClick={() => removePresentacion(idx)} className="text-red-500 hover:text-red-700 p-1">
