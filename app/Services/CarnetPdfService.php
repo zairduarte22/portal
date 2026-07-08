@@ -229,7 +229,7 @@ class CarnetPdfService
 
             // --- QR CODE ---
             $serverName = config('app.url', 'https://membresiasugavi.info');
-            $urlVerificacion = rtrim($serverName, '/') . "/c/" . $carnet->numero_carnet;
+            $urlVerificacion = rtrim($serverName, '/') . "/c/" . $carnet->id;
             
             QrCode::format('svg')->size(150)->margin(1)->generate($urlVerificacion, $tempQrPath);
             

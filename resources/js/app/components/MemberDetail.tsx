@@ -1,9 +1,10 @@
-import { X, Pencil, MapPin, Mail, Phone, Shield, FileText, UserCircle, IdCard, CheckCircle, Clock, XCircle, CreditCard, Download } from "lucide-react";
+import { X, Pencil, MapPin, Mail, Phone, Shield, FileText, UserCircle, IdCard, CheckCircle, Clock, XCircle, CreditCard, Download, Store } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Miembro, Persona, Vinculacion, RelacionFamiliar } from "./mockData";
 import { PersonasPanel } from "./PersonasPanel";
 import { EstadoCuentaPanel } from "./EstadoCuentaPanel";
 import { DocumentosPanel } from "./DocumentosPanel";
+import { ComprasTascaPanel } from "./tasca/ComprasTascaPanel";
 
 interface MemberDetailProps {
   member: Miembro;
@@ -63,7 +64,7 @@ export function MemberDetail({ member: mProp, personas, vinculaciones, relacione
   const solv = SOLVENCIA_STYLE[m.solvencia] || { bg: "linear-gradient(135deg,#f1f5f9,#e2e8f0)", color: "#475569", text: m.solvencia || "N/A" };
   const tipo = TIPO_BADGE[m.tipo] || { bg: "#f1f5f9", color: "#475569" };
   
-  const [activeTab, setActiveTab] = useState<"detalles" | "estado_cuenta" | "carnets" | "documentos">("detalles");
+  const [activeTab, setActiveTab] = useState<"detalles" | "estado_cuenta" | "carnets" | "documentos" | "compras_tasca">("detalles");
 
   const [pagosCarnets, setPagosCarnets] = useState<any[]>([]);
   const [carnetsEmitidos, setCarnetsEmitidos] = useState<any[]>([]);
@@ -172,10 +173,10 @@ export function MemberDetail({ member: mProp, personas, vinculaciones, relacione
             ))}
           </div>
           {/* Tabs */}
-          <div className="flex items-center gap-2 px-6 pt-4 border-b" style={{ borderColor: "rgba(255,255,255,0.1)" }}>
+          <div className="flex items-center gap-2 px-6 pt-4 border-b overflow-x-auto no-scrollbar" style={{ borderColor: "rgba(255,255,255,0.1)" }}>
             <button
               onClick={() => setActiveTab("detalles")}
-              className="px-4 py-2 text-sm font-bold border-b-2 transition-colors flex items-center gap-2"
+              className="px-4 py-2 text-sm font-bold border-b-2 transition-colors flex items-center gap-2 whitespace-nowrap"
               style={{
                 borderColor: activeTab === "detalles" ? "#4ade80" : "transparent",
                 color: activeTab === "detalles" ? "#fff" : "rgba(255,255,255,0.6)",
@@ -186,7 +187,7 @@ export function MemberDetail({ member: mProp, personas, vinculaciones, relacione
             </button>
             <button
               onClick={() => setActiveTab("estado_cuenta")}
-              className="px-4 py-2 text-sm font-bold border-b-2 transition-colors flex items-center gap-2"
+              className="px-4 py-2 text-sm font-bold border-b-2 transition-colors flex items-center gap-2 whitespace-nowrap"
               style={{
                 borderColor: activeTab === "estado_cuenta" ? "#4ade80" : "transparent",
                 color: activeTab === "estado_cuenta" ? "#fff" : "rgba(255,255,255,0.6)",
@@ -196,8 +197,19 @@ export function MemberDetail({ member: mProp, personas, vinculaciones, relacione
               Estado de Cuenta
             </button>
             <button
+              onClick={() => setActiveTab("compras_tasca")}
+              className="px-4 py-2 text-sm font-bold border-b-2 transition-colors flex items-center gap-2 whitespace-nowrap"
+              style={{
+                borderColor: activeTab === "compras_tasca" ? "#4ade80" : "transparent",
+                color: activeTab === "compras_tasca" ? "#fff" : "rgba(255,255,255,0.6)",
+              }}
+            >
+              <Store size={16} />
+              Compras Tasca
+            </button>
+            <button
               onClick={() => setActiveTab("carnets")}
-              className="px-4 py-2 text-sm font-bold border-b-2 transition-colors flex items-center gap-2"
+              className="px-4 py-2 text-sm font-bold border-b-2 transition-colors flex items-center gap-2 whitespace-nowrap"
               style={{
                 borderColor: activeTab === "carnets" ? "#4ade80" : "transparent",
                 color: activeTab === "carnets" ? "#fff" : "rgba(255,255,255,0.6)",
@@ -208,7 +220,7 @@ export function MemberDetail({ member: mProp, personas, vinculaciones, relacione
             </button>
             <button
               onClick={() => setActiveTab("documentos")}
-              className="px-4 py-2 text-sm font-bold border-b-2 transition-colors flex items-center gap-2"
+              className="px-4 py-2 text-sm font-bold border-b-2 transition-colors flex items-center gap-2 whitespace-nowrap"
               style={{
                 borderColor: activeTab === "documentos" ? "#4ade80" : "transparent",
                 color: activeTab === "documentos" ? "#fff" : "rgba(255,255,255,0.6)",
@@ -272,11 +284,15 @@ export function MemberDetail({ member: mProp, personas, vinculaciones, relacione
               </div>
             </>
           ) : activeTab === "estado_cuenta" ? (
-            <EstadoCuentaPanel 
-              memberId={m.id} 
-            />
+            <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <EstadoCuentaPanel memberId={m.id} />
+            </div>
+          ) : activeTab === "compras_tasca" ? (
+            <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <ComprasTascaPanel miembroId={m.id} />
+            </div>
           ) : activeTab === "carnets" ? (
-            <div className="space-y-4">
+            <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
               <Card title="Créditos de Carnets">
                 <div className="flex items-center gap-4">
                   <div className="text-4xl font-black text-green-500">{m.carnets_disponibles || 0}</div>
@@ -364,7 +380,14 @@ export function MemberDetail({ member: mProp, personas, vinculaciones, relacione
           )}
         </div>
       </div>
-      <style>{`@keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }`}</style>
+      <style>{`@keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
+      .no-scrollbar::-webkit-scrollbar {
+        display: none;
+      }
+      .no-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+      }`}</style>
     </div>
   );
 }

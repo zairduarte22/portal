@@ -3,8 +3,16 @@ import { Sidebar } from "./Sidebar";
 import { Menu } from "lucide-react";
 import { Outlet } from "react-router-dom";
 
-export function AdminLayout() {
+export function AdminLayout({ currentUser, onLogout }: { currentUser?: any, onLogout?: () => void }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  const handleLogout = () => {
+    fetch('/api/logout', { method: 'POST', headers: { 'Accept': 'application/json' } })
+      .then(() => {
+        if (onLogout) onLogout();
+      });
+  };
 
   return (
     <div className="h-screen w-screen flex overflow-hidden" style={{ backgroundColor: "var(--background)" }}>
@@ -24,6 +32,8 @@ export function AdminLayout() {
         }`}
       >
         <Sidebar
+          currentUser={currentUser}
+          onLogout={handleLogout}
           onCloseMobile={() => setSidebarOpen(false)}
         />
       </div>
@@ -54,16 +64,32 @@ export function AdminLayout() {
             </span>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 relative">
             <div
-              className="flex items-center gap-2 px-3 py-1.5 rounded-2xl"
+              className="flex items-center gap-2 px-3 py-1.5 rounded-2xl cursor-pointer hover:bg-gray-100 transition-colors"
               style={{ backgroundColor: "var(--secondary)", border: "1px solid var(--border)" }}
+              onClick={() => setMenuOpen(!menuOpen)}
             >
               <div className="w-6 h-6 rounded-lg flex items-center justify-center" style={{ background: "linear-gradient(135deg,#16a34a,#22c55e)" }}>
-                <span style={{ fontSize: "0.6rem", color: "#fff", fontFamily: "Nunito, sans-serif", fontWeight: 800 }}>AD</span>
+                <span style={{ fontSize: "0.6rem", color: "#fff", fontFamily: "Nunito, sans-serif", fontWeight: 800 }}>
+                  {currentUser?.name ? currentUser.name.substring(0, 2).toUpperCase() : 'AD'}
+                </span>
               </div>
-              <span className="text-xs" style={{ color: "var(--secondary-foreground)", fontWeight: 600 }}>Administrador</span>
+              <span className="text-xs" style={{ color: "var(--secondary-foreground)", fontWeight: 600 }}>
+                {currentUser?.name || 'Administrador'}
+              </span>
             </div>
+            
+            {menuOpen && (
+              <div className="absolute top-full mt-2 right-0 bg-white border rounded-xl shadow-lg w-48 overflow-hidden z-50">
+                <button
+                  onClick={handleLogout}
+                  className="w-full text-left px-4 py-3 text-sm text-red-600 font-bold hover:bg-red-50 transition-colors"
+                >
+                  Cerrar Sesión
+                </button>
+              </div>
+            )}
           </div>
         </header>
 

@@ -1,24 +1,31 @@
-import { LayoutDashboard, Users, BarChart3, Settings, Leaf, ChevronRight, Wallet, IdCard, BookOpen, Landmark } from "lucide-react";
+import { LayoutDashboard, Users, BarChart3, Settings, Leaf, ChevronRight, Wallet, IdCard, BookOpen, Landmark, Store, Package } from "lucide-react";
 import { NavLink } from "react-router-dom";
 
 interface SidebarProps {
   onCloseMobile?: () => void;
+  currentUser?: any;
+  onLogout?: () => void;
 }
 
 const navItems = [
-  { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { id: "miembros", label: "Miembros", icon: Users },
-  { id: "personas", label: "Personas", icon: Users },
-  { id: "pagos", label: "Pago de Cuotas", icon: Wallet },
-  { id: "carnets", label: "Gestión de Carnets", icon: IdCard },
-  { id: "libros", label: "Libros Contables", icon: BookOpen },
-  { id: "obligaciones", label: "Obligaciones", icon: Landmark },
-  { id: "conciliacion", label: "Conciliación", icon: Landmark },
-  { id: "reportes", label: "Reportes", icon: BarChart3 },
-  { id: "configuracion", label: "Configuración", icon: Settings },
+  { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, moduleId: "Dashboard" },
+  { id: "miembros", label: "Miembros", icon: Users, moduleId: "MembersList" },
+  { id: "personas", label: "Personas", icon: Users, moduleId: "PersonasList" },
+  { id: "pagos", label: "Pago de Cuotas", icon: Wallet, moduleId: "PagosPanel" },
+  { id: "ventas-tasca", label: "Ventas Tasca", icon: Store, moduleId: "VentasTascaPanel" },
+  { id: "tasca/gestion", label: "Gestión Tasca", icon: Package, moduleId: "GestionTascaPanel" },
+  { id: "carnets", label: "Gestión de Carnets", icon: IdCard, moduleId: "CarnetsPanel" },
+  { id: "libros", label: "Libros Contables", icon: BookOpen, moduleId: "LibrosPanel" },
+  { id: "obligaciones", label: "Obligaciones", icon: Landmark, moduleId: "ObligacionesPanel" },
+  { id: "conciliacion", label: "Conciliación", icon: Landmark, moduleId: "ConciliacionPanel" },
+  { id: "reportes", label: "Reportes", icon: BarChart3, moduleId: "Reports" },
+  { id: "configuraciones", label: "Configuración", icon: Settings, moduleId: "ConfiguracionesPanel" },
 ];
 
-export function Sidebar({ onCloseMobile }: SidebarProps) {
+export function Sidebar({ onCloseMobile, currentUser, onLogout }: SidebarProps) {
+  const userModules = currentUser?.modules ? JSON.parse(currentUser.modules) : [];
+  const filteredNav = currentUser?.is_master ? navItems : navItems.filter(item => userModules.includes(item.moduleId));
+
   return (
     <aside
       className="w-64 h-screen flex flex-col relative overflow-hidden"
@@ -69,7 +76,7 @@ export function Sidebar({ onCloseMobile }: SidebarProps) {
 
       {/* Nav */}
       <nav className="flex-1 px-3 space-y-1">
-        {navItems.map(({ id, label, icon: Icon }) => (
+        {filteredNav.map(({ id, label, icon: Icon }) => (
           <NavLink
             key={id}
             to={`/admin/${id}`}

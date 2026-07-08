@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import "../styles/fonts.css";
 import { AdminLayout } from "./components/AdminLayout";
 import { Dashboard } from "./components/Dashboard";
@@ -11,8 +11,13 @@ import { CarnetsPanel } from "./components/carnets/CarnetsView";
 import { LibrosPanel } from "./components/LibrosPanel";
 import { ConciliacionPanel } from "./components/ConciliacionPanel";
 import { ObligacionesPanel } from "./components/ObligacionesPanel";
+import { VentasTascaPanel } from "./components/tasca/VentasTascaPanel";
+import { VentaPos } from "./components/tasca/VentaPos";
+import { GestionTascaPanel } from "./components/tasca/GestionTascaPanel";
 import { Miembro, Persona, Vinculacion, RelacionFamiliar } from "./components/mockData";
 import { Settings } from "lucide-react";
+import { Login } from "./components/Login";
+import { ConfiguracionesPanel } from "./components/ConfiguracionesPanel";
 
 // Placeholder for Public Portal
 function PublicPortal() {
@@ -38,13 +43,45 @@ function PublicPortal() {
   );
 }
 
+const ProtectedRoute = ({ children, moduleId, user }: { children: React.ReactNode, moduleId: string, user: any }) => {
+  if (user?.is_master) return <>{children}</>;
+  // Everyone has access to the Dashboard by default
+  if (moduleId === 'Dashboard') return <>{children}</>;
+  
+  const userModules = user?.modules ? JSON.parse(user.modules) : [];
+  if (!userModules.includes(moduleId)) {
+    return <Navigate to="/admin/dashboard" replace />;
+  }
+  return <>{children}</>;
+};
 export default function App() {
+  const [user, setUser] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
   const [members, setMembers] = useState<Miembro[]>([]);
   const [personas, setPersonas] = useState<Persona[]>([]);
   const [vinculaciones, setVinculaciones] = useState<Vinculacion[]>([]);
   const [relacionesFamiliares, setRelacionesFamiliares] = useState<RelacionFamiliar[]>([]);
 
   useEffect(() => {
+    fetch('/api/me')
+      .then(res => {
+        if (!res.ok) throw new Error("No auth");
+        return res.json();
+      })
+      .then(data => {
+        setUser(data);
+        setLoading(false);
+      })
+      .catch(() => {
+        setUser(null);
+        setLoading(false);
+      });
+  }, []);
+
+  useEffect(() => {
+    if (!user) return;
+
     fetch('/api/miembros')
       .then(res => res.json())
       .then(data => setMembers(data));
@@ -60,7 +97,7 @@ export default function App() {
     fetch('/api/relaciones-familiares')
       .then(res => res.json())
       .then(data => setRelacionesFamiliares(data));
-  }, []);
+  }, [user]);
 
   const handleAdd = (m: Miembro) => {
     fetch('/api/miembros', {
@@ -159,16 +196,23 @@ export default function App() {
     });
   };
 
+  if (loading) {
+    return <div className="min-h-screen flex items-center justify-center bg-gray-50 font-bold text-gray-500">Cargando...</div>;
+  }
+
+  if (!user) {
+    return <Login onLogin={setUser} />;
+  }
+
   return (
     <BrowserRouter>
       <Routes>
-        {/* Public Portal */}
-        <Route path="/" element={<PublicPortal />} />
-
-        {/* Admin Dashboard */}
-        <Route path="/admin" element={<AdminLayout />}>
-          <Route path="dashboard" element={<Dashboard />} />
+        <Route path="/" element={<Navigate to="/admin/dashboard" replace />} />
+        
+        <Route path="/admin" element={<AdminLayout currentUser={user} onLogout={() => setUser(null)} />}>
+          <Route path="dashboard" element={<ProtectedRoute moduleId="Dashboard" user={user}><Dashboard /></ProtectedRoute>} />
           <Route path="miembros" element={
+            <ProtectedRoute moduleId="MembersList" user={user}>
               <MembersList
               members={members}
               personas={personas}
@@ -182,8 +226,10 @@ export default function App() {
               onDeletePersona={handleDeletePersona}
               onUpdateVinculacion={handleUpdateVinculacion}
             />
+            </ProtectedRoute>
           } />
           <Route path="personas" element={
+            <ProtectedRoute moduleId="PersonasList" user={user}>
               <PersonasList
                 members={members}
                 personas={personas}
@@ -195,31 +241,18 @@ export default function App() {
                 onDeleteVinculacion={handleDeleteVinculacion}
                 onDeletePersona={handleDeletePersona}
               />
+            </ProtectedRoute>
             } />
-          <Route path="pagos" element={<PagosPanel />} />
-          <Route path="carnets" element={<CarnetsPanel />} />
-          <Route path="libros" element={<LibrosPanel />} />
-          <Route path="obligaciones" element={<ObligacionesPanel />} />
-          <Route path="conciliacion" element={<ConciliacionPanel />} />
-          <Route path="reportes" element={<Reports members={members} personas={personas} />} />
-          <Route path="configuracion" element={
-            <div className="space-y-5">
-              <h1 style={{ fontFamily: "Nunito, sans-serif", color: "var(--foreground)", fontWeight: 800 }}>
-                Configuración
-              </h1>
-              <div
-                className="rounded-3xl p-12 flex flex-col items-center justify-center text-center"
-                style={{ backgroundColor: "var(--card)", border: "1px solid var(--border)", boxShadow: "0 4px 24px rgba(0,0,0,0.06)" }}
-              >
-                <div className="w-14 h-14 rounded-3xl flex items-center justify-center mb-4" style={{ background: "linear-gradient(135deg,#dcfce7,#bbf7d0)" }}>
-                  <Settings size={24} style={{ color: "#15803d" }} />
-                </div>
-                <p className="text-sm" style={{ color: "var(--muted-foreground)", fontWeight: 500 }}>
-                  Módulo de configuración en desarrollo
-                </p>
-              </div>
-            </div>
-          } />
+          <Route path="pagos" element={<ProtectedRoute moduleId="PagosPanel" user={user}><PagosPanel /></ProtectedRoute>} />
+          <Route path="carnets" element={<ProtectedRoute moduleId="CarnetsPanel" user={user}><CarnetsPanel /></ProtectedRoute>} />
+          <Route path="libros" element={<ProtectedRoute moduleId="LibrosPanel" user={user}><LibrosPanel /></ProtectedRoute>} />
+          <Route path="obligaciones" element={<ProtectedRoute moduleId="ObligacionesPanel" user={user}><ObligacionesPanel /></ProtectedRoute>} />
+          <Route path="conciliacion" element={<ProtectedRoute moduleId="ConciliacionPanel" user={user}><ConciliacionPanel /></ProtectedRoute>} />
+          <Route path="ventas-tasca" element={<ProtectedRoute moduleId="VentasTascaPanel" user={user}><VentasTascaPanel /></ProtectedRoute>} />
+          <Route path="ventas-tasca/:id" element={<ProtectedRoute moduleId="VentasTascaPanel" user={user}><VentaPos /></ProtectedRoute>} />
+          <Route path="tasca/gestion" element={<ProtectedRoute moduleId="GestionTascaPanel" user={user}><GestionTascaPanel /></ProtectedRoute>} />
+          <Route path="configuraciones" element={<ProtectedRoute moduleId="ConfiguracionesPanel" user={user}><ConfiguracionesPanel currentUser={user} /></ProtectedRoute>} />
+          <Route path="reportes" element={<ProtectedRoute moduleId="Reports" user={user}><Reports members={members} personas={personas} /></ProtectedRoute>} />
           <Route path="" element={<Navigate to="/admin/dashboard" replace />} />
         </Route>
       </Routes>
