@@ -260,6 +260,7 @@ export default function App() {
           <Route path="reportes" element={<ProtectedRoute moduleId="Reports" user={user}><Reports members={members} personas={personas} /></ProtectedRoute>} />
           <Route path="" element={<Navigate to="/gestion/dashboard" replace />} />
         </Route>
+        <Route path="*" element={<Navigate to="/gestion/dashboard" replace />} />
       </Routes>
     </BrowserRouter>
   );
