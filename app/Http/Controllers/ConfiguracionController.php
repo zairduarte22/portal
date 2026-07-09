@@ -19,7 +19,8 @@ class ConfiguracionController extends Controller
             'name' => 'required|string|max:255',
             'username' => 'required|string|max:255|unique:users',
             'password' => 'required|string|min:4',
-            'modules' => 'nullable|array'
+            'modules' => 'nullable|array',
+            'default_route' => 'nullable|string|max:255'
         ]);
 
         $user = User::create([
@@ -28,7 +29,8 @@ class ConfiguracionController extends Controller
             'email' => $request->username . '@admin.com',
             'password' => Hash::make($request->password),
             'is_master' => false,
-            'modules' => $request->modules ? json_encode($request->modules) : null
+            'modules' => $request->modules ? json_encode($request->modules) : null,
+            'default_route' => $request->default_route
         ]);
 
         return response()->json($user, 201);
@@ -46,7 +48,8 @@ class ConfiguracionController extends Controller
             'name' => 'required|string|max:255',
             'username' => 'required|string|max:255|unique:users,username,' . $id,
             'password' => 'nullable|string|min:4',
-            'modules' => 'nullable|array'
+            'modules' => 'nullable|array',
+            'default_route' => 'nullable|string|max:255'
         ]);
 
         $user->name = $request->name;
@@ -57,6 +60,7 @@ class ConfiguracionController extends Controller
         }
         
         $user->modules = $request->modules ? json_encode($request->modules) : null;
+        $user->default_route = $request->default_route;
         $user->save();
 
         return response()->json($user);

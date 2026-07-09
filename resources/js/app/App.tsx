@@ -212,7 +212,7 @@ export default function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/c/:id" element={<CarnetPublico />} />
-        <Route path="/" element={<Navigate to="/gestion/dashboard" replace />} />
+        <Route path="/" element={<Navigate to={user.default_route ? `/gestion/${user.default_route}` : "/gestion/dashboard"} replace />} />
         
         <Route path="/gestion" element={<AdminLayout currentUser={user} onLogout={() => setUser(null)} />}>
           <Route path="dashboard" element={<ProtectedRoute moduleId="Dashboard" user={user}><Dashboard /></ProtectedRoute>} />
@@ -258,9 +258,9 @@ export default function App() {
           <Route path="tasca/gestion" element={<ProtectedRoute moduleId="GestionTascaPanel" user={user}><GestionTascaPanel /></ProtectedRoute>} />
           <Route path="configuraciones" element={<ProtectedRoute moduleId="ConfiguracionesPanel" user={user}><ConfiguracionesPanel currentUser={user} /></ProtectedRoute>} />
           <Route path="reportes" element={<ProtectedRoute moduleId="Reports" user={user}><Reports members={members} personas={personas} /></ProtectedRoute>} />
-          <Route path="" element={<Navigate to="/gestion/dashboard" replace />} />
+          <Route path="" element={<Navigate to={user.default_route ? `/gestion/${user.default_route}` : "/gestion/dashboard"} replace />} />
         </Route>
-        <Route path="*" element={<Navigate to="/gestion/dashboard" replace />} />
+        <Route path="*" element={<Navigate to={user.default_route ? `/gestion/${user.default_route}` : "/gestion/dashboard"} replace />} />
       </Routes>
     </BrowserRouter>
   );

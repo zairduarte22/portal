@@ -7,25 +7,26 @@ export function ConfiguracionesPanel({ currentUser }: { currentUser: any }) {
   const [editUser, setEditUser] = useState<any>(null);
 
   const modulosDisponibles = [
-    { id: 'Dashboard', nombre: 'Dashboard' },
-    { id: 'MembersList', nombre: 'Miembros' },
-    { id: 'PersonasList', nombre: 'Personas' },
-    { id: 'Reports', nombre: 'Reportes' },
-    { id: 'PagosPanel', nombre: 'Pagos y Recibos' },
-    { id: 'CarnetsPanel', nombre: 'Carnets' },
-    { id: 'LibrosPanel', nombre: 'Libros' },
-    { id: 'ConciliacionPanel', nombre: 'Conciliación' },
-    { id: 'ObligacionesPanel', nombre: 'Obligaciones' },
-    { id: 'VentasTascaPanel', nombre: 'Punto de Venta (Tasca)' },
-    { id: 'GestionTascaPanel', nombre: 'Gestión de Tasca' },
-    { id: 'ConfiguracionesPanel', nombre: 'Configuraciones' },
+    { id: 'Dashboard', nombre: 'Dashboard', route: 'dashboard' },
+    { id: 'MembersList', nombre: 'Miembros', route: 'miembros' },
+    { id: 'PersonasList', nombre: 'Personas', route: 'personas' },
+    { id: 'Reports', nombre: 'Reportes', route: 'reportes' },
+    { id: 'PagosPanel', nombre: 'Pagos y Recibos', route: 'pagos' },
+    { id: 'CarnetsPanel', nombre: 'Carnets', route: 'carnets' },
+    { id: 'LibrosPanel', nombre: 'Libros', route: 'libros' },
+    { id: 'ConciliacionPanel', nombre: 'Conciliación', route: 'conciliacion' },
+    { id: 'ObligacionesPanel', nombre: 'Obligaciones', route: 'obligaciones' },
+    { id: 'VentasTascaPanel', nombre: 'Punto de Venta (Tasca)', route: 'ventas-tasca' },
+    { id: 'GestionTascaPanel', nombre: 'Gestión de Tasca', route: 'tasca/gestion' },
+    { id: 'ConfiguracionesPanel', nombre: 'Configuraciones', route: 'configuraciones' },
   ];
 
   const [form, setForm] = useState({
     name: "",
     username: "",
     password: "",
-    modules: [] as string[]
+    modules: [] as string[],
+    default_route: ""
   });
 
   const loadUsuarios = () => {
@@ -41,7 +42,7 @@ export function ConfiguracionesPanel({ currentUser }: { currentUser: any }) {
 
   const openNew = () => {
     setEditUser(null);
-    setForm({ name: "", username: "", password: "", modules: [] });
+    setForm({ name: "", username: "", password: "", modules: [], default_route: "" });
     setShowModal(true);
   };
 
@@ -51,7 +52,8 @@ export function ConfiguracionesPanel({ currentUser }: { currentUser: any }) {
       name: user.name,
       username: user.username,
       password: "",
-      modules: user.modules ? JSON.parse(user.modules) : []
+      modules: user.modules ? JSON.parse(user.modules) : [],
+      default_route: user.default_route || ""
     });
     setShowModal(true);
   };
@@ -200,6 +202,22 @@ export function ConfiguracionesPanel({ currentUser }: { currentUser: any }) {
                   <LayoutGrid size={18} className="text-blue-500" />
                   <h3 className="font-bold text-gray-700">Módulos Permitidos</h3>
                 </div>
+                
+                <div className="mb-6">
+                  <label className="block text-sm font-bold mb-1">Módulo/Pantalla por Defecto al Iniciar Sesión</label>
+                  <select 
+                    value={form.default_route} 
+                    onChange={e => setForm({...form, default_route: e.target.value})}
+                    className="w-full p-2.5 border rounded-xl"
+                  >
+                    <option value="">-- Seleccionar (Por defecto Dashboard) --</option>
+                    {modulosDisponibles.filter(m => form.modules.includes(m.id)).map(mod => (
+                      <option key={mod.id} value={mod.route}>{mod.nombre}</option>
+                    ))}
+                  </select>
+                  <p className="text-xs text-gray-500 mt-1">El usuario será redirigido a esta pantalla automáticamente al entrar.</p>
+                </div>
+
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                   {modulosDisponibles.map(mod => (
                     <label key={mod.id} className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-colors ${form.modules.includes(mod.id) ? 'bg-blue-50 border-blue-200' : 'hover:bg-gray-50'}`}>
