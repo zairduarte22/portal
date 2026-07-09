@@ -46,7 +46,7 @@ export function TablaCarnetss({ carnets, miembros, personas, onAnular }: TablaCa
     if (!search) return true;
     const p = getPersona(c.id_persona);
     const m = getMiembro(c.id_miembro);
-    const text = `${p?.nombre || ''} ${p?.ci_numero || ''} ${m?.razon_social || ''} ${c.numero_carnet}`.toLowerCase();
+    const text = `${p?.nombre || ''} ${p?.ci_numero || ''} ${m?.razon_social || ''} AGC-${c.id}`.toLowerCase();
     return text.includes(search.toLowerCase());
   });
 
@@ -140,7 +140,7 @@ export function TablaCarnetss({ carnets, miembros, personas, onAnular }: TablaCa
                   <span className="text-xs px-2 py-0.5 rounded-full" style={{ backgroundColor: "#f0fdf4", color: "#15803d", fontWeight: 600, border: "1px solid #bbf7d0" }}>
                     {miembro?.razon_social ?? "Desconocido"}
                   </span>
-                  <span className="text-xs font-mono" style={{ color: "#94a3b8" }}>{c.numero_carnet}</span>
+                  <span className="text-xs font-mono" style={{ color: "#94a3b8" }}>AGC-{c.id}</span>
                 </div>
 
                 {/* Dates */}

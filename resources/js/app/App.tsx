@@ -18,7 +18,7 @@ import { Miembro, Persona, Vinculacion, RelacionFamiliar } from "./components/mo
 import { Settings } from "lucide-react";
 import { Login } from "./components/Login";
 import { ConfiguracionesPanel } from "./components/ConfiguracionesPanel";
-
+import { CarnetPublico } from "./components/public/CarnetPublico";
 // Placeholder for Public Portal
 function PublicPortal() {
   return (
@@ -33,7 +33,7 @@ function PublicPortal() {
         Sistema de Gestión Administrativa y Membresías de Agroproductores. El portal público para clientes y miembros estará disponible pronto.
       </p>
       <a
-        href="/admin/dashboard"
+        href="/gestion/dashboard"
         className="px-6 py-3 rounded-2xl text-sm font-bold transition-transform hover:scale-105"
         style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)", color: "#fff", boxShadow: "0 4px 14px rgba(34,197,94,0.4)" }}
       >
@@ -50,7 +50,7 @@ const ProtectedRoute = ({ children, moduleId, user }: { children: React.ReactNod
   
   const userModules = user?.modules ? JSON.parse(user.modules) : [];
   if (!userModules.includes(moduleId)) {
-    return <Navigate to="/admin/dashboard" replace />;
+    return <Navigate to="/gestion/dashboard" replace />;
   }
   return <>{children}</>;
 };
@@ -196,20 +196,24 @@ export default function App() {
     });
   };
 
-  if (loading) {
-    return <div className="min-h-screen flex items-center justify-center bg-gray-50 font-bold text-gray-500">Cargando...</div>;
-  }
-
   if (!user) {
-    return <Login onLogin={setUser} />;
+    return (
+      <BrowserRouter>
+        <Routes>
+          <Route path="/c/:id" element={<CarnetPublico />} />
+          <Route path="*" element={<Login onLogin={setUser} />} />
+        </Routes>
+      </BrowserRouter>
+    );
   }
 
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<Navigate to="/admin/dashboard" replace />} />
+        <Route path="/c/:id" element={<CarnetPublico />} />
+        <Route path="/" element={<Navigate to="/gestion/dashboard" replace />} />
         
-        <Route path="/admin" element={<AdminLayout currentUser={user} onLogout={() => setUser(null)} />}>
+        <Route path="/gestion" element={<AdminLayout currentUser={user} onLogout={() => setUser(null)} />}>
           <Route path="dashboard" element={<ProtectedRoute moduleId="Dashboard" user={user}><Dashboard /></ProtectedRoute>} />
           <Route path="miembros" element={
             <ProtectedRoute moduleId="MembersList" user={user}>
@@ -225,14 +229,14 @@ export default function App() {
               onUpdatePersona={handleUpdatePersona}
               onDeletePersona={handleDeletePersona}
               onUpdateVinculacion={handleUpdateVinculacion}
-            />
+              />
             </ProtectedRoute>
           } />
           <Route path="personas" element={
             <ProtectedRoute moduleId="PersonasList" user={user}>
               <PersonasList
-                members={members}
                 personas={personas}
+                miembros={members}
                 vinculaciones={vinculaciones}
                 relacionesFamiliares={relacionesFamiliares}
                 onAddPersona={handleAddPersona}
@@ -242,7 +246,7 @@ export default function App() {
                 onDeletePersona={handleDeletePersona}
               />
             </ProtectedRoute>
-            } />
+          } />
           <Route path="pagos" element={<ProtectedRoute moduleId="PagosPanel" user={user}><PagosPanel /></ProtectedRoute>} />
           <Route path="carnets" element={<ProtectedRoute moduleId="CarnetsPanel" user={user}><CarnetsPanel /></ProtectedRoute>} />
           <Route path="libros" element={<ProtectedRoute moduleId="LibrosPanel" user={user}><LibrosPanel /></ProtectedRoute>} />
@@ -253,7 +257,7 @@ export default function App() {
           <Route path="tasca/gestion" element={<ProtectedRoute moduleId="GestionTascaPanel" user={user}><GestionTascaPanel /></ProtectedRoute>} />
           <Route path="configuraciones" element={<ProtectedRoute moduleId="ConfiguracionesPanel" user={user}><ConfiguracionesPanel currentUser={user} /></ProtectedRoute>} />
           <Route path="reportes" element={<ProtectedRoute moduleId="Reports" user={user}><Reports members={members} personas={personas} /></ProtectedRoute>} />
-          <Route path="" element={<Navigate to="/admin/dashboard" replace />} />
+          <Route path="" element={<Navigate to="/gestion/dashboard" replace />} />
         </Route>
       </Routes>
     </BrowserRouter>

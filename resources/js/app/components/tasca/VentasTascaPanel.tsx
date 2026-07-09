@@ -57,7 +57,7 @@ export function VentasTascaPanel() {
 
   const handleVerDetalles = (v: any) => {
     if (v.estado === 'Pendiente') {
-      navigate(`/admin/ventas-tasca/${v.id}`);
+      navigate(`/gestion/ventas-tasca/${v.id}`);
     } else {
       setVentaSeleccionada(v);
     }
@@ -268,7 +268,7 @@ export function VentasTascaPanel() {
             onClick={() => setShowReportModal(true)}
             className="flex items-center gap-2 px-4 py-2 rounded-xl text-blue-700 bg-blue-100 hover:bg-blue-200 transition-colors font-bold shadow-sm"
           >
-            <FileText size={18} /> Cierre del Día
+            <FileText size={18} /> Reporte de Ventas
           </button>
           <button 
             onClick={() => setShowNuevaVenta(true)}
@@ -412,7 +412,7 @@ export function VentasTascaPanel() {
           onClose={() => setShowNuevaVenta(false)}
           onVentaCreated={(ventaId) => {
             setShowNuevaVenta(false);
-            navigate(`/admin/ventas-tasca/${ventaId}`);
+            navigate(`/gestion/ventas-tasca/${ventaId}`);
           }}
         />
       )}

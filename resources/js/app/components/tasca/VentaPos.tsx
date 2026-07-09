@@ -173,7 +173,7 @@ export function VentaPos() {
       setVenta(data);
       setShowPaymentModal(false);
       alert("Venta procesada correctamente");
-      navigate("/admin/ventas-tasca");
+      navigate("/gestion/ventas-tasca");
     } catch (err: any) {
       alert(err.message);
     } finally {
@@ -184,7 +184,7 @@ export function VentaPos() {
   const handleAnular = () => {
     if (confirm("¿Seguro que deseas anular esta venta?")) {
       fetch(`/api/tasca/ventas/${id}/anular`, { method: "POST" })
-        .then(() => navigate("/admin/ventas-tasca"));
+        .then(() => navigate("/gestion/ventas-tasca"));
     }
   };
 

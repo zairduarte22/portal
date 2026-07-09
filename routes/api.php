@@ -20,6 +20,7 @@ use App\Http\Controllers\CarnetEmitidoController;
 use App\Http\Controllers\TascaController;
 
 Route::post('/login', [AuthController::class, 'login']);
+Route::get('/carnets/public/{id}', [CarnetEmitidoController::class, 'showPublic']);
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);

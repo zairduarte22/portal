@@ -11,10 +11,6 @@ class CarnetEmitido extends Model
 
     protected $table = 'carnets_emitidos';
 
-    // Para usar UUID como primary key
-    protected $keyType = 'string';
-    public $incrementing = false;
-
     protected $casts = [
         'fecha_emision' => 'date:Y-m-d',
         'fecha_vencimiento' => 'date:Y-m-d',

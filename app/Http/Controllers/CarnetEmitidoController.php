@@ -36,7 +36,6 @@ class CarnetEmitidoController extends Controller
         }
 
         // Crear el carnet
-        $data['id'] = (string) Str::uuid();
         $carnet = CarnetEmitido::create($data);
 
         return response()->json($carnet, 201);
@@ -73,5 +72,86 @@ class CarnetEmitidoController extends Controller
         } catch (\Exception $e) {
             return response()->json(['error' => 'No se pudo generar el carnet: ' . $e->getMessage()], 500);
         }
+    }
+
+    public function showPublic($id)
+    {
+        $carnet = CarnetEmitido::with(['persona', 'miembro'])->find($id);
+
+        if (!$carnet) {
+            return response()->json(['error' => 'Carnet no encontrado'], 404);
+        }
+
+        // Determinar cargo / tipo de carnet
+        $cargo = 'Trabajador / Vinculado';
+        if ($carnet->miembro && $carnet->persona) {
+            $vinc = \Illuminate\Support\Facades\DB::table('vinculacion')
+                ->where('id_persona', $carnet->persona->id)
+                ->where('id_miembro', $carnet->miembro->id)
+                ->first();
+            if ($vinc) {
+                if ($vinc->presidente) {
+                    $cargo = 'Presidente';
+                } elseif ($vinc->director) {
+                    $cargo = 'Director';
+                } elseif ($vinc->accionista) {
+                    $cargo = 'Accionista';
+                } elseif ($vinc->representante) {
+                    $cargo = 'Representante';
+                } else {
+                    $cargo = 'Socio / Afiliado';
+                }
+            }
+        }
+        if ($carnet->persona->ex_presidente) {
+            $cargo = 'Ex Presidente';
+        } elseif ($carnet->persona->honorario) {
+            $cargo = 'Miembro Honorario';
+        }
+
+        $vigente = true;
+        $motivo_invalidez = null;
+
+        if ($carnet->fecha_vencimiento && $carnet->fecha_vencimiento < now()) {
+            $vigente = false;
+            $motivo_invalidez = 'Carnet Vencido';
+        } elseif ($carnet->estado === 'Vencido') {
+            $vigente = false;
+            $motivo_invalidez = 'Carnet Vencido';
+        } elseif ($carnet->estado === 'Inactivo') {
+            $vigente = false;
+            $motivo_invalidez = 'Carnet Inactivo';
+        }
+
+        // Verificación en tiempo real de la solvencia
+        $solvente = true;
+        if ($carnet->miembro) {
+            $saldo = $carnet->miembro->facturas()->sum('pendiente');
+            if ($saldo > 0) {
+                $solvente = false;
+                $vigente = false;
+                $motivo_invalidez = 'Miembro Insolvente';
+            }
+        }
+
+        return response()->json([
+            'id' => $carnet->id,
+            'fecha_emision' => $carnet->fecha_emision,
+            'fecha_vencimiento' => $carnet->fecha_vencimiento,
+            'vigente' => $vigente,
+            'motivo_invalidez' => $motivo_invalidez,
+            'cargo' => $cargo,
+            'persona' => [
+                'nombre' => $carnet->persona->nombre,
+                'ci_numero' => $carnet->persona->ci_numero,
+                'ci_tipo' => $carnet->persona->ci_tipo,
+                'fotografia' => $carnet->persona->fotografia,
+            ],
+            'miembro' => $carnet->miembro ? [
+                'razon_social' => $carnet->miembro->razon_social,
+                'rif' => $carnet->miembro->rif,
+                'logo' => $carnet->miembro->logo,
+            ] : null,
+        ]);
     }
 }
