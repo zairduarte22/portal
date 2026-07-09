@@ -152,8 +152,13 @@ export function NuevaVentaModal({ onClose, onVentaCreated }: { onClose: () => vo
                   <div key={m.id} className="flex justify-between items-center p-3 rounded-xl border hover:bg-gray-50/5 cursor-pointer transition-colors"
                        onClick={() => createVenta(m.id, null)}>
                     <div>
-                      <p className="font-semibold">{m.razon_social}</p>
-                      <p className="text-xs text-gray-500">{m.rif} • {m.acronimo} • {m.solvencia}</p>
+                      <p className="font-semibold flex items-center gap-2">
+                        {m.razon_social}
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${m.solvencia === 'Solvente' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                          {m.solvencia === 'Solvente' ? 'SOLVENTE' : 'INSOLVENTE'}
+                        </span>
+                      </p>
+                      <p className="text-xs text-gray-500">{m.rif} • {m.acronimo}</p>
                     </div>
                     <button disabled={loading} className="px-3 py-1 bg-green-100 text-green-700 rounded-lg text-sm font-bold">
                       Seleccionar

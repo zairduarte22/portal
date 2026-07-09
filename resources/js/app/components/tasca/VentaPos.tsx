@@ -18,6 +18,11 @@ export function VentaPos() {
   
   const [tasa, setTasa] = useState("");
   const [loading, setLoading] = useState(false);
+  const [directores, setDirectores] = useState<any[]>([]);
+
+  // Auth Modal states
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [selectedDirector, setSelectedDirector] = useState("");
 
   // Modal states for adding product quantity
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
@@ -29,15 +34,14 @@ export function VentaPos() {
     fetch("/api/pagos/init").then(res => res.json()).then(data => {
       if (data.tasa_dia) setTasa(data.tasa_dia.toString());
     });
+    fetch("/api/tasca/directores").then(res => res.json()).then(setDirectores).catch(() => {});
   }, [id]);
 
   if (!venta) return <div className="p-10 text-center">Cargando venta...</div>;
 
   const isSolvente = venta.miembro && venta.miembro.solvencia === 'Solvente';
   const subtotal = venta.detalles?.reduce((acc: number, d: any) => acc + parseFloat(d.subtotal), 0) || 0;
-  // Descuento en UI (visual calculation to show before saving)
-  const calcDescuento = isSolvente ? subtotal * 0.05 : 0;
-  const total = subtotal - calcDescuento;
+  const total = subtotal;
 
   // Calculamos el saldo pendiente tomando en cuenta lo pagado anteriormente (si hubiera) y los pagos en memoria
   const pagadoAnteriormente = venta.pagos?.reduce((acc: number, p: any) => acc + parseFloat(p.pivot?.monto_abonado_usd || 0), 0) || 0;
@@ -163,7 +167,7 @@ export function VentaPos() {
       const res = await fetch(`/api/tasca/ventas/${id}/pagar`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ pagos })
+        body: JSON.stringify({ pagos, id_autorizador: isCredit && !isSolvente ? selectedDirector : null })
       });
       if (!res.ok) {
         const err = await res.json();
@@ -172,6 +176,7 @@ export function VentaPos() {
       const data = await res.json();
       setVenta(data);
       setShowPaymentModal(false);
+      setShowAuthModal(false);
       alert("Venta procesada correctamente");
       navigate("/gestion/ventas-tasca");
     } catch (err: any) {
@@ -206,10 +211,19 @@ export function VentaPos() {
           </button>
           <div>
             <h1 className="text-2xl font-bold flex items-center gap-2">Venta #{venta.id}</h1>
-            <p className="text-sm text-gray-500 font-medium mt-1">
+            <p className="text-sm text-gray-500 font-medium mt-1 flex items-center gap-2">
               {venta.miembro ? `${venta.miembro.razon_social} (Miembro)` : venta.cliente_foraneo ? `${venta.cliente_foraneo.nombre} (Foráneo)` : `Desconocido`} 
-              {isSolvente && <span className="ml-2 px-2 py-0.5 bg-green-100 text-green-700 rounded-md font-bold text-xs">SOLVENTE - 5% DESC</span>}
+              {venta.miembro && (
+                 isSolvente 
+                   ? <span className="px-2 py-0.5 bg-green-100 text-green-700 rounded-md font-bold text-xs">SOLVENTE</span>
+                   : <span className="px-2 py-0.5 bg-red-100 text-red-700 rounded-md font-bold text-xs">INSOLVENTE</span>
+              )}
             </p>
+            {venta.autorizador && (
+              <p className="text-xs text-orange-600 font-bold mt-2 flex items-center gap-1">
+                <Check size={14} /> Autorizado por: {venta.autorizador.nombre}
+              </p>
+            )}
           </div>
         </div>
         <span className={`px-4 py-2 rounded-full font-bold text-sm ${
@@ -320,15 +334,6 @@ export function VentaPos() {
                   <span className="text-xs ml-1 opacity-70">Bs. {(subtotal * parseFloat(tasa || "1")).toFixed(2)}</span>
                 </div>
               </div>
-              {isSolvente && (
-                <div className="flex justify-between text-green-600 font-medium">
-                  <span>Descuento (5%)</span>
-                  <div className="text-right">
-                    <span>-${calcDescuento.toFixed(2)}</span>
-                    <span className="text-xs ml-1 opacity-70">Bs. {(calcDescuento * parseFloat(tasa || "1")).toFixed(2)}</span>
-                  </div>
-                </div>
-              )}
               <div className="flex justify-between text-lg font-bold border-t pt-2">
                 <span className="text-blue-600">Total Venta</span>
                 <div className="text-right text-blue-700">
@@ -352,14 +357,18 @@ export function VentaPos() {
                   >
                     <CreditCard size={20} /> Pagar Factura
                   </button>
-                  {isSolvente && (
-                    <button 
-                      onClick={() => handleProcesar(true)} 
-                      className="w-full py-2 bg-orange-100 hover:bg-orange-200 text-orange-700 font-bold rounded-xl transition-colors flex items-center justify-center gap-2"
-                    >
-                      <Check size={18} /> Facturar a Crédito
-                    </button>
-                  )}
+                  <button 
+                    onClick={() => {
+                        if (!isSolvente) {
+                            setShowAuthModal(true);
+                        } else {
+                            handleProcesar(true);
+                        }
+                    }} 
+                    className="w-full py-2 bg-orange-100 hover:bg-orange-200 text-orange-700 font-bold rounded-xl transition-colors flex items-center justify-center gap-2"
+                  >
+                    <Check size={18} /> Facturar a Crédito
+                  </button>
                 </>
               )}
             </div>
@@ -514,6 +523,42 @@ export function VentaPos() {
                  className="w-2/3 py-3 bg-green-600 hover:bg-green-700 disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed text-white font-black rounded-xl transition-colors flex items-center justify-center gap-2">
                  <Check size={20} /> Confirmar y Cerrar Factura
                </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal for Credit Authorization */}
+      {showAuthModal && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <div className="w-full max-w-sm bg-white p-6 rounded-3xl shadow-xl flex flex-col">
+            <h2 className="text-xl font-bold mb-2 text-center text-orange-600">Autorización de Crédito</h2>
+            <p className="text-sm text-center mb-6 text-gray-500">
+              El cliente no es solvente. Seleccione el director o presidente que autoriza este crédito:
+            </p>
+            
+            <select 
+              className="w-full p-3 border rounded-xl bg-gray-50 font-medium mb-6 focus:ring-2 focus:ring-orange-500"
+              value={selectedDirector}
+              onChange={e => setSelectedDirector(e.target.value)}
+            >
+              <option value="">-- Seleccionar Autorizador --</option>
+              {directores.map(d => (
+                <option key={d.id} value={d.id}>{d.nombre}</option>
+              ))}
+            </select>
+
+            <div className="flex gap-3">
+              <button onClick={() => setShowAuthModal(false)} className="flex-1 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-xl transition-colors">
+                Cancelar
+              </button>
+              <button 
+                onClick={() => handleProcesar(true)}
+                disabled={!selectedDirector || loading}
+                className="flex-1 py-3 bg-orange-600 hover:bg-orange-700 text-white disabled:bg-gray-300 disabled:cursor-not-allowed font-bold rounded-xl transition-colors"
+              >
+                Autorizar
+              </button>
             </div>
           </div>
         </div>

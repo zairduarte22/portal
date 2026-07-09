@@ -11,6 +11,7 @@ use App\Models\PagoTasca;
 use App\Models\Miembro;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use App\Models\Persona;
 
 class TascaController extends Controller
 {
@@ -86,21 +87,39 @@ class TascaController extends Controller
         return response()->json($cliente, 201);
     }
 
+    public function getDirectores()
+    {
+        $directores = Persona::join('vinculacion', 'personas.id', '=', 'vinculacion.id_persona')
+            ->where(function($q) {
+                $q->where('vinculacion.director', true)
+                  ->orWhere('vinculacion.presidente', true);
+            })
+            ->select('personas.*')
+            ->distinct()
+            ->orderBy('personas.nombre')
+            ->get();
+        
+        return response()->json($directores);
+    }
+
     // ==========================================
     // VENTAS TASCA
     // ==========================================
-    public function getVentas()
+    public function getVentas(Request $request)
     {
-        $ventas = VentaTasca::with(['clienteForaneo', 'miembro', 'detalles.producto.insumo', 'pagos'])
-                            ->orderBy('id', 'desc')
-                            ->take(100)
-                            ->get();
-        return response()->json($ventas);
+        $query = VentaTasca::with(['clienteForaneo', 'miembro', 'detalles.producto.insumo', 'pagos', 'autorizador'])
+                            ->orderBy('id', 'desc');
+                            
+        if ($request->filled('start_date') && $request->filled('end_date')) {
+            $query->whereBetween('fecha', [$request->start_date, $request->end_date]);
+        }
+
+        return response()->json($query->get());
     }
 
     public function getVenta($id)
     {
-        $venta = VentaTasca::with(['clienteForaneo', 'miembro', 'detalles.producto.insumo', 'pagos'])->findOrFail($id);
+        $venta = VentaTasca::with(['clienteForaneo', 'miembro', 'detalles.producto.insumo', 'pagos', 'autorizador'])->findOrFail($id);
         return response()->json($venta);
     }
 
@@ -205,20 +224,14 @@ class TascaController extends Controller
                 }
             } // END foreach $request->detalles
 
-            // Aplicar 5% de descuento si es miembro y está solvente
-            if ($venta->id_cliente_miembro) {
-                $miembro = Miembro::find($venta->id_cliente_miembro);
-                if ($miembro && $miembro->solvencia === 'Solvente') {
-                    $descuento = $total * 0.05;
-                }
-            }
+            $descuento = 0; // Descuento removido a petición
 
             $venta->total = $total;
             $venta->descuento = $descuento;
             $venta->save();
 
             DB::commit();
-            return response()->json(VentaTasca::with(['clienteForaneo', 'miembro', 'detalles.producto.insumo', 'pagos'])->find($id));
+            return response()->json(VentaTasca::with(['clienteForaneo', 'miembro', 'detalles.producto.insumo', 'pagos', 'autorizador'])->find($id));
         } catch (\Exception $e) {
             DB::rollBack();
             return response()->json(['error' => $e->getMessage()], 400);
@@ -240,6 +253,7 @@ class TascaController extends Controller
             'pagos.*.tasa' => 'required|numeric|min:1',
             'pagos.*.monto_bs' => 'nullable|numeric|min:0',
             'pagos.*.referencia' => 'nullable|string',
+            'id_autorizador' => 'nullable|exists:personas,id'
         ]);
 
         $pagosEnviados = $request->pagos ?? [];
@@ -284,57 +298,54 @@ class TascaController extends Controller
                 $venta->estado = 'Parcial';
             } else {
                 // Si no se pagó nada, es un Crédito total
-                if (!$venta->id_cliente_miembro) {
-                    throw new \Exception("El crédito solo está disponible para miembros.");
-                }
-                $miembro = Miembro::find($venta->id_cliente_miembro);
-                if ($miembro->solvencia !== 'Solvente') {
-                    throw new \Exception("El crédito solo está disponible para miembros solventes.");
-                }
                 $venta->estado = 'Credito';
             }
             
-            // Re-check for partial credit validity
+            // Verificación unificada para crédito o saldo parcial (crédito)
             if (($venta->estado === 'Parcial' || $venta->estado === 'Credito') && $totalPagado < $totalVenta) {
-                if (!$venta->id_cliente_miembro) {
-                    throw new \Exception("No puede haber saldo pendiente para un cliente foráneo.");
-                }
-                $miembro = Miembro::find($venta->id_cliente_miembro);
-                if ($miembro->solvencia !== 'Solvente') {
-                    throw new \Exception("Solo miembros solventes pueden tener saldo pendiente (crédito).");
+                if ($request->id_autorizador) {
+                    $venta->id_autorizador = $request->id_autorizador;
+                } else {
+                    if (!$venta->id_cliente_miembro) {
+                        throw new \Exception("Se requiere autorización de un director para créditos a clientes foráneos.");
+                    }
+                    $miembro = Miembro::find($venta->id_cliente_miembro);
+                    if ($miembro->solvencia !== 'Solvente') {
+                        throw new \Exception("Se requiere autorización de un director para créditos a miembros insolventes.");
+                    }
                 }
             }
 
             $venta->save();
 
             DB::commit();
-            return response()->json($venta);
+            return response()->json(VentaTasca::with(['clienteForaneo', 'miembro', 'detalles.producto.insumo', 'pagos', 'autorizador'])->find($id));
         } catch (\Exception $e) {
             DB::rollBack();
             return response()->json(['error' => $e->getMessage()], 400);
         }
     }
 
-    public function getEstadisticas()
+    public function getEstadisticas(Request $request)
     {
-        $hoy = Carbon::now()->toDateString();
+        $startDate = $request->query('start_date', Carbon::now()->toDateString());
+        $endDate = $request->query('end_date', Carbon::now()->toDateString());
 
-        // 1. Ventas del Día (Total USD de ventas cobradas hoy o hechas hoy)
-        // Usaremos las ventas cuya fecha es hoy
-        $ventasHoy = VentaTasca::where('fecha', $hoy)->get();
+        // 1. Ventas del Periodo (Total USD de ventas cobradas o hechas en el periodo)
+        $ventasHoy = VentaTasca::whereBetween('fecha', [$startDate, $endDate])->get();
         $totalVentasHoy = $ventasHoy->sum(function($v) { return $v->total - $v->descuento; });
 
-        // 2. Desglose de métodos de pago (Pagos hechos hoy)
+        // 2. Desglose de métodos de pago (Pagos hechos en el periodo)
         $pagosHoy = DB::table('pago_venta_tasca')
             ->join('pagos_tasca', 'pago_venta_tasca.id_pago', '=', 'pagos_tasca.id')
-            ->where('pagos_tasca.fecha_pago', $hoy)
+            ->whereBetween('pagos_tasca.fecha_pago', [$startDate, $endDate])
             ->select('pagos_tasca.metodo_pago', DB::raw('SUM(pago_venta_tasca.monto_abonado_usd) as total'))
             ->groupBy('pagos_tasca.metodo_pago')
             ->get();
 
         $desglose = $pagosHoy->pluck('total', 'metodo_pago')->toArray();
 
-        // 3. Cuánto es a crédito (Ventas hechas hoy que están en estado Credito o Parcial)
+        // 3. Cuánto es a crédito (Ventas hechas en el periodo que están en estado Credito o Parcial)
         $creditoHoy = 0;
         foreach ($ventasHoy as $v) {
             if ($v->estado === 'Credito' || $v->estado === 'Parcial') {

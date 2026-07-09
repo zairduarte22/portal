@@ -6,6 +6,7 @@ import { jsPDF } from "jspdf";
 import { NuevaVentaModal } from "./NuevaVentaModal";
 import { useNavigate } from "react-router-dom";
 import { AbonosCreditoTab } from "./tabs/AbonosCreditoTab";
+import { InventarioRapidoTab } from "./tabs/InventarioRapidoTab";
 import { DetalleFacturaModal } from "./DetalleFacturaModal";
 import { ReporteVentasModal } from "./ReporteVentasModal";
 
@@ -15,17 +16,23 @@ export function VentasTascaPanel() {
   const [search, setSearch] = useState("");
   const [showNuevaVenta, setShowNuevaVenta] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
-  const [activeTab, setActiveTab] = useState<'historial' | 'abonos'>('historial');
+  const [activeTab, setActiveTab] = useState<'historial' | 'abonos' | 'inventario'>('historial');
   const [ventaSeleccionada, setVentaSeleccionada] = useState<any>(null);
+  
+  const today = new Date().toISOString().split('T')[0];
+  const [startDate, setStartDate] = useState(today);
+  const [endDate, setEndDate] = useState(today);
+
   const navigate = useNavigate();
 
   const loadVentas = () => {
-    fetch("/api/tasca/ventas")
+    const query = `?start_date=${startDate}&end_date=${endDate}`;
+    fetch(`/api/tasca/ventas${query}`)
       .then(res => res.json())
       .then(data => setVentas(data))
       .catch(console.error);
 
-    fetch("/api/tasca/ventas/estadisticas")
+    fetch(`/api/tasca/ventas/estadisticas${query}`)
       .then(res => res.json())
       .then(data => setEstadisticas(data))
       .catch(console.error);
@@ -33,7 +40,7 @@ export function VentasTascaPanel() {
 
   useEffect(() => {
     loadVentas();
-  }, []);
+  }, [startDate, endDate]);
 
   const handleAnular = (id: number) => {
     if (confirm("¿Estás seguro de anular esta venta? El stock se devolverá al inventario.")) {
@@ -148,6 +155,19 @@ export function VentasTascaPanel() {
           docToDraw.text(`Método: ${metodoPrincipal}`, marginX, cursorY);
           cursorY += 5;
 
+          if (ventaDetallada.autorizador) {
+              docToDraw.setFont("helvetica", "bold");
+              docToDraw.text("AUTORIZADO POR:", marginX, cursorY);
+              cursorY += 4;
+              docToDraw.setFont("helvetica", "normal");
+              const authLines = docToDraw.splitTextToSize(ventaDetallada.autorizador.nombre, pageWidth - marginX * 2);
+              authLines.forEach((line: string) => {
+                docToDraw.text(line, marginX, cursorY);
+                cursorY += 3;
+              });
+              cursorY += 2;
+          }
+
           printDashedLine();
           cursorY += 5;
 
@@ -160,7 +180,7 @@ export function VentasTascaPanel() {
 
           if (ventaDetallada.detalles) {
               ventaDetallada.detalles.forEach((det: any) => {
-                 const nombre = det.producto ? det.producto.nombre : "Producto";
+                 const nombre = det.producto ? (det.producto.nombre_completo || det.producto.nombre) : "Producto";
                  const nombreLines = docToDraw.splitTextToSize(nombre, pageWidth - marginX * 2 - 30);
                  
                  let firstLine = true;
@@ -280,6 +300,29 @@ export function VentasTascaPanel() {
         </div>
       </div>
 
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-gray-50 p-4 rounded-2xl border">
+        <div className="flex items-center gap-3">
+          <div className="flex flex-col">
+            <label className="text-xs font-bold text-gray-500 uppercase">Desde</label>
+            <input 
+              type="date" 
+              value={startDate} 
+              onChange={e => setStartDate(e.target.value)}
+              className="p-2 border rounded-lg bg-white text-sm outline-none focus:ring-2 focus:ring-green-500"
+            />
+          </div>
+          <div className="flex flex-col">
+            <label className="text-xs font-bold text-gray-500 uppercase">Hasta</label>
+            <input 
+              type="date" 
+              value={endDate} 
+              onChange={e => setEndDate(e.target.value)}
+              className="p-2 border rounded-lg bg-white text-sm outline-none focus:ring-2 focus:ring-green-500"
+            />
+          </div>
+        </div>
+      </div>
+
       <div className="flex border-b" style={{ borderColor: "var(--border)" }}>
         <button 
           onClick={() => setActiveTab('historial')} 
@@ -293,6 +336,12 @@ export function VentasTascaPanel() {
         >
           Abonos a Crédito
         </button>
+        <button 
+          onClick={() => setActiveTab('inventario')} 
+          className={`pb-3 px-6 text-sm font-bold ${activeTab === 'inventario' ? 'border-b-2 border-green-600 text-green-600' : 'text-gray-500 hover:text-gray-700'}`}
+        >
+          Inventario Rápido
+        </button>
       </div>
 
       {activeTab === 'historial' ? (
@@ -302,14 +351,14 @@ export function VentasTascaPanel() {
           <div className="p-6 rounded-2xl border flex items-center gap-4 bg-white shadow-sm">
             <div className="p-4 bg-green-100 text-green-600 rounded-xl"><DollarSign size={24} /></div>
             <div>
-              <p className="text-xs text-gray-500 font-bold uppercase tracking-wider">Ventas del Día</p>
+              <p className="text-xs text-gray-500 font-bold uppercase tracking-wider">Ventas del Período</p>
               <h3 className="text-2xl font-black">${parseFloat(estadisticas.ventas_dia_usd).toFixed(2)}</h3>
             </div>
           </div>
           <div className="p-6 rounded-2xl border flex items-center gap-4 bg-white shadow-sm">
             <div className="p-4 bg-blue-100 text-blue-600 rounded-xl"><CreditCard size={24} /></div>
             <div>
-              <p className="text-xs text-gray-500 font-bold uppercase tracking-wider">A Crédito (Hoy)</p>
+              <p className="text-xs text-gray-500 font-bold uppercase tracking-wider">A Crédito (Período)</p>
               <h3 className="text-2xl font-black">${parseFloat(estadisticas.credito_otorgado_hoy).toFixed(2)}</h3>
             </div>
           </div>
@@ -403,8 +452,10 @@ export function VentasTascaPanel() {
         </div>
       </div>
       </>
-      ) : (
+      ) : activeTab === 'abonos' ? (
         <AbonosCreditoTab onOpenDetalle={(v) => setVentaSeleccionada(v)} />
+      ) : (
+        <InventarioRapidoTab />
       )}
 
       {showNuevaVenta && (

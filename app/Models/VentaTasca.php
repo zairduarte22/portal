@@ -44,4 +44,9 @@ class VentaTasca extends Model
     {
         return $this->belongsToMany(PagoTasca::class, 'pago_venta_tasca', 'id_venta', 'id_pago')->withPivot('monto_abonado_usd');
     }
+
+    public function autorizador()
+    {
+        return $this->belongsTo(Persona::class, 'id_autorizador');
+    }
 }

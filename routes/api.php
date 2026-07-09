@@ -160,6 +160,7 @@ Route::prefix('tasca')->group(function () {
     Route::get('/ventas/{id}', [TascaController::class, 'getVenta']);
     Route::get('/ventas/{id}/ticket', [TascaController::class, 'ticketVentaPdf']);
     Route::post('/ventas', [TascaController::class, 'storeVenta']);
+    Route::get('/directores', [TascaController::class, 'getDirectores']);
     Route::put('/ventas/{id}/detalles', [TascaController::class, 'updateVentaDetalles']);
     Route::post('/ventas/{id}/pagar', [TascaController::class, 'pagarVenta']);
     Route::post('/ventas/{id}/anular', [TascaController::class, 'anularVenta']);

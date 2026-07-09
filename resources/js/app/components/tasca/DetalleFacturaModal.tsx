@@ -58,6 +58,15 @@ export function DetalleFacturaModal({ venta, onClose }: { venta: any, onClose: (
                 {venta.estado}
               </span>
             </div>
+            {venta.autorizador && (
+              <div className="p-4 rounded-xl bg-orange-50 border border-orange-100 col-span-2 flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-bold text-orange-500 uppercase tracking-wider mb-1">Crédito Autorizado Por</p>
+                  <p className="font-bold text-orange-900">{venta.autorizador.nombre}</p>
+                </div>
+                <CheckCircle size={24} className="text-orange-500" />
+              </div>
+            )}
           </div>
 
           <div>
