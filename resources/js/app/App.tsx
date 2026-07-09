@@ -201,7 +201,8 @@ export default function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/c/:id" element={<CarnetPublico />} />
-          <Route path="*" element={<Login onLogin={setUser} />} />
+          <Route path="/personal/login" element={<Login onLogin={setUser} />} />
+          <Route path="*" element={<Navigate to="/personal/login" replace />} />
         </Routes>
       </BrowserRouter>
     );
