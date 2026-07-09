@@ -237,7 +237,7 @@ export default function App() {
             <ProtectedRoute moduleId="PersonasList" user={user}>
               <PersonasList
                 personas={personas}
-                miembros={members}
+                members={members}
                 vinculaciones={vinculaciones}
                 relacionesFamiliares={relacionesFamiliares}
                 onAddPersona={handleAddPersona}

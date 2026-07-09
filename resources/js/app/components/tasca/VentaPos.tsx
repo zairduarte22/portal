@@ -339,9 +339,9 @@ export function VentaPos() {
             </div>
 
             <div className="flex flex-col gap-2">
-              {isPendingPay && total === 0 && (
-                <button onClick={handleAnular} className="w-full py-2 text-red-600 font-bold hover:bg-red-50 rounded-xl transition-colors border border-red-200">
-                  Anular Orden Vacía
+              {isPendingPay && (
+                <button onClick={handleAnular} className="w-full py-2 text-red-600 font-bold hover:bg-red-50 rounded-xl transition-colors border border-red-200 flex items-center justify-center gap-2">
+                  <Ban size={18} /> {total === 0 ? "Anular Orden Vacía" : "Anular Venta"}
                 </button>
               )}
               {!isReadOnly && total > 0 && (
