@@ -14,7 +14,19 @@ class ProductoTasca extends Model
         'medida_descuento' => 'decimal:2',
     ];
 
-    protected $appends = ['stock', 'nombre_completo'];
+    protected $appends = ['stock', 'nombre_completo', 'costo_calculado'];
+
+    public function getCostoCalculadoAttribute()
+    {
+        if ($this->id_insumo && $this->insumo && $this->insumo->lotesActivos) {
+            $lote = $this->insumo->lotesActivos->first();
+            if ($lote) {
+                $medida = $this->medida_descuento > 0 ? $this->medida_descuento : 1;
+                return round($lote->costo_unitario * $medida, 2);
+            }
+        }
+        return $this->precio; // Fallback to normal price if no cost found
+    }
 
     public function getNombreCompletoAttribute()
     {

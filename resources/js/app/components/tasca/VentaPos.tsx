@@ -40,6 +40,8 @@ export function VentaPos() {
   if (!venta) return <div className="p-10 text-center">Cargando venta...</div>;
 
   const isSolvente = venta.miembro && venta.miembro.solvencia === 'Solvente';
+  const isUgavi = venta.cliente_foraneo && venta.cliente_foraneo.nombre?.toLowerCase() === 'ugavi';
+  
   const subtotal = venta.detalles?.reduce((acc: number, d: any) => acc + parseFloat(d.subtotal), 0) || 0;
   const total = subtotal;
 
@@ -64,19 +66,21 @@ export function VentaPos() {
         return alert(`Stock insuficiente. Quedan ${prod.stock}`);
     }
 
+    const precioReal = isUgavi ? parseFloat(prod.costo_calculado || prod.precio) : parseFloat(prod.precio);
+
     const newDetalles = existing 
       ? currentDetalles.map((d: any) => {
           if (d.id_producto === prod.id) {
             const newQty = d.cantidad + qty;
-            return { ...d, cantidad: newQty, subtotal: parseFloat(d.precio_unitario) * newQty };
+            return { ...d, cantidad: newQty, subtotal: precioReal * newQty };
           }
           return d;
         })
       : [...currentDetalles, { 
           id_producto: prod.id, 
           cantidad: qty, 
-          precio_unitario: prod.precio, 
-          subtotal: parseFloat(prod.precio) * qty 
+          precio_unitario: precioReal, 
+          subtotal: precioReal * qty 
         }];
 
     updateDetalles(newDetalles);
@@ -102,7 +106,8 @@ export function VentaPos() {
 
     const newDetalles = currentDetalles.map((d: any) => {
       if (d.id_producto === id_producto) {
-        return { ...d, cantidad: newCantidad, subtotal: parseFloat(d.precio_unitario) * newCantidad };
+        const precioReal = isUgavi ? parseFloat(p?.costo_calculado || d.precio_unitario) : parseFloat(p?.precio || d.precio_unitario);
+        return { ...d, cantidad: newCantidad, subtotal: precioReal * newCantidad };
       }
       return d;
     });
@@ -277,7 +282,10 @@ export function VentaPos() {
                 >
                   <div>
                     <p className="font-bold text-sm mb-1 leading-tight break-words" title={p.nombre_completo || p.nombre}>{p.nombre_completo || p.nombre}</p>
-                    <p className="text-green-600 font-bold">${parseFloat(p.precio).toFixed(2)}</p>
+                    <p className="text-green-600 font-bold">
+                      ${isUgavi ? parseFloat(p.costo_calculado || p.precio).toFixed(2) : parseFloat(p.precio).toFixed(2)}
+                      {isUgavi && p.costo_calculado !== undefined && <span className="text-xs text-orange-500 ml-2">(Costo)</span>}
+                    </p>
                   </div>
                   <p className="text-xs text-gray-400 mt-2">Stock: {p.stock}</p>
                 </button>

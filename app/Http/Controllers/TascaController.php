@@ -20,7 +20,7 @@ class TascaController extends Controller
     // ==========================================
     public function getProductos()
     {
-        return response()->json(ProductoTasca::with('insumo')->get());
+        return response()->json(ProductoTasca::with('insumo.lotesActivos')->get());
     }
 
     public function storeProducto(Request $request)
@@ -178,6 +178,7 @@ class TascaController extends Controller
 
             $total = 0;
             $descuento = 0;
+            $esUgavi = $venta->clienteForaneo && strtolower(trim($venta->clienteForaneo->nombre)) === 'ugavi';
             
             foreach ($request->detalles as $det) {
                 $producto = ProductoTasca::findOrFail($det['id_producto']);
@@ -186,14 +187,15 @@ class TascaController extends Controller
                     throw new \Exception("Stock insuficiente para el producto: {$producto->nombre}");
                 }
 
-                $subtotal = $producto->precio * $det['cantidad'];
+                $precioReal = $esUgavi ? $producto->costo_calculado : $producto->precio;
+                $subtotal = $precioReal * $det['cantidad'];
                 $total += $subtotal;
 
                 VentaTascaDetalle::create([
                     'id_venta' => $id,
                     'id_producto' => $producto->id,
                     'cantidad' => $det['cantidad'],
-                    'precio_unitario' => $producto->precio,
+                    'precio_unitario' => $precioReal,
                     'subtotal' => $subtotal
                 ]);
 
