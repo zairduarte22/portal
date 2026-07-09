@@ -7,28 +7,57 @@ interface SidebarProps {
   onLogout?: () => void;
 }
 
-const navItems = [
-  { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, moduleId: "Dashboard" },
-  { id: "miembros", label: "Miembros", icon: Users, moduleId: "MembersList" },
-  { id: "personas", label: "Personas", icon: Users, moduleId: "PersonasList" },
-  { id: "pagos", label: "Pago de Cuotas", icon: Wallet, moduleId: "PagosPanel" },
-  { id: "ventas-tasca", label: "Ventas Tasca", icon: Store, moduleId: "VentasTascaPanel" },
-  { id: "tasca/gestion", label: "Gestión Tasca", icon: Package, moduleId: "GestionTascaPanel" },
-  { id: "carnets", label: "Gestión de Carnets", icon: IdCard, moduleId: "CarnetsPanel" },
-  { id: "libros", label: "Libros Contables", icon: BookOpen, moduleId: "LibrosPanel" },
-  { id: "obligaciones", label: "Obligaciones", icon: Landmark, moduleId: "ObligacionesPanel" },
-  { id: "conciliacion", label: "Conciliación", icon: Landmark, moduleId: "ConciliacionPanel" },
-  { id: "reportes", label: "Reportes", icon: BarChart3, moduleId: "Reports" },
-  { id: "configuraciones", label: "Configuración", icon: Settings, moduleId: "ConfiguracionesPanel" },
+const navGroups = [
+  {
+    title: "Principal",
+    items: [
+      { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, moduleId: "Dashboard" },
+    ]
+  },
+  {
+    title: "Membresías",
+    items: [
+      { id: "miembros", label: "Miembros", icon: Users, moduleId: "MembersList" },
+      { id: "personas", label: "Personas", icon: Users, moduleId: "PersonasList" },
+      { id: "carnets", label: "Carnets", icon: IdCard, moduleId: "CarnetsPanel" },
+    ]
+  },
+  {
+    title: "La Tasca",
+    items: [
+      { id: "ventas-tasca", label: "Ventas (POS)", icon: Store, moduleId: "VentasTascaPanel" },
+      { id: "tasca/gestion", label: "Inventario y Reportes", icon: Package, moduleId: "GestionTascaPanel" },
+    ]
+  },
+  {
+    title: "Administración",
+    items: [
+      { id: "pagos", label: "Cuotas y Pagos", icon: Wallet, moduleId: "PagosPanel" },
+      { id: "obligaciones", label: "Obligaciones", icon: Landmark, moduleId: "ObligacionesPanel" },
+      { id: "conciliacion", label: "Conciliación Bancaria", icon: Landmark, moduleId: "ConciliacionPanel" },
+      { id: "libros", label: "Libros Contables", icon: BookOpen, moduleId: "LibrosPanel" },
+    ]
+  },
+  {
+    title: "Sistema",
+    items: [
+      { id: "reportes", label: "Reportes Generales", icon: BarChart3, moduleId: "Reports" },
+      { id: "configuraciones", label: "Configuración", icon: Settings, moduleId: "ConfiguracionesPanel" },
+    ]
+  }
 ];
 
 export function Sidebar({ onCloseMobile, currentUser, onLogout }: SidebarProps) {
   const userModules = currentUser?.modules ? JSON.parse(currentUser.modules) : [];
-  const filteredNav = currentUser?.is_master ? navItems : navItems.filter(item => userModules.includes(item.moduleId));
+  
+  const filteredGroups = navGroups.map(group => ({
+    ...group,
+    items: currentUser?.is_master ? group.items : group.items.filter(item => userModules.includes(item.moduleId))
+  })).filter(group => group.items.length > 0);
 
   return (
     <aside
-      className="w-64 h-screen flex flex-col relative overflow-hidden"
+      className="w-64 h-screen flex flex-col relative overflow-hidden flex-shrink-0"
       style={{ backgroundColor: "var(--sidebar)" }}
     >
       {/* Decorative gradient orbs */}
@@ -42,7 +71,7 @@ export function Sidebar({ onCloseMobile, currentUser, onLogout }: SidebarProps) 
       />
 
       {/* Logo */}
-      <div className="relative px-5 pt-7 pb-6">
+      <div className="relative px-5 pt-7 pb-6 flex-shrink-0">
         <div className="flex items-center gap-3">
           <div
             className="w-10 h-10 rounded-2xl flex items-center justify-center shadow-lg"
@@ -67,59 +96,63 @@ export function Sidebar({ onCloseMobile, currentUser, onLogout }: SidebarProps) 
         </div>
       </div>
 
-      <div className="mx-4 h-px mb-5" style={{ background: "var(--sidebar-border)" }} />
-
-      {/* Label */}
-      <p className="px-5 mb-2 text-xs uppercase tracking-widest" style={{ color: "#6ee7b7", opacity: 0.5, fontWeight: 700 }}>
-        Navegación
-      </p>
+      <div className="mx-4 h-px mb-2 flex-shrink-0" style={{ background: "var(--sidebar-border)" }} />
 
       {/* Nav */}
-      <nav className="flex-1 px-3 space-y-1">
-        {filteredNav.map(({ id, label, icon: Icon }) => (
-          <NavLink
-            key={id}
-            to={`/gestion/${id}`}
-            onClick={onCloseMobile}
-            className={({ isActive }) =>
-              `w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl transition-all duration-200 text-left group`
-            }
-            style={({ isActive }) => ({
-              background: isActive
-                ? "linear-gradient(135deg, rgba(34,197,94,0.2), rgba(22,163,74,0.12))"
-                : "transparent",
-              border: isActive ? "1px solid rgba(34,197,94,0.25)" : "1px solid transparent",
-              color: isActive ? "#4ade80" : "#6ee7b7",
-            })}
-          >
-            {({ isActive }) => (
-              <>
-                <div
-                  className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
-                  style={{
-                    backgroundColor: isActive ? "rgba(34,197,94,0.2)" : "transparent",
-                  }}
+      <div className="flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar">
+        <nav className="px-3 pb-6 space-y-6 pt-2">
+          {filteredGroups.map((group, idx) => (
+            <div key={idx} className="space-y-1">
+              <p className="px-3 mb-2 text-[10px] uppercase tracking-widest" style={{ color: "#6ee7b7", opacity: 0.6, fontWeight: 700 }}>
+                {group.title}
+              </p>
+              {group.items.map(({ id, label, icon: Icon }) => (
+                <NavLink
+                  key={id}
+                  to={`/gestion/${id}`}
+                  onClick={onCloseMobile}
+                  className={({ isActive }) =>
+                    `w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl transition-all duration-200 text-left group`
+                  }
+                  style={({ isActive }) => ({
+                    background: isActive
+                      ? "linear-gradient(135deg, rgba(34,197,94,0.2), rgba(22,163,74,0.12))"
+                      : "transparent",
+                    border: isActive ? "1px solid rgba(34,197,94,0.25)" : "1px solid transparent",
+                    color: isActive ? "#4ade80" : "#6ee7b7",
+                  })}
                 >
-                  <Icon size={16} />
-                </div>
-                <span
-                  style={{
-                    fontFamily: "Nunito, sans-serif",
-                    fontWeight: isActive ? 700 : 500,
-                    fontSize: "0.875rem",
-                    color: isActive ? "#4ade80" : "#a7f3d0",
-                  }}
-                >
-                  {label}
-                </span>
-                {isActive && (
-                  <ChevronRight size={13} style={{ marginLeft: "auto", color: "#4ade80" }} />
-                )}
-              </>
-            )}
-          </NavLink>
-        ))}
-      </nav>
+                  {({ isActive }) => (
+                    <>
+                      <div
+                        className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
+                        style={{
+                          backgroundColor: isActive ? "rgba(34,197,94,0.2)" : "transparent",
+                        }}
+                      >
+                        <Icon size={16} />
+                      </div>
+                      <span
+                        style={{
+                          fontFamily: "Nunito, sans-serif",
+                          fontWeight: isActive ? 700 : 500,
+                          fontSize: "0.875rem",
+                          color: isActive ? "#4ade80" : "#a7f3d0",
+                        }}
+                      >
+                        {label}
+                      </span>
+                      {isActive && (
+                        <ChevronRight size={13} style={{ marginLeft: "auto", color: "#4ade80" }} />
+                      )}
+                    </>
+                  )}
+                </NavLink>
+              ))}
+            </div>
+          ))}
+        </nav>
+      </div>
 
       {/* Bottom card */}
       <div className="px-4 pb-6 mt-4">
