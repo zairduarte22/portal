@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Plus, Search, Store, FileText, Ban, DollarSign, CreditCard, Activity, Printer } from "lucide-react";
 import { format } from "date-fns";
+import { jsPDF } from "jspdf";
 
 import { NuevaVentaModal } from "./NuevaVentaModal";
 import { useNavigate } from "react-router-dom";
@@ -59,6 +60,191 @@ export function VentasTascaPanel() {
       navigate(`/admin/ventas-tasca/${v.id}`);
     } else {
       setVentaSeleccionada(v);
+    }
+  };
+
+  const handleImprimirTicket = async (v: any) => {
+    try {
+      const res = await fetch(`/api/tasca/ventas/${v.id}`);
+      if (!res.ok) throw new Error("Error al obtener detalles");
+      const ventaDetallada = await res.json();
+      
+      const drawTicket = (docToDraw: any, isDummy: boolean) => {
+          const marginX = 4;
+          let cursorY = 10;
+          const pageWidth = 80;
+
+          const printCenter = (text: string, y: number, size: number, isBold = false) => {
+            docToDraw.setFontSize(size);
+            docToDraw.setFont("helvetica", isBold ? "bold" : "normal");
+            const textWidth = docToDraw.getTextWidth(text);
+            docToDraw.text(text, (pageWidth - textWidth) / 2, y);
+          };
+
+          const printDashedLine = () => {
+              if (!isDummy) {
+                  docToDraw.setLineDashPattern([1, 1], 0);
+                  docToDraw.line(marginX, cursorY, pageWidth - marginX, cursorY);
+                  docToDraw.setLineDashPattern([], 0);
+              }
+          }
+
+          printCenter("Unión de Ganaderos del Municipio", cursorY, 10, true);
+          cursorY += 4;
+          printCenter("Rosario de Perijá - TASCA", cursorY, 10, true);
+          cursorY += 5;
+          
+          printCenter("RIF: J-07002231-0", cursorY, 8);
+          cursorY += 4;
+          printCenter("Tlf: 02634511191", cursorY, 8);
+          cursorY += 4;
+
+          const addressLines = docToDraw.splitTextToSize("Av. 18 de Octubre Local UGAVI N° 57000 Sector Aurora. Villa del Rosario Municipio Rosario de Perijá", pageWidth - marginX * 2);
+          docToDraw.setFont("helvetica", "normal");
+          docToDraw.setFontSize(7);
+          addressLines.forEach((line: string) => {
+            printCenter(line, cursorY, 7);
+            cursorY += 3;
+          });
+
+          cursorY += 2;
+          printDashedLine();
+          cursorY += 5;
+
+          printCenter("TICKET DE VENTA TASCA", cursorY, 11, true);
+          cursorY += 6;
+
+          docToDraw.setFontSize(8);
+          docToDraw.setFont("helvetica", "normal");
+          docToDraw.text(`Ref: ${ventaDetallada.id}`, marginX, cursorY);
+          const dateText = `Fecha: ${format(new Date(ventaDetallada.fecha), 'dd/MM/yyyy')}`;
+          docToDraw.text(dateText, pageWidth - marginX - docToDraw.getTextWidth(dateText), cursorY);
+          cursorY += 4;
+          docToDraw.text(`Estado: ${ventaDetallada.estado}`, marginX, cursorY);
+          docToDraw.text(`Caja: Tasca`, pageWidth - marginX - docToDraw.getTextWidth(`Caja: Tasca`), cursorY);
+          cursorY += 5;
+
+          printDashedLine();
+          cursorY += 5;
+
+          docToDraw.setFont("helvetica", "bold");
+          docToDraw.text("CLIENTE:", marginX, cursorY);
+          cursorY += 4;
+          docToDraw.setFont("helvetica", "normal");
+          const clienteName = ventaDetallada.miembro ? ventaDetallada.miembro.razon_social : (ventaDetallada.clienteForaneo ? ventaDetallada.clienteForaneo.nombre : "Consumidor Final");
+          const clienteRif = ventaDetallada.miembro ? ventaDetallada.miembro.rif : (ventaDetallada.clienteForaneo ? ventaDetallada.clienteForaneo.cedula_rif : "");
+          
+          const nameLines = docToDraw.splitTextToSize(clienteName, pageWidth - marginX * 2);
+          nameLines.forEach((line: string) => {
+            docToDraw.text(line, marginX, cursorY);
+            cursorY += 3;
+          });
+          if (clienteRif) {
+            docToDraw.text(`RIF/C.I: ${clienteRif}`, marginX, cursorY);
+            cursorY += 4;
+          }
+          
+          const metodoPrincipal = ventaDetallada.pagos && ventaDetallada.pagos.length > 0 ? ventaDetallada.pagos[0].metodo_pago : 'N/A';
+          docToDraw.text(`Método: ${metodoPrincipal}`, marginX, cursorY);
+          cursorY += 5;
+
+          printDashedLine();
+          cursorY += 5;
+
+          docToDraw.setFont("helvetica", "bold");
+          docToDraw.text("DESCRIPCIÓN", marginX, cursorY);
+          docToDraw.text("CANT", pageWidth - marginX - 25, cursorY);
+          docToDraw.text("MONTO", pageWidth - marginX - docToDraw.getTextWidth("MONTO"), cursorY);
+          cursorY += 4;
+          docToDraw.setFont("helvetica", "normal");
+
+          if (ventaDetallada.detalles) {
+              ventaDetallada.detalles.forEach((det: any) => {
+                 const nombre = det.producto ? det.producto.nombre : "Producto";
+                 const nombreLines = docToDraw.splitTextToSize(nombre, pageWidth - marginX * 2 - 30);
+                 
+                 let firstLine = true;
+                 nombreLines.forEach((line: string) => {
+                     docToDraw.text(line, marginX, cursorY);
+                     if (firstLine) {
+                         docToDraw.text(String(det.cantidad), pageWidth - marginX - 22, cursorY);
+                         const sub = `$${Number(det.subtotal).toFixed(2)}`;
+                         docToDraw.text(sub, pageWidth - marginX - docToDraw.getTextWidth(sub), cursorY);
+                         firstLine = false;
+                     }
+                     cursorY += 3;
+                 });
+                 cursorY += 1;
+              });
+          }
+
+          cursorY += 2;
+          printDashedLine();
+          cursorY += 5;
+
+          docToDraw.setFont("helvetica", "bold");
+          docToDraw.text("TOTAL PAGADO (USD):", marginX, cursorY);
+          const totalUsdStr = `$${Number(ventaDetallada.total).toFixed(2)}`;
+          docToDraw.text(totalUsdStr, pageWidth - marginX - docToDraw.getTextWidth(totalUsdStr), cursorY);
+          cursorY += 5;
+          
+          let totalBs = 0;
+          if (ventaDetallada.pagos) {
+             ventaDetallada.pagos.forEach((p:any) => totalBs += Number(p.monto_bs || 0));
+          }
+          
+          if (totalBs > 0) {
+             docToDraw.text("TOTAL PAGADO (Bs):", marginX, cursorY);
+             const totalBsStr = `Bs. ${totalBs.toFixed(2)}`;
+             docToDraw.text(totalBsStr, pageWidth - marginX - docToDraw.getTextWidth(totalBsStr), cursorY);
+             cursorY += 5;
+          }
+          
+          cursorY += 2;
+          printCenter("*** GRACIAS POR SU COMPRA ***", cursorY, 9, true);
+          cursorY += 4;
+          
+          const footerLines = docToDraw.splitTextToSize("Este documento es un comprobante de venta interno de la Tasca y carece de validez fiscal o tributaria.", pageWidth - marginX * 2);
+          docToDraw.setFontSize(7);
+          docToDraw.setFont("helvetica", "normal");
+          footerLines.forEach((line: string) => {
+            printCenter(line, cursorY, 7);
+            cursorY += 3;
+          });
+          
+          if (['credito', 'parcial'].includes(ventaDetallada.estado.toLowerCase())) {
+              cursorY += 8;
+              printDashedLine();
+              cursorY += 4;
+              printCenter("Firma del Cliente", cursorY, 8);
+              cursorY += 4;
+              printCenter(`Saldo pendiente: $${Number(ventaDetallada.pendiente || 0).toFixed(2)}`, cursorY, 8, true);
+          }
+
+          cursorY += 6;
+          printCenter("SIGAMA", cursorY, 8, true);
+          cursorY += 4;
+          printCenter("Sistema de Gestión Administrativa", cursorY, 7);
+          cursorY += 4;
+          printCenter(`y Membresías de Agroproductores`, cursorY, 7);
+          cursorY += 6;
+
+          return cursorY;
+      };
+
+      const dummyDoc = new jsPDF({ orientation: "portrait", unit: "mm", format: [80, 500] });
+      const finalHeight = drawTicket(dummyDoc, true);
+      
+      const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: [80, finalHeight] });
+      drawTicket(doc, false);
+
+      const blob = doc.output('blob');
+      const url = URL.createObjectURL(blob);
+      window.open(url, '_blank');
+      
+    } catch (e) {
+       console.error(e);
+       alert("Error generando el ticket.");
     }
   };
 
@@ -195,9 +381,9 @@ export function VentasTascaPanel() {
                       <button onClick={() => handleVerDetalles(v)} className="p-2 flex items-center justify-center bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors" title="Ver Detalles">
                         <FileText size={16} />
                       </button>
-                      <a href={`/api/tasca/ventas/${v.id}/ticket`} target="_blank" className="p-2 flex items-center justify-center bg-purple-50 text-purple-600 rounded-lg hover:bg-purple-100 transition-colors" title="Imprimir Ticket">
+                      <button onClick={() => handleImprimirTicket(v)} className="p-2 flex items-center justify-center bg-purple-50 text-purple-600 rounded-lg hover:bg-purple-100 transition-colors" title="Imprimir Ticket">
                         <Printer size={16} />
-                      </a>
+                      </button>
                       {v.estado !== 'Anulada' && (
                         <button onClick={() => handleAnular(v.id)} className="p-2 flex items-center justify-center bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors" title="Anular Venta">
                           <Ban size={16} />

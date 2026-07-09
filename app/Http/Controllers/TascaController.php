@@ -349,6 +349,96 @@ class TascaController extends Controller
         ]);
     }
 
+    public function reporteVentasData(Request $request)
+    {
+        $startDate = $request->query('start_date', Carbon::now()->toDateString());
+        $endDate = $request->query('end_date', Carbon::now()->toDateString());
+        
+        $pagos = DB::table('pago_venta_tasca')
+            ->join('pagos_tasca', 'pago_venta_tasca.id_pago', '=', 'pagos_tasca.id')
+            ->join('ventas_tasca', 'pago_venta_tasca.id_venta', '=', 'ventas_tasca.id')
+            ->whereBetween('pagos_tasca.fecha_pago', [$startDate, $endDate])
+            ->select(
+                'pagos_tasca.metodo_pago',
+                'pago_venta_tasca.monto_abonado_usd',
+                'pagos_tasca.monto_bs',
+                'ventas_tasca.fecha as fecha_venta',
+                'pagos_tasca.fecha_pago'
+            )
+            ->get();
+
+        $ingresosVentasNuevas = [];
+        $ingresosAbonos = [];
+        $totalVentasNuevasUsd = 0;
+        $totalVentasNuevasBs = 0;
+        $totalAbonosUsd = 0;
+        $totalAbonosBs = 0;
+        $totalPuroDivisas = 0;
+
+        foreach ($pagos as $pago) {
+            $montoUsd = (float) $pago->monto_abonado_usd;
+            $montoBs = (float) $pago->monto_bs;
+            $metodo = $pago->metodo_pago;
+
+            $isBsMethod = str_contains(strtolower($metodo), 'transferencia') || 
+                          str_contains(strtolower($metodo), 'pago móvil') || 
+                          str_contains(strtolower($metodo), 'pos') || 
+                          str_contains(strtolower($metodo), 'punto de venta') ||
+                          str_contains(strtolower($metodo), 'ves') ||
+                          str_contains(strtolower($metodo), 'bs');
+                          
+            if (!$isBsMethod) {
+                $totalPuroDivisas += $montoUsd;
+            }
+
+            if ($pago->fecha_venta >= $startDate && $pago->fecha_venta <= $endDate) {
+                if (!isset($ingresosVentasNuevas[$metodo])) $ingresosVentasNuevas[$metodo] = ['usd' => 0, 'bs' => 0];
+                $ingresosVentasNuevas[$metodo]['usd'] += $montoUsd;
+                $ingresosVentasNuevas[$metodo]['bs'] += $montoBs;
+                $totalVentasNuevasUsd += $montoUsd;
+                $totalVentasNuevasBs += $montoBs;
+            } else {
+                if (!isset($ingresosAbonos[$metodo])) $ingresosAbonos[$metodo] = ['usd' => 0, 'bs' => 0];
+                $ingresosAbonos[$metodo]['usd'] += $montoUsd;
+                $ingresosAbonos[$metodo]['bs'] += $montoBs;
+                $totalAbonosUsd += $montoUsd;
+                $totalAbonosBs += $montoBs;
+            }
+        }
+
+        $ventasPeriodo = VentaTasca::with('miembro')
+            ->whereBetween('fecha', [$startDate, $endDate])
+            ->whereIn('estado', ['Pagada', 'Credito', 'Parcial'])
+            ->get();
+            
+        $totalFacturado = $ventasPeriodo->sum(function($v) { return $v->total - $v->descuento; });
+        $totalPendiente = $ventasPeriodo->whereIn('estado', ['Credito', 'Parcial'])->sum('pendiente');
+        $totalContado = $totalFacturado - $totalPendiente;
+
+        $ventasCredito = $ventasPeriodo->whereIn('estado', ['Credito', 'Parcial'])->filter(function($v) {
+            return $v->pendiente > 0;
+        })->values();
+        
+        $totalCreditoOtorgado = $ventasCredito->sum('pendiente');
+
+        return response()->json([
+            'startDate' => $startDate,
+            'endDate' => $endDate,
+            'ingresosVentasNuevas' => $ingresosVentasNuevas,
+            'ingresosAbonos' => $ingresosAbonos,
+            'totalVentasNuevasUsd' => $totalVentasNuevasUsd,
+            'totalVentasNuevasBs' => $totalVentasNuevasBs,
+            'totalAbonosUsd' => $totalAbonosUsd,
+            'totalAbonosBs' => $totalAbonosBs,
+            'totalPuroDivisas' => $totalPuroDivisas,
+            'totalFacturado' => $totalFacturado,
+            'totalPendiente' => $totalPendiente,
+            'totalContado' => $totalContado,
+            'ventasCredito' => $ventasCredito,
+            'totalCreditoOtorgado' => $totalCreditoOtorgado
+        ]);
+    }
+
     public function reporteVentasPdf(Request $request)
     {
         $startDate = $request->query('start_date', Carbon::now()->toDateString());
@@ -446,41 +536,50 @@ class TascaController extends Controller
 
         // Estilos
         $fontSizeTitle = $formato === 'ticket' ? '12px' : '18px';
-        $fontSizeSub = $formato === 'ticket' ? '10px' : '14px';
-        $fontSizeText = $formato === 'ticket' ? '9px' : '12px';
-        $fontFamily = $formato === 'ticket' ? 'Courier, monospace' : 'Helvetica, Arial, sans-serif';
-        $tableStyle = $formato === 'ticket' ? "width: 100%; border-collapse: collapse; font-size: 9px; font-family: {$fontFamily};" : "width: 100%; border-collapse: collapse; font-size: 12px; font-family: {$fontFamily};";
-        $thStyle = $formato === 'ticket' ? 'border-bottom: 1px dashed #333; font-weight:bold; padding: 2px 0;' : 'background-color:#f0f0f0; border-bottom: 2px solid #ccc; font-weight:bold; padding: 4px;';
-        $tdStyle = $formato === 'ticket' ? 'padding: 2px 0;' : 'border-bottom: 1px solid #eee; padding: 4px;';
+        $fontSizeSub = $formato === 'ticket' ? '10px' : '13px';
+        $fontSizeText = $formato === 'ticket' ? '8px' : '11px';
+        $fontFamily = $formato === 'ticket' ? 'Helvetica, Arial, sans-serif' : 'Helvetica, Arial, sans-serif';
+        $tableStyle = $formato === 'ticket' ? "width: 100%; border-collapse: collapse; font-size: 8px; font-family: {$fontFamily};" : "width: 100%; border-collapse: collapse; font-size: 11px; font-family: {$fontFamily}; color: #334155;";
+        $thStyle = $formato === 'ticket' ? 'border-bottom: 1px dashed #333; font-weight:bold; padding: 4px 0;' : 'background-color:#f8fafc; border-bottom: 2px solid #cbd5e1; font-weight:bold; padding: 8px; color: #0f172a;';
+        $tdStyle = $formato === 'ticket' ? 'padding: 3px 0;' : 'border-bottom: 1px solid #e2e8f0; padding: 7px; color: #334155;';
 
         $rangoTexto = $startDate === $endDate ? $startDate : "{$startDate} al {$endDate}";
 
         if ($formato === 'ticket') {
             $html = "
-                <div style='text-align:center; font-family: {$fontFamily}; line-height: 1.2;'>
-                    <strong style='font-size: 11px;'>Unión de Ganaderos del Municipio Rosario de Perijá - TASCA</strong><br>
-                    <span style='font-size: 9px;'>RIF: J-07002231-0</span><br>
-                    <span style='font-size: 9px;'>Tlf: 02634511191</span><br>
-                    <span style='font-size: 8px;'>Av. 18 de Octubre Local UGAVI N° 57000 Sector Aurora. Villa del Rosario Municipio Rosario de Perijá</span><br>
-                    ----------------------------------------<br>
-                    <strong style='font-size: 12px;'>REPORTE DE CIERRE DE CAJA</strong><br>
-                    <span style='font-size: 9px;'>Fechas: {$rangoTexto}</span><br>
-                    ----------------------------------------
+                <div style='text-align:center; font-family: {$fontFamily}; line-height: 1.3;'>
+                    <strong style='font-size: 10px;'>Unión de Ganaderos del Municipio<br>Rosario de Perijá - TASCA</strong><br>
+                    <span style='font-size: 8px;'>RIF: J-07002231-0</span><br>
+                    <span style='font-size: 8px;'>Tlf: 02634511191</span><br>
+                    <span style='font-size: 7px;'>Av. 18 de Octubre Local UGAVI N° 57000 Sector Aurora.<br>Villa del Rosario Municipio Rosario de Perijá</span><br>
                 </div>
+                <table width=\"100%\"><tr><td style=\"border-bottom: 1px dashed #333;\"></td></tr></table>
+                <div style='text-align:center; font-family: {$fontFamily}; line-height: 1.3;'><br>
+                    <strong style='font-size: 11px;'>REPORTE DE CIERRE DE CAJA</strong><br>
+                    <span style='font-size: 8px;'>Fechas: {$rangoTexto}</span><br>
+                </div>
+                <br><table width=\"100%\"><tr><td style=\"border-bottom: 1px dashed #333;\"></td></tr></table><br>
             ";
-            $separador = "<div style='text-align:center; font-family: {$fontFamily}; margin-top:10px;'>----------------------------------------</div>";
+            $separador = "<br><table width=\"100%\"><tr><td style=\"border-top: 1px dashed #333;\"></td></tr></table><br>";
         } else {
             $html = "
-                <div style='text-align:center; font-family: {$fontFamily};'>
-                    <h2 style='font-size: 16px; margin-bottom:2px;'>Unión de Ganaderos del Municipio Rosario de Perijá - TASCA</h2>
-                    <p style='font-size: 12px; margin: 2px 0;'>RIF: J-07002231-0 | Tlf: 02634511191</p>
-                    <p style='font-size: 10px; margin: 2px 0 10px 0;'>Av. 18 de Octubre Local UGAVI N° 57000 Sector Aurora. Villa del Rosario Municipio Rosario de Perijá</p>
-                    <h1 style='font-size:{$fontSizeTitle}; margin-bottom:5px;'>REPORTE DE CIERRE DE CAJA</h1>
-                    <h4 style='font-size:{$fontSizeSub}; color:#555; margin-top:0;'>Fechas: {$rangoTexto}</h4>
-                </div>
-                <hr style='border: 0.5px solid #ccc; margin: 10px 0;'>
+                <table width=\"100%\" cellpadding=\"8\" style=\"background-color:#0f172a; color:#ffffff; font-family: {$fontFamily};\">
+                    <tr>
+                        <td width=\"55%\">
+                            <strong style='font-size: 15px; letter-spacing: 1px; color:#e2e8f0;'>UNIÓN DE GANADEROS DEL MUNICIPIO ROSARIO DE PERIJÁ</strong><br>
+                            <span style='font-size: 11px; color: #94a3b8;'>RIF: J-07002231-0 | Tlf: 02634511191</span><br>
+                            <span style='font-size: 10px; color: #64748b;'>Av. 18 de Octubre Local UGAVI N° 57000 Sector Aurora.<br>Villa del Rosario Municipio Rosario de Perijá</span>
+                        </td>
+                        <td width=\"45%\" style=\"text-align: right;\">
+                            <strong style='font-size: 24px; color: #38bdf8; letter-spacing: 2px;'>REPORTE DE CIERRE</strong><br>
+                            <span style='font-size: 12px; color: #e2e8f0;'>Fechas: <strong>{$rangoTexto}</strong></span><br>
+                            <span style='font-size: 10px; color: #94a3b8;'>Generado: " . date('d/m/Y h:i A') . "</span>
+                        </td>
+                    </tr>
+                </table>
+                <br><br>
             ";
-            $separador = "<hr style='border: 0.5px dotted #ccc; margin: 15px 0;'>";
+            $separador = "<br><table width=\"100%\"><tr><td style=\"border-bottom: 2px solid #e2e8f0;\"></td></tr></table><br><br>";
         }
 
         // --- SECCIÓN 1: RESUMEN DE FACTURACIÓN ---
@@ -507,9 +606,9 @@ class TascaController extends Controller
             ";
         } else {
             $html .= "
-                <tr style='font-weight:bold; background-color:#e0f2fe;'>
-                    <td style='padding:4px;'>TOTAL FACTURADO (Ventas Reales)</td>
-                    <td style='padding:4px; text-align:right;'>$" . number_format($totalFacturado, 2) . "</td>
+                <tr style='background-color:#f1f5f9; color: #0f172a;'>
+                    <td style='padding:8px; border-bottom: 2px solid #94a3b8;'><strong>TOTAL FACTURADO (Ventas Reales)</strong></td>
+                    <td style='padding:8px; border-bottom: 2px solid #94a3b8; text-align:right;'><strong>$" . number_format($totalFacturado, 2) . "</strong></td>
                 </tr>
             </table>
             ";
@@ -519,12 +618,19 @@ class TascaController extends Controller
 
         // --- SECCIÓN 2: INGRESOS RECIBIDOS (DINERO EN CAJA) ---
         $html .= "
-            <h3 style='font-size:{$fontSizeSub}; font-family: {$fontFamily}; margin-bottom: 5px; text-align:center; color:#2e7d32;'>DETALLE DE INGRESOS (DINERO RECIBIDO)</h3>
+            <table width=\"100%\">
+                <tr>
+                    <td style='background-color:#10b981; color:#ffffff; padding: 6px 10px;'>
+                        <strong style='font-size:12px; font-family: {$fontFamily};'>DETALLE DE INGRESOS (DINERO RECIBIDO)</strong>
+                    </td>
+                </tr>
+            </table>
+            <br>
             <table style='{$tableStyle}'>
                 <tr>
-                    <th style='{$thStyle} text-align:left;'>Método (Ventas Nuevas)</th>
-                    <th style='{$thStyle} text-align:right;'>Total (USD)</th>
-                    <th style='{$thStyle} text-align:right;'>Exacto (Bs)</th>
+                    <th width=\"50%\" style='{$thStyle} text-align:left;'>MÉTODO DE PAGO (VENTAS NUEVAS)</th>
+                    <th width=\"25%\" style='{$thStyle} text-align:right;'>TOTAL (USD)</th>
+                    <th width=\"25%\" style='{$thStyle} text-align:right;'>EXACTO (Bs)</th>
                 </tr>
         ";
 
@@ -548,10 +654,10 @@ class TascaController extends Controller
             ";
         } else {
             $html .= "
-                    <tr style='background-color:#f1f8e9; font-weight:bold;'>
-                        <td style='padding:4px;'>SUBTOTAL INGRESOS NUEVOS</td>
-                        <td style='padding:4px; text-align:right;'>$" . number_format($totalVentasNuevasUsd, 2) . "</td>
-                        <td style='padding:4px; text-align:right;'>Bs " . number_format($totalVentasNuevasBs, 2) . "</td>
+                    <tr style='background-color:#ecfdf5; color: #064e3b;'>
+                        <td style='padding:8px; border-bottom: 1px solid #6ee7b7;'><strong>SUBTOTAL INGRESOS NUEVOS</strong></td>
+                        <td style='padding:8px; border-bottom: 1px solid #6ee7b7; text-align:right;'><strong>$" . number_format($totalVentasNuevasUsd, 2) . "</strong></td>
+                        <td style='padding:8px; border-bottom: 1px solid #6ee7b7; text-align:right;'><strong>Bs " . number_format($totalVentasNuevasBs, 2) . "</strong></td>
                     </tr>
                 </table>
             ";
@@ -561,9 +667,9 @@ class TascaController extends Controller
             <br>
             <table style='{$tableStyle}'>
                 <tr>
-                    <th style='{$thStyle} text-align:left;'>Método (Abonos a Deudas)</th>
-                    <th style='{$thStyle} text-align:right;'>Total (USD)</th>
-                    <th style='{$thStyle} text-align:right;'>Exacto (Bs)</th>
+                    <th width=\"50%\" style='{$thStyle} text-align:left;'>MÉTODO DE PAGO (ABONOS A DEUDAS)</th>
+                    <th width=\"25%\" style='{$thStyle} text-align:right;'>TOTAL (USD)</th>
+                    <th width=\"25%\" style='{$thStyle} text-align:right;'>EXACTO (Bs)</th>
                 </tr>
         ";
 
@@ -585,9 +691,7 @@ class TascaController extends Controller
                     </tr>
                 </table>
 
-                <div style='text-align:center; font-family: {$fontFamily}; margin-top:10px;'>
-                    ========================================
-                </div>
+                <br><table width=\"100%\"><tr><td style=\"border-bottom: 1px dashed #333;\"></td></tr></table><br>
                 <table style='{$tableStyle} margin-top: 5px;'>
                     <tr style='font-size:{$fontSizeSub}; font-weight:bold;'>
                         <td style='text-align:left; padding-bottom:2px;'>RECIBIDO (DIVISAS):</td>
@@ -605,28 +709,35 @@ class TascaController extends Controller
             ";
         } else {
             $html .= "
-                    <tr style='background-color:#fff3e0; font-weight:bold;'>
-                        <td style='padding:4px;'>SUBTOTAL ABONOS</td>
-                        <td style='padding:4px; text-align:right;'>$" . number_format($totalAbonosUsd, 2) . "</td>
-                        <td style='padding:4px; text-align:right;'>Bs " . number_format($totalAbonosBs, 2) . "</td>
+                    <tr style='background-color:#fffbeb; color: #78350f;'>
+                        <td style='padding:8px; border-bottom: 1px solid #fcd34d;'><strong>SUBTOTAL ABONOS</strong></td>
+                        <td style='padding:8px; border-bottom: 1px solid #fcd34d; text-align:right;'><strong>$" . number_format($totalAbonosUsd, 2) . "</strong></td>
+                        <td style='padding:8px; border-bottom: 1px solid #fcd34d; text-align:right;'><strong>Bs " . number_format($totalAbonosBs, 2) . "</strong></td>
                     </tr>
                 </table>
 
-                <hr style='border: 0.5px solid #ccc; margin: 15px 0;'>
-                <table style='{$tableStyle}'>
-                    <tr style='font-size:{$fontSizeSub}; font-weight:bold;'>
-                        <td style='text-align:left; padding-bottom:5px;'>TOTAL RECIBIDO (DIVISAS):</td>
-                        <td style='text-align:right; padding-bottom:5px;'>$" . number_format($totalPuroDivisas, 2) . "</td>
-                    </tr>
-                    <tr style='font-size:{$fontSizeSub}; font-weight:bold; color:#2e7d32;'>
-                        <td style='text-align:left; padding-bottom:10px;'>TOTAL RECIBIDO (BOLÍVARES):</td>
-                        <td style='text-align:right; padding-bottom:10px;'>Bs " . number_format($totalVentasNuevasBs + $totalAbonosBs, 2) . "</td>
-                    </tr>
-                    <tr style='font-size:{$fontSizeTitle}; font-weight:bold; background-color:#22c55e; color:#ffffff;'>
-                        <td style='text-align:left; padding:8px;'>TOTAL GENERAL INGRESADO (USD):</td>
-                        <td style='text-align:right; padding:8px;'>$" . number_format($totalVentasNuevasUsd + $totalAbonosUsd, 2) . "</td>
+                <br><br>
+                <table width=\"100%\" cellpadding=\"8\" style=\"font-family: {$fontFamily};\">
+                    <tr>
+                        <td width=\"100%\" style=\"background-color:#f8fafc; border: 1px solid #cbd5e1; border-top: 4px solid #10b981;\">
+                            <table width=\"100%\">
+                                <tr>
+                                    <td style='font-size:13px; color:#475569; padding-bottom: 4px;'>TOTAL RECIBIDO (DIVISAS):</td>
+                                    <td style='font-size:14px; color:#0f172a; font-weight:bold; text-align:right; padding-bottom: 4px;'>$" . number_format($totalPuroDivisas, 2) . "</td>
+                                </tr>
+                                <tr>
+                                    <td style='font-size:13px; color:#475569; padding-bottom: 8px; border-bottom: 1px solid #cbd5e1;'>TOTAL RECIBIDO (Bs):</td>
+                                    <td style='font-size:14px; color:#0f172a; font-weight:bold; text-align:right; padding-bottom: 8px; border-bottom: 1px solid #cbd5e1;'>Bs " . number_format($totalVentasNuevasBs + $totalAbonosBs, 2) . "</td>
+                                </tr>
+                                <tr>
+                                    <td style='font-size:15px; color:#047857; font-weight:bold; padding-top: 8px;'>TOTAL GENERAL INGRESADO (USD):</td>
+                                    <td style='font-size:18px; color:#047857; font-weight:bold; text-align:right; padding-top: 8px;'>$" . number_format($totalVentasNuevasUsd + $totalAbonosUsd, 2) . "</td>
+                                </tr>
+                            </table>
+                        </td>
                     </tr>
                 </table>
+                <br>
             ";
         }
 
@@ -634,11 +745,18 @@ class TascaController extends Controller
         if ($ventasCredito->count() > 0) {
             $html .= $separador;
             $html .= "
-                <h3 style='font-size:{$fontSizeSub}; font-family: {$fontFamily}; margin-bottom: 2px; text-align:center; color: #b45309;'>CUENTAS POR COBRAR (Créditos Otorgados)</h3>
+                <table width=\"100%\">
+                    <tr>
+                        <td style='background-color:#f59e0b; color:#ffffff; padding: 6px 10px;'>
+                            <strong style='font-size:12px; font-family: {$fontFamily};'>CUENTAS POR COBRAR (CRÉDITOS OTORGADOS)</strong>
+                        </td>
+                    </tr>
+                </table>
+                <br>
                 <table style='{$tableStyle}'>
                     <tr>
-                        <th style='{$thStyle} text-align:left;'>Cliente / Comprobante</th>
-                        <th style='{$thStyle} text-align:right;'>Pendiente (USD)</th>
+                        <th width=\"60%\" style='{$thStyle} text-align:left;'>CLIENTE / COMPROBANTE</th>
+                        <th width=\"40%\" style='{$thStyle} text-align:right;'>PENDIENTE (USD)</th>
                     </tr>
             ";
             foreach ($ventasCredito as $vc) {
@@ -658,16 +776,53 @@ class TascaController extends Controller
                 ";
             } else {
                 $html .= "
-                        <tr style='background-color:#fef3c7; font-weight:bold;'>
-                            <td style='padding:4px;'>TOTAL A CRÉDITO</td>
-                            <td style='padding:4px; text-align:right;'>$" . number_format($totalCreditoOtorgado, 2) . "</td>
+                        <tr style='background-color:#f8fafc; color: #0f172a;'>
+                            <td style='padding:8px; border-top: 2px solid #cbd5e1;'><strong>TOTAL A CRÉDITO</strong></td>
+                            <td style='padding:8px; border-top: 2px solid #cbd5e1; text-align:right;'><strong>$" . number_format($totalCreditoOtorgado, 2) . "</strong></td>
                         </tr>
                     </table>
                 ";
             }
         }
 
+        $html .= "</div>";
+
         $pdf->writeHTML($html, true, false, true, false, '');
+
+        $nombreUsuario = auth()->user() ? auth()->user()->name : 'Admin';
+
+        if ($formato === 'carta') {
+            $pdf->SetAutoPageBreak(false);
+            $pdf->SetY(-35);
+            $footerHtml = "
+                <table width=\"100%\" style=\"font-family: {$fontFamily};\">
+                    <tr>
+                        <td style=\"text-align:center; color:#94a3b8; font-size: 10px; border-top: 1px solid #e2e8f0; padding-top: 8px;\">
+                            *** FIN DEL REPORTE ***<br>
+                            <strong style='color:#64748b; font-size: 11px;'>SIGAMA</strong><br>
+                            Sistema de Gestión Administrativa y Membresías de Agroproductores - {$nombreUsuario}
+                        </td>
+                    </tr>
+                </table>
+            ";
+            $pdf->writeHTML($footerHtml, true, false, true, false, '');
+            $pdf->SetAutoPageBreak(true, 15);
+        } else {
+            $footerHtml = "
+                <br>
+                <table width=\"100%\" style=\"font-family: {$fontFamily};\">
+                    <tr>
+                        <td style=\"text-align:center; color:#94a3b8; font-size: 9px;\">
+                            *** FIN DEL REPORTE ***<br>
+                            <strong>SIGAMA</strong><br>
+                            Sistema de Gestión Administrativa<br>
+                            Generado por: {$nombreUsuario}
+                        </td>
+                    </tr>
+                </table>
+            ";
+            $pdf->writeHTML($footerHtml, true, false, true, false, '');
+        }
 
         $pdf->Output('Reporte_Ventas_'.$rangoTexto.'.pdf', 'I');
     }
@@ -733,8 +888,16 @@ class TascaController extends Controller
     {
         $venta = VentaTasca::with(['clienteForaneo', 'miembro', 'detalles.producto.insumo', 'pagos'])->findOrFail($id);
         
-        $pdf = new \TCPDF('P', 'mm', array(80, 297));
-        $pdf->SetMargins(2, 2, 2);
+        // Calcular altura dinámica
+        $baseHeight = 110;
+        $itemsHeight = count($venta->detalles) * 6;
+        $pagosHeight = $venta->pagos->count() * 5;
+        $signatureHeight = in_array(strtolower($venta->estado), ['credito', 'parcial']) ? 30 : 0;
+        
+        $totalHeight = $baseHeight + $itemsHeight + $pagosHeight + $signatureHeight;
+
+        $pdf = new \TCPDF('P', 'mm', array(80, $totalHeight));
+        $pdf->SetMargins(4, 6, 4);
         $pdf->SetCreator('Fondo2');
         $pdf->SetAuthor('Tasca');
         $pdf->SetTitle('Ticket de Venta #' . $venta->id);
@@ -742,28 +905,56 @@ class TascaController extends Controller
         $pdf->setPrintFooter(false);
         $pdf->AddPage();
         
-        $fontFamily = 'Courier, monospace';
-        $fecha = \Carbon\Carbon::parse($venta->created_at)->format('d/m/Y h:i A');
+        $fontFamily = 'Helvetica, Arial, sans-serif';
+        $fecha = \Carbon\Carbon::parse($venta->created_at)->format('d/m/Y');
         $cliente = $venta->miembro ? $venta->miembro->razon_social : ($venta->clienteForaneo ? $venta->clienteForaneo->nombre : 'Consumidor Final');
+        $rif = $venta->miembro ? $venta->miembro->rif : ($venta->clienteForaneo ? $venta->clienteForaneo->cedula_rif : '');
+        $metodoPrincipal = $venta->pagos->count() > 0 ? $venta->pagos->first()->metodo_pago : 'N/A';
+
+        // Usamos líneas punteadas con caracteres porque TCPDF las renderiza de manera muy confiable para formato ticket
+        $dashes = "<div style='text-align:center; font-family: {$fontFamily}; font-size: 11px; letter-spacing: 2px; color: #333;'>- - - - - - - - - - - - - - - - - - - - - - - - - - - -</div>";
 
         $html = "
-            <div style='text-align:center; font-family: {$fontFamily}; line-height: 1.2;'>
-                <strong style='font-size: 11px;'>Unión de Ganaderos del Municipio Rosario de Perijá - TASCA</strong><br>
-                <span style='font-size: 9px;'>RIF: J-07002231-0</span><br>
-                <span style='font-size: 9px;'>Tlf: 02634511191</span><br>
-                <span style='font-size: 8px;'>Av. 18 de Octubre Local UGAVI N° 57000 Sector Aurora. Villa del Rosario Municipio Rosario de Perijá</span><br>
-                ----------------------------------------<br>
-                <strong style='font-size: 12px;'>TICKET DE VENTA #{$venta->id}</strong><br>
-                <span style='font-size: 9px;'>Fecha: {$fecha}</span><br>
-                <span style='font-size: 9px;'>Cliente: {$cliente}</span><br>
-                <span style='font-size: 9px;'>Estado: " . strtoupper($venta->estado) . "</span><br>
-                ----------------------------------------
+            <div style='text-align:center; font-family: {$fontFamily}; line-height: 1.3;'>
+                <strong style='font-size: 10px;'>Unión de Ganaderos del Municipio<br>Rosario de Perijá - TASCA</strong><br>
+                <span style='font-size: 8px;'>RIF: J-07002231-0</span><br>
+                <span style='font-size: 8px;'>Tlf: 02634511191</span><br>
+                <span style='font-size: 7px;'>Av. 18 de Octubre Local UGAVI N° 57000 Sector Aurora.<br>Villa del Rosario Municipio Rosario de Perijá</span>
             </div>
-            <table style='width: 100%; border-collapse: collapse; font-size: 9px; font-family: {$fontFamily};'>
+            
+            {$dashes}
+            
+            <div style='text-align:center; font-family: {$fontFamily};'>
+                <strong style='font-size: 11px;'>TICKET DE VENTA TASCA</strong>
+            </div>
+            
+            <table style='width: 100%; font-size: 8px; font-family: {$fontFamily}; margin-top: 5px;'>
                 <tr>
-                    <th style='border-bottom: 1px dashed #333; text-align:left;'>Cant.</th>
-                    <th style='border-bottom: 1px dashed #333; text-align:left;'>Descripción</th>
-                    <th style='border-bottom: 1px dashed #333; text-align:right;'>Total</th>
+                    <td style='text-align:left; width: 50%;'>Ref: {$venta->id}</td>
+                    <td style='text-align:right; width: 50%;'>Fecha: {$fecha}</td>
+                </tr>
+                <tr>
+                    <td style='text-align:left;'>Estado: " . ucfirst(strtolower($venta->estado)) . "</td>
+                    <td style='text-align:right;'>Caja: Tasca</td>
+                </tr>
+            </table>
+
+            {$dashes}
+            
+            <div style='font-family: {$fontFamily}; font-size: 8px; line-height: 1.3;'>
+                <strong>CLIENTE:</strong><br>
+                {$cliente}
+                " . ($rif ? "<br>RIF: {$rif}" : "") . "<br>
+                Método: {$metodoPrincipal}
+            </div>
+
+            {$dashes}
+            
+            <table style='width: 100%; border-collapse: collapse; font-size: 8px; font-family: {$fontFamily};'>
+                <tr>
+                    <th style='text-align:left; font-weight:bold; padding-bottom: 4px; width: 65%;'>DESCRIPCIÓN</th>
+                    <th style='text-align:center; font-weight:bold; padding-bottom: 4px; width: 15%;'>CANT.</th>
+                    <th style='text-align:right; font-weight:bold; padding-bottom: 4px; width: 20%;'>MONTO</th>
                 </tr>
         ";
 
@@ -771,55 +962,55 @@ class TascaController extends Controller
             $nombre = $det->producto->nombre_completo ?? $det->producto->nombre;
             $html .= "
                 <tr>
-                    <td style='padding: 2px 0;'>{$det->cantidad}</td>
                     <td style='padding: 2px 0;'>{$nombre}</td>
+                    <td style='padding: 2px 0; text-align:center;'>{$det->cantidad}</td>
                     <td style='padding: 2px 0; text-align:right;'>$" . number_format($det->subtotal, 2) . "</td>
                 </tr>
             ";
         }
 
         $html .= "
-                <tr><td colspan='3' style='border-top:1px dashed #333;'></td></tr>
-                <tr>
-                    <td colspan='2' style='font-weight:bold;'>TOTAL:</td>
-                    <td style='text-align:right; font-weight:bold;'>$" . number_format($venta->total, 2) . "</td>
-                </tr>
             </table>
+            
+            {$dashes}
+            
+            <table style='width: 100%; border-collapse: collapse; font-size: 9px; font-family: {$fontFamily};'>
+                <tr>
+                    <td style='font-weight:bold; padding-top: 2px;'>TOTAL PAGADO (USD):</td>
+                    <td style='text-align:right; font-weight:bold; padding-top: 2px;'>$" . number_format($venta->total, 2) . "</td>
+                </tr>
         ";
-
-        if ($venta->pagos->count() > 0) {
-            $html .= "
-                <div style='text-align:center; font-family: {$fontFamily}; margin-top:5px;'>
-                    ----------------------------------------<br>
-                    <strong style='font-size: 10px;'>PAGOS REALIZADOS</strong>
-                </div>
-                <table style='width: 100%; border-collapse: collapse; font-size: 9px; font-family: {$fontFamily};'>
-            ";
-            foreach ($venta->pagos as $pago) {
-                $montoBs = $pago->monto_bs ? "(Bs " . number_format($pago->monto_bs, 2) . ")" : "";
-                $html .= "
-                    <tr>
-                        <td>{$pago->metodo_pago}</td>
-                        <td style='text-align:right;'>$" . number_format($pago->monto_usd, 2) . " {$montoBs}</td>
-                    </tr>
-                ";
-            }
-            $html .= "</table>";
+        
+        $totalBs = 0;
+        foreach ($venta->pagos as $pago) {
+            $totalBs += $pago->monto_bs;
         }
 
+        if ($totalBs > 0) {
+            $html .= "
+                <tr>
+                    <td style='font-weight:bold; padding-top: 4px;'>TOTAL PAGADO (Bs):</td>
+                    <td style='text-align:right; font-weight:bold; padding-top: 4px;'>Bs. " . number_format($totalBs, 2) . "</td>
+                </tr>
+            ";
+        }
+
+        $html .= "</table>";
+
         $html .= "
-            <div style='text-align:center; font-family: {$fontFamily}; margin-top:10px;'>
-                ----------------------------------------<br>
-                <span style='font-size: 9px;'>¡Gracias por su compra!</span>
+            <div style='text-align:center; font-family: {$fontFamily}; margin-top: 10px;'>
+                <strong style='font-size: 9px;'>*** GRACIAS POR SU COMPRA ***</strong><br>
+                <span style='font-size: 7px; color: #444; display:block; margin-top: 4px;'>Este documento es un comprobante de venta interno de la Tasca y carece de validez fiscal o tributaria.</span>
             </div>
         ";
 
-        if (strtolower($venta->estado) === 'credito') {
+        if (in_array(strtolower($venta->estado), ['credito', 'parcial'])) {
             $html .= "
                 <br><br><br>
-                <div style='text-align:center; font-family: {$fontFamily};'>
-                    _________________________<br>
-                    <span style='font-size: 9px;'>Firma del Cliente</span>
+                <div style='text-align:center; font-family: {$fontFamily}; font-size: 8px;'>
+                    - - - - - - - - - - - - - - - - - - - -<br>
+                    Firma del Cliente<br>
+                    <strong>Saldo pendiente: $" . number_format($venta->pendiente, 2) . "</strong>
                 </div>
             ";
         }

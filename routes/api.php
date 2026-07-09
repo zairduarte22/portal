@@ -155,6 +155,7 @@ Route::prefix('tasca')->group(function () {
     Route::get('/ventas', [TascaController::class, 'getVentas']);
     Route::get('/ventas/estadisticas', [TascaController::class, 'getEstadisticas']);
     Route::get('/ventas/reporte-pdf', [TascaController::class, 'reporteVentasPdf']);
+    Route::get('/ventas/reporte-data', [TascaController::class, 'reporteVentasData']);
     Route::get('/ventas/{id}', [TascaController::class, 'getVenta']);
     Route::get('/ventas/{id}/ticket', [TascaController::class, 'ticketVentaPdf']);
     Route::post('/ventas', [TascaController::class, 'storeVenta']);

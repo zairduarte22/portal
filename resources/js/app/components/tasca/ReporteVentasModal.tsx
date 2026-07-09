@@ -1,16 +1,260 @@
 import React, { useState } from "react";
 import { format } from "date-fns";
 import { FileText, Calendar, Receipt, X } from "lucide-react";
+import { jsPDF } from "jspdf";
 
 export function ReporteVentasModal({ onClose }: { onClose: () => void }) {
   const [startDate, setStartDate] = useState(format(new Date(), "yyyy-MM-dd"));
   const [endDate, setEndDate] = useState(format(new Date(), "yyyy-MM-dd"));
   const [reportFormat, setReportFormat] = useState<"carta" | "ticket">("carta");
 
-  const handleGenerate = () => {
-    // Abrir en nueva pestaña
-    window.open(`/api/tasca/ventas/reporte-pdf?start_date=${startDate}&end_date=${endDate}&format=${reportFormat}`, '_blank');
-    onClose();
+  const handleGenerate = async () => {
+    if (reportFormat === "carta") {
+        window.open(`/api/tasca/ventas/reporte-pdf?start_date=${startDate}&end_date=${endDate}&format=carta`, '_blank');
+        onClose();
+        return;
+    }
+
+    try {
+        const res = await fetch(`/api/tasca/ventas/reporte-data?start_date=${startDate}&end_date=${endDate}`);
+        if (!res.ok) throw new Error("Error obteniendo datos");
+        const data = await res.json();
+        
+        const resUser = await fetch('/api/me', { headers: { 'Accept': 'application/json' } });
+        let userName = "Administrador";
+        if (resUser.ok) {
+            const userData = await resUser.json();
+            userName = userData.name || "Administrador";
+        }
+
+        const drawTicket = (docToDraw: any, isDummy: boolean) => {
+            let cursorY = 10;
+            const marginX = 4;
+            const pageWidth = 80;
+
+            const printCenter = (text: string, y: number, size: number, isBold = false) => {
+              docToDraw.setFontSize(size);
+              docToDraw.setFont("helvetica", isBold ? "bold" : "normal");
+              const textWidth = docToDraw.getTextWidth(text);
+              docToDraw.text(text, (pageWidth - textWidth) / 2, y);
+            };
+            
+            const printDashedLine = () => {
+               cursorY += 2;
+               if (!isDummy) {
+                   docToDraw.setLineDashPattern([1, 1], 0);
+                   docToDraw.line(marginX, cursorY, pageWidth - marginX, cursorY);
+                   docToDraw.setLineDashPattern([], 0);
+               }
+               cursorY += 4;
+            };
+
+            printCenter("Unión de Ganaderos del Municipio", cursorY, 10, true);
+            cursorY += 4;
+            printCenter("Rosario de Perijá - TASCA", cursorY, 10, true);
+            cursorY += 5;
+            
+            printCenter("RIF: J-07002231-0", cursorY, 8);
+            cursorY += 4;
+            printCenter("Tlf: 02634511191", cursorY, 8);
+            cursorY += 4;
+
+            const addressLines = docToDraw.splitTextToSize("Av. 18 de Octubre Local UGAVI N° 57000 Sector Aurora. Villa del Rosario Municipio Rosario de Perijá", pageWidth - marginX * 2);
+            docToDraw.setFont("helvetica", "normal");
+            docToDraw.setFontSize(7);
+            addressLines.forEach((line: string) => {
+              printCenter(line, cursorY, 7);
+              cursorY += 3;
+            });
+
+            printDashedLine();
+            
+            printCenter("REPORTE DE CIERRE DE CAJA", cursorY, 11, true);
+            cursorY += 5;
+            
+            const rangoTexto = startDate === endDate ? format(new Date(startDate + "T00:00:00"), 'dd/MM/yyyy') : `${format(new Date(startDate + "T00:00:00"), 'dd/MM/yyyy')} al ${format(new Date(endDate + "T00:00:00"), 'dd/MM/yyyy')}`;
+            printCenter(`Fechas: ${rangoTexto}`, cursorY, 8);
+            cursorY += 2;
+            
+            printDashedLine();
+            
+            // Seccion 1: Resumen
+            printCenter("RESUMEN DE FACTURACIÓN", cursorY, 9, true);
+            cursorY += 5;
+            
+            docToDraw.setFontSize(8);
+            docToDraw.setFont("helvetica", "normal");
+            docToDraw.text("Ventas al Contado", marginX, cursorY);
+            docToDraw.text(`$${Number(data.totalContado).toFixed(2)}`, pageWidth - marginX - docToDraw.getTextWidth(`$${Number(data.totalContado).toFixed(2)}`), cursorY);
+            cursorY += 4;
+            
+            docToDraw.text("Ventas a Crédito", marginX, cursorY);
+            docToDraw.text(`$${Number(data.totalPendiente).toFixed(2)}`, pageWidth - marginX - docToDraw.getTextWidth(`$${Number(data.totalPendiente).toFixed(2)}`), cursorY);
+            cursorY += 2;
+            
+            printDashedLine();
+            
+            docToDraw.setFont("helvetica", "bold");
+            docToDraw.text("TOTAL FACTURADO", marginX, cursorY);
+            docToDraw.text(`$${Number(data.totalFacturado).toFixed(2)}`, pageWidth - marginX - docToDraw.getTextWidth(`$${Number(data.totalFacturado).toFixed(2)}`), cursorY);
+            cursorY += 2;
+            
+            printDashedLine();
+            
+            // Seccion 2: Ingresos
+            printCenter("INGRESOS RECIBIDOS", cursorY, 9, true);
+            cursorY += 5;
+            
+            const colUsdRight = pageWidth - marginX - 28; // Termina en 48
+            const colBsRight = pageWidth - marginX;       // Termina en 76
+            
+            docToDraw.setFont("helvetica", "bold");
+            docToDraw.setFontSize(7);
+            docToDraw.text("MÉTODO (NUEVOS)", marginX, cursorY);
+            docToDraw.text("USD", colUsdRight - docToDraw.getTextWidth("USD"), cursorY);
+            docToDraw.text("Bs", colBsRight - docToDraw.getTextWidth("Bs"), cursorY);
+            cursorY += 4;
+            
+            docToDraw.setFont("helvetica", "normal");
+            let hasNuevas = false;
+            Object.entries(data.ingresosVentasNuevas).forEach(([metodo, totales]: any) => {
+                hasNuevas = true;
+                let mStr = String(metodo);
+                if (mStr.length > 13) mStr = mStr.substring(0, 13) + ".";
+                docToDraw.text(mStr, marginX, cursorY);
+                
+                const usdStr = `$${Number(totales.usd).toFixed(2)}`;
+                docToDraw.text(usdStr, colUsdRight - docToDraw.getTextWidth(usdStr), cursorY);
+                
+                const bsStr = totales.bs > 0 ? `Bs ${Number(totales.bs).toFixed(2)}` : "-";
+                docToDraw.text(bsStr, colBsRight - docToDraw.getTextWidth(bsStr), cursorY);
+                cursorY += 4;
+            });
+            if (!hasNuevas) {
+                docToDraw.text("No hay ingresos.", marginX, cursorY);
+                cursorY += 4;
+            }
+            
+            printDashedLine();
+            
+            docToDraw.setFont("helvetica", "bold");
+            docToDraw.text("SUBTOTAL NUEVAS", marginX, cursorY);
+            const sub1UsdStr = `$${Number(data.totalVentasNuevasUsd).toFixed(2)}`;
+            docToDraw.text(sub1UsdStr, colUsdRight - docToDraw.getTextWidth(sub1UsdStr), cursorY);
+            const sub1BsStr = `Bs ${Number(data.totalVentasNuevasBs).toFixed(2)}`;
+            docToDraw.text(sub1BsStr, colBsRight - docToDraw.getTextWidth(sub1BsStr), cursorY);
+            cursorY += 6;
+            
+            docToDraw.setFontSize(7);
+            docToDraw.text("MÉTODO (ABONOS)", marginX, cursorY);
+            docToDraw.text("USD", colUsdRight - docToDraw.getTextWidth("USD"), cursorY);
+            docToDraw.text("Bs", colBsRight - docToDraw.getTextWidth("Bs"), cursorY);
+            cursorY += 4;
+            
+            docToDraw.setFont("helvetica", "normal");
+            let hasAbonos = false;
+            Object.entries(data.ingresosAbonos).forEach(([metodo, totales]: any) => {
+                hasAbonos = true;
+                let mStr = String(metodo);
+                if (mStr.length > 13) mStr = mStr.substring(0, 13) + ".";
+                docToDraw.text(mStr, marginX, cursorY);
+                
+                const usdStr = `$${Number(totales.usd).toFixed(2)}`;
+                docToDraw.text(usdStr, colUsdRight - docToDraw.getTextWidth(usdStr), cursorY);
+                
+                const bsStr = totales.bs > 0 ? `Bs ${Number(totales.bs).toFixed(2)}` : "-";
+                docToDraw.text(bsStr, colBsRight - docToDraw.getTextWidth(bsStr), cursorY);
+                cursorY += 4;
+            });
+            if (!hasAbonos) {
+                docToDraw.text("No hay abonos.", marginX, cursorY);
+                cursorY += 4;
+            }
+            
+            printDashedLine();
+            
+            docToDraw.setFont("helvetica", "bold");
+            docToDraw.text("SUBTOTAL ABONOS", marginX, cursorY);
+            const sub2UsdStr = `$${Number(data.totalAbonosUsd).toFixed(2)}`;
+            docToDraw.text(sub2UsdStr, colUsdRight - docToDraw.getTextWidth(sub2UsdStr), cursorY);
+            const sub2BsStr = `Bs ${Number(data.totalAbonosBs).toFixed(2)}`;
+            docToDraw.text(sub2BsStr, colBsRight - docToDraw.getTextWidth(sub2BsStr), cursorY);
+            cursorY += 2;
+            
+            printDashedLine();
+            
+            docToDraw.setFontSize(8);
+            docToDraw.text("RECIBIDO (DIVISAS):", marginX, cursorY);
+            docToDraw.text(`$${Number(data.totalPuroDivisas).toFixed(2)}`, pageWidth - marginX - docToDraw.getTextWidth(`$${Number(data.totalPuroDivisas).toFixed(2)}`), cursorY);
+            cursorY += 4;
+            
+            const totBs = Number(data.totalVentasNuevasBs) + Number(data.totalAbonosBs);
+            docToDraw.text("RECIBIDO (Bs):", marginX, cursorY);
+            docToDraw.text(`Bs ${totBs.toFixed(2)}`, pageWidth - marginX - docToDraw.getTextWidth(`Bs ${totBs.toFixed(2)}`), cursorY);
+            cursorY += 4;
+            
+            const totUsd = Number(data.totalVentasNuevasUsd) + Number(data.totalAbonosUsd);
+            docToDraw.text("TOTAL INGRESADO:", marginX, cursorY);
+            docToDraw.text(`$${totUsd.toFixed(2)}`, pageWidth - marginX - docToDraw.getTextWidth(`$${totUsd.toFixed(2)}`), cursorY);
+            cursorY += 2;
+            
+            if (data.ventasCredito && data.ventasCredito.length > 0) {
+                printDashedLine();
+                printCenter("CUENTAS POR COBRAR", cursorY, 9, true);
+                cursorY += 5;
+                
+                docToDraw.setFontSize(7);
+                docToDraw.text("CLIENTE", marginX, cursorY);
+                docToDraw.text("PENDIENTE", pageWidth - marginX - docToDraw.getTextWidth("PENDIENTE"), cursorY);
+                cursorY += 4;
+                
+                docToDraw.setFont("helvetica", "normal");
+                data.ventasCredito.forEach((vc: any) => {
+                    const nombre = vc.miembro ? vc.miembro.razon_social : `Factura #${vc.id}`;
+                    docToDraw.text(nombre.substring(0, 20), marginX, cursorY);
+                    const p = `$${Number(vc.pendiente).toFixed(2)}`;
+                    docToDraw.text(p, pageWidth - marginX - docToDraw.getTextWidth(p), cursorY);
+                    cursorY += 4;
+                });
+                
+                printDashedLine();
+                
+                docToDraw.setFont("helvetica", "bold");
+                docToDraw.setFontSize(8);
+                docToDraw.text("TOTAL A CRÉDITO", marginX, cursorY);
+                const tc = `$${Number(data.totalCreditoOtorgado).toFixed(2)}`;
+                docToDraw.text(tc, pageWidth - marginX - docToDraw.getTextWidth(tc), cursorY);
+                cursorY += 2;
+            }
+            
+            printDashedLine();
+            printCenter("*** FIN DEL REPORTE ***", cursorY, 8);
+            cursorY += 4;
+            printCenter("SIGAMA", cursorY, 8, true);
+            cursorY += 4;
+            printCenter("Sistema de Gestión Administrativa", cursorY, 7);
+            cursorY += 4;
+            printCenter(`y Membresías de Agroproductores - ${userName}`, cursorY, 7);
+            cursorY += 6;
+
+            return cursorY;
+        };
+
+        const dummyDoc = new jsPDF({ orientation: "portrait", unit: "mm", format: [80, 500] });
+        const finalHeight = drawTicket(dummyDoc, true);
+
+        const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: [80, finalHeight] });
+        drawTicket(doc, false);
+        
+        const blob = doc.output('blob');
+        const url = URL.createObjectURL(blob);
+        window.open(url, '_blank');
+        onClose();
+
+    } catch (e) {
+        console.error(e);
+        alert("Error generando el reporte.");
+    }
   };
 
   return (
