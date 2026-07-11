@@ -73,7 +73,7 @@ export function PagosPanel() {
     const date = new Date(dateStr + "T00:00:00");
     const mes = date.toLocaleString('es-VE', { month: 'long' });
     const anio = date.getFullYear();
-    return `Membresía ${mes.charAt(0).toUpperCase() + mes.slice(1)} ${anio}`;
+    return `${mes.charAt(0).toUpperCase() + mes.slice(1)} ${anio}`;
   };
 
   // Filtered payments
@@ -520,9 +520,9 @@ export function PagosPanel() {
                     </span>
                   </td>
                   <td className="px-4 py-4">
-                    <div className="flex flex-col gap-1">
+                    <div className="flex flex-wrap gap-1 max-w-[250px]">
                       {pago.facturas && pago.facturas.length > 0 ? pago.facturas.map((f: any) => (
-                        <span key={f.id} className="text-[0.65rem] font-semibold bg-gray-100 text-gray-700 px-2 py-0.5 rounded">
+                        <span key={f.id} className="text-[0.65rem] font-semibold bg-gray-100 text-gray-700 px-2 py-0.5 rounded whitespace-nowrap">
                           {formatMesCuota(f.mes_cuota)}
                         </span>
                       )) : (

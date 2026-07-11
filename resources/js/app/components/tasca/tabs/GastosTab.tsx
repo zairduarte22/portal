@@ -17,7 +17,7 @@ export default function GastosTab() {
     monto_bs: "",
     metodo_pago: "Efectivo Divisas",
     referencia_pago: "",
-    fecha: new Date().toISOString().split('T')[0],
+    fecha: format(new Date(), 'yyyy-MM-dd'),
     proveedor_id: ""
   });
 
@@ -55,7 +55,7 @@ export default function GastosTab() {
       monto_bs: "",
       metodo_pago: "Efectivo Divisas",
       referencia_pago: "",
-      fecha: new Date().toISOString().split('T')[0],
+      fecha: format(new Date(), 'yyyy-MM-dd'),
       proveedor_id: ""
     });
     setShowGastoModal(true);

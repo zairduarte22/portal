@@ -53,6 +53,7 @@ Route::prefix('documentos-miembros')->group(function () {
 Route::prefix('facturas')->group(function () {
     Route::get('/', [FacturaController::class, 'index']);
     Route::post('/massive', [FacturaController::class, 'storeMassive']);
+    Route::post('/adelantos', [FacturaController::class, 'storeAdelantos']);
     Route::get('/miembro/{id}', [FacturaController::class, 'getByMiembro']);
     Route::delete('/{id}', [FacturaController::class, 'destroy']);
 });

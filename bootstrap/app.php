@@ -26,4 +26,4 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->shouldRenderJsonWhen(
             fn (Request $request) => $request->is('api/*'),
         );
-    })->create()->usePublicPath(__DIR__.'/../../public_html');
+    })->create()->usePublicPath(__DIR__.'/../public');

@@ -30,9 +30,8 @@ class FetchTasaCommand extends Command
     public function handle()
     {
         $this->info('Fetching official USD exchange rate...');
-
         try {
-            $response = Http::timeout(10)->get('https://ve.dolarapi.com/v1/dolares/oficial');
+            $response = Http::withoutVerifying()->timeout(10)->get('https://ve.dolarapi.com/v1/dolares/oficial');
 
             if ($response->successful()) {
                 $data = $response->json();

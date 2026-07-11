@@ -20,7 +20,7 @@ export function EstadoCuentaPanel({ memberId }: EstadoCuentaPanelProps) {
         const res = await fetch(`/api/miembros/${memberId}/estado-cuenta`);
         if (!res.ok) throw new Error("Error al cargar estado de cuenta");
         const data = await res.json();
-        setCuotas(data.Cuotas || []);
+        setCuotas(data.facturas || []);
         setPagos(data.pagos || []);
         setVinculacionPagos(data.vinculacion_pagos || []);
       } catch (error) {
@@ -43,7 +43,7 @@ export function EstadoCuentaPanel({ memberId }: EstadoCuentaPanelProps) {
     return CuotasMiembro.map(f => {
       // Ignorar pagos anulados para no duplicar el monto (ya que el backend restauró el pendiente)
       const pagosDeEsta = vinculacionPagos.filter(vp => {
-        if (vp.id_Cuota !== f.id) return false;
+        if (vp.id_factura !== f.id) return false;
         const pagoInfo = pagos.find(p => p.id === vp.id_pago);
         return pagoInfo && pagoInfo.estado !== 'Anulada';
       });
@@ -189,7 +189,7 @@ export function EstadoCuentaPanel({ memberId }: EstadoCuentaPanelProps) {
                       ) : (
                         <div className="space-y-3">
                           {Cuota.pagosAplicados.map((vp: any) => (
-                            <div key={`${vp.id_Cuota}-${vp.id_pago}`} className="flex flex-col sm:flex-row sm:items-center justify-between bg-card p-3.5 rounded-xl border" style={{ borderColor: "var(--border)" }}>
+                            <div key={`${vp.id_factura}-${vp.id_pago}`} className="flex flex-col sm:flex-row sm:items-center justify-between bg-card p-3.5 rounded-xl border" style={{ borderColor: "var(--border)" }}>
                               <div className="mb-2 sm:mb-0">
                                 <p className="text-sm font-semibold" style={{ color: "var(--foreground)" }}>
                                   {vp.pagoInfo?.metodo_pago} - Ref: {vp.pagoInfo?.referencia}

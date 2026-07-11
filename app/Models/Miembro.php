@@ -26,6 +26,13 @@ class Miembro extends Authenticatable
     public function actualizarSaldoPendiente()
     {
         $this->saldo_pendiente = $this->facturas()->sum('pendiente');
+        
+        if ($this->saldo_pendiente >= 100) {
+            $this->solvencia = 'Insolvente';
+        } else {
+            $this->solvencia = 'Solvente';
+        }
+        
         $this->save();
     }
 }

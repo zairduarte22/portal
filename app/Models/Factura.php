@@ -25,4 +25,19 @@ class Factura extends Model
     {
         return $this->belongsTo(Miembro::class, 'id_miembro');
     }
+
+    protected static function booted()
+    {
+        static::saved(function ($factura) {
+            if ($factura->miembro) {
+                $factura->miembro->actualizarSaldoPendiente();
+            }
+        });
+
+        static::deleted(function ($factura) {
+            if ($factura->miembro) {
+                $factura->miembro->actualizarSaldoPendiente();
+            }
+        });
+    }
 }

@@ -12,7 +12,7 @@ export default function LotesTab() {
   const [showDetalleModal, setShowDetalleModal] = useState<any | null>(null);
   const [showAbonoModal, setShowAbonoModal] = useState<any | null>(null);
   const [abonoForm, setAbonoForm] = useState({
-    fecha: new Date().toISOString().split('T')[0]
+    fecha: format(new Date(), 'yyyy-MM-dd')
   });
   
   const [pagosLista, setPagosLista] = useState<any[]>([]);
@@ -25,7 +25,7 @@ export default function LotesTab() {
 
   // Formulario de Nueva Compra (Cabecera)
   const [compraHeader, setCompraHeader] = useState({
-    fecha_compra: new Date().toISOString().split('T')[0],
+    fecha_compra: format(new Date(), 'yyyy-MM-dd'),
     referencia_factura: "",
     proveedor_id: "",
     tipo_compra: "Contado",
@@ -164,7 +164,7 @@ export default function LotesTab() {
       .then(async res => {
         if (!res.ok) throw new Error("Error al registrar abono");
         setShowAbonoModal(null);
-        setAbonoForm({ fecha: new Date().toISOString().split('T')[0] });
+        setAbonoForm({ fecha: format(new Date(), 'yyyy-MM-dd') });
         setPagosLista([]);
         loadCompras();
       })
@@ -188,7 +188,7 @@ export default function LotesTab() {
 
   const openNewCompra = () => {
     setCompraHeader({
-      fecha_compra: new Date().toISOString().split('T')[0],
+      fecha_compra: format(new Date(), 'yyyy-MM-dd'),
       referencia_factura: "",
       proveedor_id: "",
       tipo_compra: "Contado",

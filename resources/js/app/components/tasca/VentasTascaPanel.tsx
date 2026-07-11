@@ -19,7 +19,7 @@ export function VentasTascaPanel() {
   const [activeTab, setActiveTab] = useState<'historial' | 'abonos' | 'inventario'>('historial');
   const [ventaSeleccionada, setVentaSeleccionada] = useState<any>(null);
   
-  const today = new Date().toISOString().split('T')[0];
+  const today = format(new Date(), 'yyyy-MM-dd');
   const [startDate, setStartDate] = useState(today);
   const [endDate, setEndDate] = useState(today);
 

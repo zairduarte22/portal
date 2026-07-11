@@ -39,6 +39,10 @@ export function PagoModal({ isOpen, onClose, onSuccess, miembros, facturas, tasa
   const [facturaFondo, setFacturaFondo] = useState("");
   const [mesesProntoPago, setMesesProntoPago] = useState<number>(0);
   
+  // Local facturas state to allow appending new ones
+  const [localFacturas, setLocalFacturas] = useState<any[]>([]);
+  const [isAdelantando, setIsAdelantando] = useState(false);
+
   // Selected invoices state: a set of factura IDs
   const [selectedFacturas, setSelectedFacturas] = useState<Set<number>>(new Set());
 
@@ -58,6 +62,7 @@ export function PagoModal({ isOpen, onClose, onSuccess, miembros, facturas, tasa
       setMesesProntoPago(0);
       setSelectedFacturas(new Set());
     } else {
+      setLocalFacturas(facturas);
       if (isCreating) {
         if (tasaDia !== "") setTasaCambio(tasaDia);
       } else if (pagoToEdit) {
@@ -87,10 +92,11 @@ export function PagoModal({ isOpen, onClose, onSuccess, miembros, facturas, tasa
 
   // Filter members
   const filteredMembers = useMemo(() => {
+    const term = searchTerm.toLowerCase();
     return miembros.filter(m => 
-      m.razon_social.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      m.rif.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      m.acronimo.toLowerCase().includes(searchTerm.toLowerCase())
+      (m.razon_social || '').toLowerCase().includes(term) ||
+      (m.rif || '').toLowerCase().includes(term) ||
+      (m.acronimo || '').toLowerCase().includes(term)
     );
   }, [searchTerm, miembros]);
 
@@ -100,7 +106,7 @@ export function PagoModal({ isOpen, onClose, onSuccess, miembros, facturas, tasa
   const memberInvoices = useMemo(() => {
     if (!selectedMemberId) return [];
     
-    const pending = facturas.filter(f => f.id_miembro === selectedMemberId && Number(f.pendiente) > 0);
+    const pending = localFacturas.filter(f => f.id_miembro === selectedMemberId && Number(f.pendiente) > 0);
     const linked = (pagoToEdit?.facturas || []).filter((f: any) => f.id_miembro === selectedMemberId);
     
     const mergedMap = new Map();
@@ -108,7 +114,53 @@ export function PagoModal({ isOpen, onClose, onSuccess, miembros, facturas, tasa
     linked.forEach((f: any) => mergedMap.set(f.id, f));
     
     return Array.from(mergedMap.values()).sort((a: any, b: any) => new Date(a.fecha + "T12:00:00Z").getTime() - new Date(b.fecha + "T12:00:00Z").getTime());
-  }, [selectedMemberId, facturas, pagoToEdit]);
+  }, [selectedMemberId, localFacturas, pagoToEdit]);
+
+  const handleAdelantarCuotas = async () => {
+    if (!selectedMemberId) return;
+    const qty = window.prompt("¿Cuántos meses desea adelantar?", "1");
+    if (!qty) return;
+    const parsedQty = parseInt(qty, 10);
+    if (isNaN(parsedQty) || parsedQty <= 0) return;
+
+    setIsAdelantando(true);
+    try {
+      const token = document.head.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+      const response = await fetch('/api/facturas/adelantos', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'X-CSRF-TOKEN': token
+        },
+        body: JSON.stringify({
+          id_miembro: selectedMemberId,
+          cantidad_meses: parsedQty
+        })
+      });
+
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.error || 'Error al adelantar cuotas');
+      }
+
+      const data = await response.json();
+      setLocalFacturas(prev => [...prev, ...data.facturas]);
+      setNotification({
+        isOpen: true,
+        type: "success",
+        message: `Se adelantaron ${data.facturas.length} cuotas exitosamente.`
+      });
+    } catch (e: any) {
+      setNotification({
+        isOpen: true,
+        type: "error",
+        message: e.message
+      });
+    } finally {
+      setIsAdelantando(false);
+    }
+  };
 
   // Derived financial computations
   const descuentoTotal = mesesProntoPago * 5;
@@ -513,6 +565,18 @@ export function PagoModal({ isOpen, onClose, onSuccess, miembros, facturas, tasa
                           </label>
                         );
                       })}
+                    </div>
+                  )}
+                  {isCreating && selectedMemberId && (
+                    <div className="mt-4 flex justify-end">
+                      <button
+                        type="button"
+                        onClick={handleAdelantarCuotas}
+                        disabled={isAdelantando}
+                        className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold text-blue-600 bg-blue-50 hover:bg-blue-100 transition-colors"
+                      >
+                        {isAdelantando ? "Generando..." : "+ Adelantar Cuotas"}
+                      </button>
                     </div>
                   )}
                 </div>

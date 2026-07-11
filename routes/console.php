@@ -9,7 +9,11 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 // Programar la actualización de la tasa de cambio del dólar (DolarAPI)
-Schedule::command('app:fetch-tasa')->dailyAt('06:00');
+Schedule::call(function () {
+    Artisan::call('app:fetch-tasa');
+})->dailyAt('00:00');
 
 // Programar la generacion masiva de facturas mensuales (el dia 1 de cada mes a la 1:00 AM)
-Schedule::command('invoices:generate-monthly')->monthlyOn(1, '01:00');
+Schedule::call(function () {
+    Artisan::call('invoices:generate-monthly');
+})->monthlyOn(1, '01:00');

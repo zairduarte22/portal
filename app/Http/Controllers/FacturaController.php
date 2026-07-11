@@ -30,6 +30,11 @@ class FacturaController extends Controller
         \Illuminate\Support\Facades\DB::beginTransaction();
         try {
             foreach ($request->miembro_ids as $id_miembro) {
+                // Prevenir duplicados: si ya existe una factura para este mes, la saltamos
+                if (Factura::where('id_miembro', $id_miembro)->where('mes_cuota', $request->mes_cuota)->exists()) {
+                    continue;
+                }
+
                 $factura = Factura::create([
                     'id_miembro' => $id_miembro,
                     'monto' => $request->monto,
@@ -43,6 +48,65 @@ class FacturaController extends Controller
             }
             \Illuminate\Support\Facades\DB::commit();
             return response()->json(['message' => 'Facturas creadas exitosamente', 'facturas' => $facturas], 201);
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\DB::rollBack();
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    public function storeAdelantos(Request $request)
+    {
+        $request->validate([
+            'id_miembro' => 'required|exists:miembros,id',
+            'cantidad_meses' => 'required|integer|min:1|max:48',
+        ]);
+
+        $facturasGeneradas = [];
+        \Illuminate\Support\Facades\DB::beginTransaction();
+        try {
+            // Encontrar la última factura del miembro para saber desde qué mes arrancar
+            $ultimaFactura = Factura::where('id_miembro', $request->id_miembro)
+                                    ->orderBy('mes_cuota', 'desc')
+                                    ->first();
+
+            if ($ultimaFactura) {
+                // Arrancamos desde el mes siguiente a la última factura
+                $fechaInicio = \Carbon\Carbon::parse($ultimaFactura->mes_cuota)->addMonth();
+            } else {
+                // Si no tiene facturas, empezamos desde el mes actual
+                $fechaInicio = \Carbon\Carbon::now()->startOfMonth();
+            }
+
+            for ($i = 0; $i < $request->cantidad_meses; $i++) {
+                $mesCuota = $fechaInicio->copy()->addMonths($i)->toDateString();
+                
+                // Doble chequeo para no duplicar por si acaso
+                if (Factura::where('id_miembro', $request->id_miembro)->where('mes_cuota', $mesCuota)->exists()) {
+                    continue;
+                }
+
+                $factura = Factura::create([
+                    'id_miembro' => $request->id_miembro,
+                    'monto' => 25, // Monto base estándar de la cuota
+                    'pendiente' => 25,
+                    'mes_cuota' => $mesCuota,
+                    'fecha' => \Carbon\Carbon::now()->toDateString(), // Fecha de emisión hoy
+                ]);
+                $facturasGeneradas[] = $factura;
+            }
+
+            if (count($facturasGeneradas) > 0) {
+                // El saldo se actualiza automáticamente con el evento del modelo, pero forzamos uno al final
+                $facturasGeneradas[0]->miembro->actualizarSaldoPendiente();
+            }
+
+            \Illuminate\Support\Facades\DB::commit();
+            
+            // Retornamos las facturas generadas
+            return response()->json([
+                'message' => 'Adelantos generados', 
+                'facturas' => Factura::whereIn('id', collect($facturasGeneradas)->pluck('id'))->get()
+            ], 201);
         } catch (\Exception $e) {
             \Illuminate\Support\Facades\DB::rollBack();
             return response()->json(['error' => $e->getMessage()], 500);
