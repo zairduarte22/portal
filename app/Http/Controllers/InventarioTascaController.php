@@ -574,4 +574,135 @@ class InventarioTascaController extends Controller
         return response($pdf->Output('Inventario_Tasca_'.date('Ymd').'.pdf', 'I'))
             ->header('Content-Type', 'application/pdf');
     }
+
+    public function getMovimientos($id)
+    {
+        $insumo = InsumoTasca::findOrFail($id);
+        
+        $compras = LoteTasca::where('id_insumo', $id)
+            ->orderBy('fecha_compra', 'asc')
+            ->orderBy('id', 'asc')
+            ->get();
+            
+        $ventas_detalladas = \Illuminate\Support\Facades\DB::table('ventas_tasca_detalles')
+            ->join('ventas_tasca', 'ventas_tasca_detalles.id_venta', '=', 'ventas_tasca.id')
+            ->join('productos_tasca', 'ventas_tasca_detalles.id_producto', '=', 'productos_tasca.id')
+            ->leftJoin('miembros', 'ventas_tasca.id_miembro', '=', 'miembros.id')
+            ->where('productos_tasca.id_insumo', $id)
+            ->whereRaw("LOWER(ventas_tasca.estado) NOT IN ('anulada', 'anulado')")
+            ->select(
+                'ventas_tasca.fecha',
+                'ventas_tasca.estado',
+                'miembros.nombres as miembro_nombre',
+                'miembros.apellidos as miembro_apellido',
+                'productos_tasca.nombre as presentacion',
+                'ventas_tasca_detalles.cantidad',
+                'ventas_tasca_detalles.total',
+                'productos_tasca.medida_descuento'
+            )
+            ->orderBy('ventas_tasca.fecha', 'desc')
+            ->orderBy('ventas_tasca.id', 'desc')
+            ->get();
+            
+        // Calcular en base a las unidades de insumo reales consumidas (cantidad * medida_descuento)
+        $total_unidades = 0;
+        foreach ($ventas_detalladas as $v) {
+            $total_unidades += $v->cantidad * ($v->medida_descuento ?: 1);
+        }
+
+        $ventas_resumidas = [
+            'total_unidades_vendidas' => $total_unidades,
+            'total_ingresos' => $ventas_detalladas->whereNotIn('estado', ['Ajuste'])->sum('total'),
+        ];
+        
+        return response()->json([
+            'insumo' => $insumo,
+            'compras' => $compras,
+            'ventas_resumidas' => $ventas_resumidas,
+            'ventas_detalladas' => $ventas_detalladas
+        ]);
+    }
+
+    public function ajustarInventario(Request $request, $id)
+    {
+        $request->validate([
+            'tipo' => 'required|in:aumento,disminucion',
+            'cantidad' => 'required|numeric|min:0.01',
+            'motivo' => 'required|string|max:255'
+        ]);
+
+        \Illuminate\Support\Facades\DB::beginTransaction();
+        try {
+            $insumo = InsumoTasca::findOrFail($id);
+            
+            if ($request->tipo === 'aumento') {
+                LoteTasca::create([
+                    'id_insumo' => $id,
+                    'codigo_lote' => 'AJUSTE: ' . $request->motivo,
+                    'cantidad_comprada' => $request->cantidad,
+                    'costo_unitario' => 0,
+                    'stock_actual' => $request->cantidad,
+                    'fecha_compra' => \Carbon\Carbon::now()->toDateString(),
+                    'estado' => 'Activo'
+                ]);
+            } else {
+                $producto = \App\Models\ProductoTasca::where('id_insumo', $id)->first();
+                if (!$producto) {
+                    throw new \Exception("Debe tener al menos una presentacion configurada para disminuir.");
+                }
+                
+                $qty = $request->cantidad / ($producto->medida_descuento ?: 1);
+
+                $ventaId = \Illuminate\Support\Facades\DB::table('ventas_tasca')->insertGetId([
+                    'fecha' => \Carbon\Carbon::now()->toDateString(),
+                    'estado' => 'Ajuste', // Ignorado en reportes, pero descontado en recalculo
+                    'total' => 0,
+                    'pendiente' => 0,
+                    'descuento' => 0,
+                    'id_miembro' => null,
+                    'created_at' => now(),
+                    'updated_at' => now()
+                ]);
+
+                \Illuminate\Support\Facades\DB::table('ventas_tasca_detalles')->insert([
+                    'id_venta' => $ventaId,
+                    'id_producto' => $producto->id,
+                    'cantidad' => $qty,
+                    'precio_unitario' => 0,
+                    'total' => 0,
+                    'created_at' => now(),
+                    'updated_at' => now()
+                ]);
+
+                // Descontar inmediatamente de los lotes activos
+                $remaining = $request->cantidad;
+                $lotes = LoteTasca::where('id_insumo', $id)
+                    ->where('stock_actual', '>', 0)
+                    ->orderBy('fecha_compra', 'asc')
+                    ->orderBy('id', 'asc')
+                    ->get();
+                    
+                foreach ($lotes as $l) {
+                    if ($remaining <= 0) break;
+                    if ($l->stock_actual >= $remaining) {
+                        $l->stock_actual -= $remaining;
+                        if ($l->stock_actual == 0) $l->estado = 'Agotado';
+                        $l->save();
+                        $remaining = 0;
+                    } else {
+                        $remaining -= $l->stock_actual;
+                        $l->stock_actual = 0;
+                        $l->estado = 'Agotado';
+                        $l->save();
+                    }
+                }
+            }
+
+            \Illuminate\Support\Facades\DB::commit();
+            return response()->json(['message' => 'Inventario ajustado correctamente.']);
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\DB::rollBack();
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
 }

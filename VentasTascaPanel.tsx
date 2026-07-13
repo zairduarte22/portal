@@ -173,30 +173,23 @@ export function VentasTascaPanel() {
 
           docToDraw.setFont("helvetica", "bold");
           docToDraw.text("DESCRIPCIÓN", marginX, cursorY);
-          docToDraw.text("CANT", 38, cursorY);
-          docToDraw.text("USD", 50, cursorY);
-          docToDraw.text("BS", pageWidth - marginX - docToDraw.getTextWidth("BS"), cursorY);
+          docToDraw.text("CANT", pageWidth - marginX - 25, cursorY);
+          docToDraw.text("MONTO", pageWidth - marginX - docToDraw.getTextWidth("MONTO"), cursorY);
           cursorY += 4;
           docToDraw.setFont("helvetica", "normal");
 
           if (ventaDetallada.detalles) {
-              const tasaBcv = Number(ventaDetallada.tasa_bcv || 36.5);
               ventaDetallada.detalles.forEach((det: any) => {
-                 const nombreInsumo = det.producto?.insumo?.nombre || "";
-                 const nombreProd = det.producto?.nombre_completo || det.producto?.nombre || "Producto";
-                 const nombre = nombreInsumo ? `${nombreInsumo} - ${nombreProd}` : nombreProd;
-                 const nombreLines = docToDraw.splitTextToSize(nombre, 38 - marginX - 2);
+                 const nombre = det.producto ? (det.producto.nombre_completo || det.producto.nombre) : "Producto";
+                 const nombreLines = docToDraw.splitTextToSize(nombre, pageWidth - marginX * 2 - 30);
                  
                  let firstLine = true;
                  nombreLines.forEach((line: string) => {
                      docToDraw.text(line, marginX, cursorY);
                      if (firstLine) {
-                         const qtyStr = String(det.cantidad);
-                         docToDraw.text(qtyStr, 38 + docToDraw.getTextWidth("CANT")/2 - docToDraw.getTextWidth(qtyStr)/2, cursorY);
-                         const subUsd = Number(det.subtotal).toFixed(2);
-                         docToDraw.text(subUsd, 50 + docToDraw.getTextWidth("USD")/2 - docToDraw.getTextWidth(subUsd)/2, cursorY);
-                         const subBs = (Number(det.subtotal) * tasaBcv).toFixed(2);
-                         docToDraw.text(subBs, pageWidth - marginX - docToDraw.getTextWidth(subBs), cursorY);
+                         docToDraw.text(String(det.cantidad), pageWidth - marginX - 22, cursorY);
+                         const sub = `$${Number(det.subtotal).toFixed(2)}`;
+                         docToDraw.text(sub, pageWidth - marginX - docToDraw.getTextWidth(sub), cursorY);
                          firstLine = false;
                      }
                      cursorY += 3;
@@ -210,53 +203,21 @@ export function VentasTascaPanel() {
           cursorY += 5;
 
           docToDraw.setFont("helvetica", "bold");
-          docToDraw.text("TOTAL:", marginX, cursorY);
-          
-          const tasaBcv = Number(ventaDetallada.tasa_bcv || 36.5);
-          const totalUsdStr = Number(ventaDetallada.total).toFixed(2);
-          const totalBsStr = (Number(ventaDetallada.total) * tasaBcv).toFixed(2);
-
-          docToDraw.text(totalUsdStr, 50 + docToDraw.getTextWidth("USD")/2 - docToDraw.getTextWidth(totalUsdStr)/2, cursorY);
-          docToDraw.text(totalBsStr, pageWidth - marginX - docToDraw.getTextWidth(totalBsStr), cursorY);
+          docToDraw.text("TOTAL PAGADO (USD):", marginX, cursorY);
+          const totalUsdStr = `$${Number(ventaDetallada.total).toFixed(2)}`;
+          docToDraw.text(totalUsdStr, pageWidth - marginX - docToDraw.getTextWidth(totalUsdStr), cursorY);
           cursorY += 5;
-
-          docToDraw.setFontSize(7);
-          docToDraw.setFont("helvetica", "normal");
-          docToDraw.text(`Tasa BCV del día: Bs. ${tasaBcv.toFixed(2)}`, marginX, cursorY);
-          cursorY += 5;
-          docToDraw.setFontSize(8);
           
-          let totalPagadoBs = 0;
-          let totalPagadoUsd = 0;
+          let totalBs = 0;
           if (ventaDetallada.pagos) {
-             ventaDetallada.pagos.forEach((p:any) => {
-                 if (Number(p.monto_bs) > 0) {
-                     totalPagadoBs += Number(p.monto_bs);
-                 } else {
-                     totalPagadoUsd += Number(p.monto_usd || 0);
-                 }
-             });
+             ventaDetallada.pagos.forEach((p:any) => totalBs += Number(p.monto_bs || 0));
           }
           
-          if (totalPagadoUsd > 0 || totalPagadoBs > 0) {
-             docToDraw.setFont("helvetica", "bold");
-             cursorY += 2;
-             docToDraw.text("DETALLE DE PAGO", marginX, cursorY);
-             cursorY += 4;
-             docToDraw.setFont("helvetica", "normal");
-             if (totalPagadoUsd > 0) {
-                 docToDraw.text("Pagado en USD:", marginX, cursorY);
-                 const pagoUsdStr = `$${totalPagadoUsd.toFixed(2)}`;
-                 docToDraw.text(pagoUsdStr, pageWidth - marginX - docToDraw.getTextWidth(pagoUsdStr), cursorY);
-                 cursorY += 4;
-             }
-             if (totalPagadoBs > 0) {
-                 docToDraw.text("Pagado en Bs:", marginX, cursorY);
-                 const pagoBsStr = `Bs. ${totalPagadoBs.toFixed(2)}`;
-                 docToDraw.text(pagoBsStr, pageWidth - marginX - docToDraw.getTextWidth(pagoBsStr), cursorY);
-                 cursorY += 4;
-             }
-             cursorY += 1;
+          if (totalBs > 0) {
+             docToDraw.text("TOTAL PAGADO (Bs):", marginX, cursorY);
+             const totalBsStr = `Bs. ${totalBs.toFixed(2)}`;
+             docToDraw.text(totalBsStr, pageWidth - marginX - docToDraw.getTextWidth(totalBsStr), cursorY);
+             cursorY += 5;
           }
           
           cursorY += 2;

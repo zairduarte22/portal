@@ -73,7 +73,7 @@ class ImportarSaldosCsvCommand extends Command
                 $mesesEnteros = floor($meses);
                 $resto = $montoDeuda - ($mesesEnteros * $cuota);
 
-                // Empezar a cobrar siempre desde Julio 2026 hacia el futuro.
+                // Empezar a cobrar siempre desde Julio 2026 hacia el PASADO.
                 $mesInicio = Carbon::create(2026, 7, 1);
 
                 for ($i = 0; $i < $mesesEnteros; $i++) {
@@ -84,7 +84,7 @@ class ImportarSaldosCsvCommand extends Command
                         'monto' => $cuota,
                         'pendiente' => $cuota
                     ]);
-                    $mesInicio->addMonth();
+                    $mesInicio->subMonth(); // Vamos hacia atrás (junio, mayo, abril...)
                 }
 
                 // Si hay un saldo sobrante que no es múltiplo exacto de 25

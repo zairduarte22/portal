@@ -254,10 +254,141 @@ class PagoController extends Controller
             'metodo_pago' => 'required|string',
             'referencia' => 'nullable|string',
         ]);
+        
+        $oldFecha = $pago->fecha;
+        $oldReferencia = $pago->referencia;
+        $oldMetodo = $pago->metodo_pago;
+
         $dataToUpdate = $request->only(['fecha', 'metodo_pago']);
         $dataToUpdate['referencia'] = $request->referencia ?? 'CRUCE';
-        $pago->update($dataToUpdate);
-        return response()->json(['message' => 'Actualizado exitosamente', 'pago' => $pago]);
+        
+        DB::beginTransaction();
+        try {
+            $pago->update($dataToUpdate);
+            
+            // 1. Update libro_ventas
+            $libroVenta = DB::table('libro_ventas')->where('id_pago', $pago->id)->first();
+            if ($libroVenta) {
+                DB::table('libro_ventas')->where('id_pago', $pago->id)->update([
+                    'fecha' => $request->fecha,
+                    'metodo_pago' => $request->metodo_pago,
+                    'referencia' => $dataToUpdate['referencia']
+                ]);
+                
+                // Helper mapping
+                $getBankMapping = function($mp, $pagoObj) {
+                    if ($mp === 'Pago Movil/Transferencia') {
+                        return [
+                            'table' => 'cuenta_banco',
+                            'montoToSum' => $pagoObj->monto_bs,
+                            'bancoId' => DB::table('bancos')->where('nombre', 'BNC (Banco Nacional de Credito)')->value('id'),
+                            'tipoOperacion' => 'TRANSF'
+                        ];
+                    } elseif ($mp === 'Zelle') {
+                        return [
+                            'table' => 'cuenta_moneda_extranjera',
+                            'montoToSum' => $pagoObj->monto,
+                            'bancoId' => DB::table('bancos')->where('nombre', 'Zelle')->value('id'),
+                            'tipoOperacion' => 'TRANSF'
+                        ];
+                    } elseif ($mp === 'Efectivo Divisas') {
+                        return [
+                            'table' => 'cuenta_moneda_extranjera',
+                            'montoToSum' => $pagoObj->monto,
+                            'bancoId' => DB::table('bancos')->where('nombre', 'Efectivo Divisas')->value('id'),
+                            'tipoOperacion' => 'TRANSF'
+                        ];
+                    } elseif ($mp === 'Cruces') {
+                        return [
+                            'table' => 'cruces',
+                            'montoToSum' => $pagoObj->monto,
+                            'bancoId' => null,
+                            'tipoOperacion' => ''
+                        ];
+                    }
+                    return null;
+                };
+
+                $oldMapping = $getBankMapping($oldMetodo, $pago);
+                $newMapping = $getBankMapping($request->metodo_pago, $pago);
+                
+                if ($oldMapping && $newMapping) {
+                    $oldTable = $oldMapping['table'];
+                    $newTable = $newMapping['table'];
+                    
+                    // Encontrar el registro contable original por id_venta o por referencia+fecha
+                    $bankRecord = DB::table($oldTable)->where('id_venta', $libroVenta->id)->first();
+                    if (!$bankRecord) {
+                        $bankRecord = DB::table($oldTable)->where('referencia', $oldReferencia)->where('fecha', $oldFecha)->first();
+                    }
+                    
+                    if ($bankRecord) {
+                        if ($oldMetodo === $request->metodo_pago) {
+                            // Solo actualizamos fecha y referencia
+                            DB::table($oldTable)->where('id', $bankRecord->id)->update([
+                                'fecha' => $request->fecha,
+                                'referencia' => $dataToUpdate['referencia']
+                            ]);
+                        } else {
+                            // Se cambio de metodo de pago, restamos del viejo y agregamos al nuevo
+                            $col = ($oldTable === 'cruces') ? 'haber' : 'debe';
+                            if ($bankRecord->$col > $oldMapping['montoToSum']) {
+                                // Estaba agrupado con otros pagos, solo le restamos nuestro monto
+                                DB::table($oldTable)->where('id', $bankRecord->id)->update([
+                                    $col => $bankRecord->$col - $oldMapping['montoToSum']
+                                ]);
+                            } else {
+                                // Era el unico pago de ese movimiento, lo borramos
+                                DB::table($oldTable)->where('id', $bankRecord->id)->delete();
+                            }
+                            
+                            // Lo insertamos en la tabla/banco nuevos
+                            $existingNew = DB::table($newTable)
+                                ->where('referencia', $dataToUpdate['referencia'])
+                                ->where('fecha', $request->fecha)
+                                ->first();
+                                
+                            if ($existingNew) {
+                                $colNew = ($newTable === 'cruces') ? 'haber' : 'debe';
+                                DB::table($newTable)->where('id', $existingNew->id)->update([
+                                    $colNew => $existingNew->$colNew + $newMapping['montoToSum'],
+                                    'descripcion' => $existingNew->descripcion . " / FACT#" . str_replace("00-", "", $libroVenta->numero_control)
+                                ]);
+                            } else {
+                                if ($newTable === 'cruces') {
+                                    DB::table('cruces')->insert([
+                                        'id_venta' => $libroVenta->id,
+                                        'id_banco' => null,
+                                        'fecha' => $request->fecha,
+                                        'referencia' => $dataToUpdate['referencia'],
+                                        'descripcion' => "FACT#" . str_replace("00-", "", $libroVenta->numero_control),
+                                        'haber' => $newMapping['montoToSum']
+                                    ]);
+                                } else {
+                                    DB::table($newTable)->insert([
+                                        'id_banco' => $newMapping['bancoId'],
+                                        'id_venta' => $libroVenta->id,
+                                        'fecha' => $request->fecha,
+                                        'tipo_operacion' => $newMapping['tipoOperacion'],
+                                        'referencia' => $dataToUpdate['referencia'],
+                                        'descripcion' => "FACT#" . str_replace("00-", "", $libroVenta->numero_control),
+                                        'beneficiario' => 'Ingreso Particular',
+                                        'debe' => $newMapping['montoToSum'],
+                                        'haber' => 0
+                                    ]);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            
+            DB::commit();
+            return response()->json(['message' => 'Actualizado exitosamente', 'pago' => $pago]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['error' => 'Error al actualizar: ' . $e->getMessage()], 500);
+        }
     }
 
     public function anular($id)

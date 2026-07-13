@@ -123,6 +123,62 @@ Route::get('/eliminar-factura-vieja', function () {
     }
 });
 
+Route::get('/recalcular-existencias', function () {
+    try {
+        \Illuminate\Support\Facades\DB::beginTransaction();
+
+        // 1. Restaurar todos los lotes a su cantidad original
+        \Illuminate\Support\Facades\DB::statement('UPDATE lotes_tasca SET stock_actual = cantidad_comprada');
+
+        // 2. Obtener todo el consumo historico de ventas_tasca_detalles
+        $consumptions = \Illuminate\Support\Facades\DB::select("
+            SELECT p.id_insumo, SUM(d.cantidad * p.medida_descuento) as total_consumed
+            FROM ventas_tasca_detalles d
+            JOIN productos_tasca p ON d.id_producto = p.id
+            JOIN ventas_tasca v ON d.id_venta = v.id
+            WHERE LOWER(v.estado) NOT IN ('anulada', 'anulado')
+            GROUP BY p.id_insumo
+        ");
+
+        foreach ($consumptions as $c) {
+            $insumo_id = $c->id_insumo;
+            $remaining_to_consume = (float)$c->total_consumed;
+
+            // Obtener los lotes de este insumo (FIFO - Primero en entrar, primero en salir)
+            $lotes = \Illuminate\Support\Facades\DB::table('lotes_tasca')
+                ->where('id_insumo', $insumo_id)
+                ->orderBy('fecha_compra', 'asc')
+                ->orderBy('id', 'asc')
+                ->get();
+
+            foreach ($lotes as $lote) {
+                if ($remaining_to_consume <= 0) break;
+
+                $stock = (float)$lote->stock_actual;
+                if ($stock > 0) {
+                    if ($stock >= $remaining_to_consume) {
+                        \Illuminate\Support\Facades\DB::table('lotes_tasca')->where('id', $lote->id)->update([
+                            'stock_actual' => $stock - $remaining_to_consume
+                        ]);
+                        $remaining_to_consume = 0;
+                    } else {
+                        \Illuminate\Support\Facades\DB::table('lotes_tasca')->where('id', $lote->id)->update([
+                            'stock_actual' => 0
+                        ]);
+                        $remaining_to_consume -= $stock;
+                    }
+                }
+            }
+        }
+
+        \Illuminate\Support\Facades\DB::commit();
+        return "¡Éxito! Todas las existencias han sido recalculadas y sincronizadas con las ventas.";
+    } catch (\Exception $e) {
+        \Illuminate\Support\Facades\DB::rollBack();
+        return "Ocurrió un error: " . $e->getMessage();
+    }
+});
+
 Route::get('/{any}', function () {
     return view('app');
 })->where('any', '.*');

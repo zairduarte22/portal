@@ -172,6 +172,8 @@ Route::prefix('tasca')->group(function () {
     Route::post('/insumos', [\App\Http\Controllers\InventarioTascaController::class, 'storeInsumo']);
     Route::put('/insumos/{id}', [\App\Http\Controllers\InventarioTascaController::class, 'updateInsumo']);
     Route::delete('/insumos/{id}', [\App\Http\Controllers\InventarioTascaController::class, 'destroyInsumo']);
+    Route::get('/insumos/{id}/movimientos', [\App\Http\Controllers\InventarioTascaController::class, 'getMovimientos']);
+    Route::post('/insumos/{id}/ajustar', [\App\Http\Controllers\InventarioTascaController::class, 'ajustarInventario']);
     Route::post('/productos-completos', [\App\Http\Controllers\InventarioTascaController::class, 'storeProductoCompleto']);
     Route::put('/productos-completos/{id}', [\App\Http\Controllers\InventarioTascaController::class, 'updateProductoCompleto']);
     Route::get('/compras', [\App\Http\Controllers\InventarioTascaController::class, 'getCompras']);

@@ -73,26 +73,29 @@ class FacturaController extends Controller
                 // Arrancamos desde el mes siguiente a la última factura
                 $fechaInicio = \Carbon\Carbon::parse($ultimaFactura->mes_cuota)->addMonth();
             } else {
-                // Si no tiene facturas, empezamos desde el mes actual
-                $fechaInicio = \Carbon\Carbon::now()->startOfMonth();
+                // Si no tiene facturas (ej. migrado solvente), empezamos desde el MES SIGUIENTE al actual
+                $fechaInicio = \Carbon\Carbon::now()->addMonth()->startOfMonth();
             }
 
             for ($i = 0; $i < $request->cantidad_meses; $i++) {
                 $mesCuota = $fechaInicio->copy()->addMonths($i)->toDateString();
                 
-                // Doble chequeo para no duplicar por si acaso
-                if (Factura::where('id_miembro', $request->id_miembro)->where('mes_cuota', $mesCuota)->exists()) {
-                    continue;
-                }
+                // Usar firstOrCreate para evitar duplicados si el usuario hace doble clic rápido (race condition)
+                $factura = Factura::firstOrCreate(
+                    [
+                        'id_miembro' => $request->id_miembro,
+                        'mes_cuota' => $mesCuota,
+                    ],
+                    [
+                        'monto' => 25, // Monto base estándar de la cuota
+                        'pendiente' => 25,
+                        'fecha' => \Carbon\Carbon::now()->toDateString(), // Fecha de emisión hoy
+                    ]
+                );
 
-                $factura = Factura::create([
-                    'id_miembro' => $request->id_miembro,
-                    'monto' => 25, // Monto base estándar de la cuota
-                    'pendiente' => 25,
-                    'mes_cuota' => $mesCuota,
-                    'fecha' => \Carbon\Carbon::now()->toDateString(), // Fecha de emisión hoy
-                ]);
-                $facturasGeneradas[] = $factura;
+                if ($factura->wasRecentlyCreated) {
+                    $facturasGeneradas[] = $factura;
+                }
             }
 
             if (count($facturasGeneradas) > 0) {

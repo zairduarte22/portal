@@ -120,8 +120,6 @@ class TascaController extends Controller
     public function getVenta($id)
     {
         $venta = VentaTasca::with(['clienteForaneo', 'miembro', 'detalles.producto.insumo', 'pagos', 'autorizador'])->findOrFail($id);
-        $tasa = \DB::table('tasas')->orderBy('fecha', 'desc')->first();
-        $venta->tasa_bcv = $tasa ? (float) $tasa->monto : 36.5;
         return response()->json($venta);
     }
 
@@ -336,9 +334,7 @@ class TascaController extends Controller
         $endDate = $request->query('end_date', Carbon::now()->toDateString());
 
         // 1. Ventas del Periodo (Total USD de ventas cobradas o hechas en el periodo)
-        $ventasHoy = VentaTasca::whereBetween('fecha', [$startDate, $endDate])
-            ->whereNotIn('estado', ['Anulada', 'anulada'])
-            ->get();
+        $ventasHoy = VentaTasca::whereBetween('fecha', [$startDate, $endDate])->get();
         $totalVentasHoy = $ventasHoy->sum(function($v) { return $v->total - $v->descuento; });
 
         // 2. Desglose de métodos de pago (Pagos hechos en el periodo)
