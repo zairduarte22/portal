@@ -179,7 +179,7 @@ Route::get('/recalcular-existencias', function () {
     }
 });
 
+
 Route::get('/{any}', function () {
     return view('app');
 })->where('any', '.*');
-

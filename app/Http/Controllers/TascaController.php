@@ -121,7 +121,7 @@ class TascaController extends Controller
     {
         $venta = VentaTasca::with(['clienteForaneo', 'miembro', 'detalles.producto.insumo', 'pagos', 'autorizador'])->findOrFail($id);
         $tasa = \DB::table('tasas')->orderBy('fecha', 'desc')->first();
-        $venta->tasa_bcv = $tasa ? (float) $tasa->monto : 36.5;
+        $venta->tasa_bcv = $venta->tasa_bcv ?: ($tasa ? (float) $tasa->monto : 36.5);
         return response()->json($venta);
     }
 
@@ -137,13 +137,17 @@ class TascaController extends Controller
             return response()->json(['error' => 'Debe seleccionar un cliente o miembro para la venta.'], 400);
         }
 
+        $tasa = \DB::table('tasas')->orderBy('fecha', 'desc')->first();
+        $tasaActual = $tasa ? (float) $tasa->monto : 36.5;
+
         $venta = VentaTasca::create([
             'id_cliente_miembro' => $request->id_cliente_miembro,
             'id_cliente_tasca' => $request->id_cliente_tasca,
             'total' => 0,
             'descuento' => 0,
             'estado' => 'Pendiente',
-            'fecha' => Carbon::now()->toDateString()
+            'fecha' => Carbon::now()->toDateString(),
+            'tasa_bcv' => $tasaActual
         ]);
 
         return response()->json($venta, 201);
@@ -427,7 +431,7 @@ class TascaController extends Controller
             }
         }
 
-        $ventasPeriodo = VentaTasca::with('miembro')
+        $ventasPeriodo = VentaTasca::with(['miembro', 'clienteForaneo'])
             ->whereBetween('fecha', [$startDate, $endDate])
             ->whereIn('estado', ['Pagada', 'Credito', 'Parcial'])
             ->get();

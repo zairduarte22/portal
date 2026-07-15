@@ -1,0 +1,88 @@
+id_miembro,id_persona,nombre_persona,ci_numero,representante
+4,594,Jose Joaquin Fernandez Ferrer,36.129.337,True
+8,700,Iria Carmen Sandoval Luzardo,4.591.295,True
+12,375,Lenis Cecilia Rincon Romero,11.662.932,True
+16,395,Reinaldo Antonio Gonzalez Martinez,7.690.506,True
+23,432,Alexander David Rincon Gutierrez,25.449.147,True
+25,459,Nolasco Jose Triana Rodriguez,12.344.226,True
+30,519,Ricardo Jose Rincon Garcia,31.204.883,True
+31,526,Leobardo Enrique Cruz Soto,4.991.054,True
+35,773,Nelly Josefina Mestre de Salamanca,7.634.217,True
+43,640,Nelson David Martinez Palmar,26.241.761,True
+46,649,Juan Salvador Ferrante Pirela,27.717.847,True
+52,656,Jose Martin Romero Garcia,36.688.741,True
+54,668,Adafel De Jesus Romero Garcia,10.677.729,True
+57,673,Selfi Jose Cuevas,13.592.820,True
+61,684,Aura Ligia Gutierrez de Chacin,10.100.027,True
+62,688,Ricauter Ramon Reyes Aguirre,9.844.040,True
+65,691,Leonardo Enrique Castillo Chavez,10.426.230,True
+69,692,Hernan Segundo Aguirre Sandoval,7.692.836,True
+71,698,Valeria Sierra Gonzalez,18.409.636,True
+81,701,Darwin Andres Berrueta Martinez,13.100.049,True
+89,710,Mauricio Andres Lopez Baptista,25.449.162,True
+94,711,Miguel Ernesto Chacin Martinez,10.436.133,True
+98,713,Eulises Enrique Chacin Quintero,2.880.792,True
+99,728,Wilson de Jesus Chacin Quintero,3.465.635,True
+102,783,Pedro Jose Cipolat Martinez,4.707.490,True
+103,361,Juan Carlos Rodriguez Romero,7.937.820,True
+106,362,Carlos Augusto Fernandez Martinez,11.256.769,True
+119,371,Alvaro Luis Finol Romero,4.989.426,True
+123,376,Ezequiel Segundo Garcia Aguirre,11.662.877,True
+124,384,Luis Alfonso Garcia Villasmil,18.704.096,True
+141,749,Maria Jose Romero Sandoval,34.828.668,True
+152,392,Carmelo Antonio Morales Wiles,4.989.316,True
+159,759,Pablo Martin Martinez Rincon,28.319.788,True
+160,396,Aliria Violeta Gonzalez de Sierra,7.630.348,True
+171,399,Pedro Manuel Maioriello Montero,13.592.621,True
+174,404,Douglas Enrique Rincon Gonzalez,4.988.363,True
+185,406,Laura Berrueta Montero,11.255.115,True
+198,409,Carolina Romero Gaddi,14.945.187,True
+199,414,Pasqual Jose Maioriello Ugas,11.256.302,True
+202,415,Jesus Samuel Martinez Aguirre,7.633.668,True
+206,421,Johny Jose Martinez Aguirre,7.633.667,True
+214,423,Roberto Carlo Romero Perozo,14.945.044,True
+217,427,Ciro Segundo Mestre Gonzalez,3.467.675,True
+233,436,Victor Manuel Navarro Garcia,14.233.093,True
+236,445,Arevalo Omar Marquez Delgado,3.468.453,True
+242,453,Napoleon Adolfo Pacheco Corona,2.888.833,True
+252,467,Maria Luisa Przytulski Suarez,7.935.351,True
+255,766,Oslardo Enrique Martinez Martinez,11.661.198,True
+260,474,Armilo Antonio Rincon Suarez,2.888.369,True
+261,738,Francisco Javier Pirela Garcia,16.549.029,True
+262,478,Mary Juana Gonzalez Carmona,7.691.740,True
+266,483,Ruben Dario Romero Vera,13.101.051,True
+269,489,Zaida Carmen Romero Tapia,4.987.337,True
+272,493,Wilmer Alberto Quintero Fernandez,5.854.038,True
+278,731,Franco Alfredo Saab Zuleta,14.682.974,True
+284,504,Maria Eugenia Finol de Lossada,4.153.180,True
+285,506,Silfredo Geraldo Sandoval Romero,7.818.984,True
+289,508,Luis Enrique Diaz Sandoval,4.593.039,True
+291,786,Hugo Jose Suarez Carmona,3.468.565,True
+299,515,Edgar Guzman Vargas Gutierrez,4.990.756,True
+309,520,Luvi Jose Zuleta Romero,3.273.779,True
+310,781,Juan Carlos Romero Mendez,11.661.737,True
+324,530,Adafel Enrique Berrueta Gutierrez,2.883.459,True
+328,535,Gerardo Javier Ferrante Landaeta,5.816.226,True
+334,539,Silvia Maria Aguirre Diaz,18.703.536,True
+363,545,Larry Martinez Martinez,10.676.381,True
+368,550,Leocadio Angel Walo Baez,3.800.008,True
+371,553,Ana Victoria Piña Aguirre,23.268.115,True
+376,557,Marcela Criscuolo Sandoval,31.845.262,True
+377,560,Orlando Rafael Rincon Vasquez,17.564.947,True
+379,562,Ana Cecilia Zuleta Romero,7.930.587,True
+385,564,Jose Carlos Finol Marti,19.392.988,True
+388,566,Mario Alfredo Saab Zuleta,12.758.239,True
+389,570,Camilo Alfredo Saab Zuleta,12.344.216,True
+393,574,Ana Rosario Vargas Gutierrez,10.676.089,True
+396,579,Jonny Willian Vargas Gutierrez,7.693.992,True
+399,582,Enerdo Antonio Ferrer Ortega,4.592.272,True
+402,600,Luis Manuel Finol Lopez,11.256.379,True
+403,609,Raul Eduardo Collados Luzardo,17.460.667,True
+404,612,Heberto Manuel Finol Romero,14.682.338,True
+405,620,Jose Grabiel Cruz Soto,7.934.604,True
+407,621,Oscar Jesus Corona Moran,13.102.646,True
+408,626,Dulce Maria Contreras Acosta,25.819.799,True
+411,627,Jose Manuel Finol Martinez,7.633.796,True
+412,629,Angelica Maria Urdaneta Gomez,14.257.008,True
+413,634,Victor Raul Velarde Nava,7.687.072,True
+422,784,Mario Jose Fernandez Finol,18.305.077,True

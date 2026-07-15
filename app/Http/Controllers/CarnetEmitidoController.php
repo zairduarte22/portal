@@ -123,11 +123,10 @@ class CarnetEmitidoController extends Controller
             $motivo_invalidez = 'Carnet Inactivo';
         }
 
-        // Verificación en tiempo real de la solvencia
+        // Verificación de la solvencia
         $solvente = true;
         if ($carnet->miembro) {
-            $saldo = $carnet->miembro->facturas()->sum('pendiente');
-            if ($saldo > 0) {
+            if ($carnet->miembro->solvencia !== 'Solvente') {
                 $solvente = false;
                 $vigente = false;
                 $motivo_invalidez = 'Miembro Insolvente';

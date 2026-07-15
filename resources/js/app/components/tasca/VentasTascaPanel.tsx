@@ -139,8 +139,8 @@ export function VentasTascaPanel() {
           docToDraw.text("CLIENTE:", marginX, cursorY);
           cursorY += 4;
           docToDraw.setFont("helvetica", "normal");
-          const clienteName = ventaDetallada.miembro ? ventaDetallada.miembro.razon_social : (ventaDetallada.clienteForaneo ? ventaDetallada.clienteForaneo.nombre : "Consumidor Final");
-          const clienteRif = ventaDetallada.miembro ? ventaDetallada.miembro.rif : (ventaDetallada.clienteForaneo ? ventaDetallada.clienteForaneo.cedula_rif : "");
+          const clienteName = ventaDetallada.miembro ? ventaDetallada.miembro.razon_social : (ventaDetallada.cliente_foraneo ? ventaDetallada.cliente_foraneo.nombre : "Consumidor Final");
+          const clienteRif = ventaDetallada.miembro ? ventaDetallada.miembro.rif : (ventaDetallada.cliente_foraneo ? ventaDetallada.cliente_foraneo.cedula_rif : "");
           
           const nameLines = docToDraw.splitTextToSize(clienteName, pageWidth - marginX * 2);
           nameLines.forEach((line: string) => {
