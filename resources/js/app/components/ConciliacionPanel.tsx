@@ -166,13 +166,13 @@ export function ConciliacionPanel() {
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="bg-card rounded-2xl p-5 border" style={{ borderColor: "var(--border)" }}>
-          <p className="text-sm font-bold uppercase tracking-wider" style={{ color: "var(--muted-foreground)" }}>Total Haber (Ingresos)</p>
+          <p className="text-sm font-bold uppercase tracking-wider" style={{ color: "var(--muted-foreground)" }}>Total Debe (Ingresos)</p>
           <h2 className="text-2xl font-black mt-1 text-green-600">
             {activeTab === "ves" ? "Bs." : "$"} {totalIngresos.toFixed(2)}
           </h2>
         </div>
         <div className="bg-card rounded-2xl p-5 border" style={{ borderColor: "var(--border)" }}>
-          <p className="text-sm font-bold uppercase tracking-wider" style={{ color: "var(--muted-foreground)" }}>Total Debe (Egresos)</p>
+          <p className="text-sm font-bold uppercase tracking-wider" style={{ color: "var(--muted-foreground)" }}>Total Haber (Egresos)</p>
           <h2 className="text-2xl font-black mt-1 text-red-600">
             {activeTab === "ves" ? "Bs." : "$"} {totalEgresos.toFixed(2)}
           </h2>
@@ -242,13 +242,13 @@ export function ConciliacionPanel() {
                       </span>
                     </td>
                     <td className="px-4 py-4 whitespace-nowrap text-right">
-                      <span className="text-xs font-bold text-red-600">
-                        {Number(item.haber || 0) > 0 ? (activeTab === "ves" ? `Bs. ${Number(item.haber).toFixed(2)}` : `$${Number(item.haber).toFixed(2)}`) : "-"}
+                      <span className="text-xs font-bold text-green-600">
+                        {Number(item.debe || 0) > 0 ? (activeTab === "ves" ? `Bs. ${Number(item.debe).toFixed(2)}` : `$${Number(item.debe).toFixed(2)}`) : "-"}
                       </span>
                     </td>
                     <td className="px-4 py-4 whitespace-nowrap text-right">
-                      <span className="text-xs font-bold text-green-600">
-                        {Number(item.debe || 0) > 0 ? (activeTab === "ves" ? `Bs. ${Number(item.debe).toFixed(2)}` : `$${Number(item.debe).toFixed(2)}`) : "-"}
+                      <span className="text-xs font-bold text-red-600">
+                        {Number(item.haber || 0) > 0 ? (activeTab === "ves" ? `Bs. ${Number(item.haber).toFixed(2)}` : `$${Number(item.haber).toFixed(2)}`) : "-"}
                       </span>
                     </td>
                     <td className="px-4 py-4 whitespace-nowrap text-center">

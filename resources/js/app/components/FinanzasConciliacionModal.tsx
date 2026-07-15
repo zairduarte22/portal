@@ -122,24 +122,24 @@ export function FinanzasConciliacionModal({ isOpen, onClose, onSuccess, record, 
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-bold uppercase text-gray-500 tracking-wider">Debe (Egresos)</label>
+                <label className="text-xs font-bold uppercase text-gray-500 tracking-wider">Debe (Ingresos)</label>
                 <input
                   type="number"
                   step="0.01"
                   disabled={mode === "view"}
-                  className="w-full px-4 py-2.5 rounded-xl border outline-none bg-white focus:ring-2 focus:ring-purple-200 disabled:bg-gray-100 disabled:opacity-70 text-red-600 font-bold"
+                  className="w-full px-4 py-2.5 rounded-xl border outline-none bg-white focus:ring-2 focus:ring-purple-200 disabled:bg-gray-100 disabled:opacity-70 text-green-600 font-bold"
                   value={formData.debe || ""}
                   onChange={e => setFormData({ ...formData, debe: e.target.value })}
                 />
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-bold uppercase text-gray-500 tracking-wider">Haber (Ingresos)</label>
+                <label className="text-xs font-bold uppercase text-gray-500 tracking-wider">Haber (Egresos)</label>
                 <input
                   type="number"
                   step="0.01"
                   disabled={mode === "view"}
-                  className="w-full px-4 py-2.5 rounded-xl border outline-none bg-white focus:ring-2 focus:ring-purple-200 disabled:bg-gray-100 disabled:opacity-70 text-green-600 font-bold"
+                  className="w-full px-4 py-2.5 rounded-xl border outline-none bg-white focus:ring-2 focus:ring-purple-200 disabled:bg-gray-100 disabled:opacity-70 text-red-600 font-bold"
                   value={formData.haber || ""}
                   onChange={e => setFormData({ ...formData, haber: e.target.value })}
                 />
