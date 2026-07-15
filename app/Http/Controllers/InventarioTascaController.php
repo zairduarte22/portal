@@ -10,7 +10,80 @@ class InventarioTascaController extends Controller
 {
     public function getInsumos()
     {
-        return response()->json(InsumoTasca::with(['lotes', 'productos'])->get());
+        $insumos = InsumoTasca::with(['lotes', 'productos'])->get();
+        
+        $fechaHoy = \Carbon\Carbon::now();
+        $fechaHace3Meses = \Carbon\Carbon::now()->subMonths(3);
+        $tresMesesAtras = $fechaHace3Meses->toDateString();
+        
+        $diasPeriodo = $fechaHace3Meses->diffInDays($fechaHoy);
+        if ($diasPeriodo <= 0) $diasPeriodo = 90;
+
+        $ventasPorInsumo = \Illuminate\Support\Facades\DB::table('ventas_tasca_detalles')
+            ->join('ventas_tasca', 'ventas_tasca.id', '=', 'ventas_tasca_detalles.id_venta')
+            ->join('productos_tasca', 'productos_tasca.id', '=', 'ventas_tasca_detalles.id_producto')
+            ->where('ventas_tasca.fecha', '>=', $tresMesesAtras)
+            ->whereRaw("LOWER(ventas_tasca.estado) NOT IN ('anulada', 'anulado')")
+            ->select('productos_tasca.id_insumo', \Illuminate\Support\Facades\DB::raw('SUM(ventas_tasca_detalles.cantidad * productos_tasca.medida_descuento) as total_unidades_vendidas_3m'))
+            ->groupBy('productos_tasca.id_insumo')
+            ->pluck('total_unidades_vendidas_3m', 'productos_tasca.id_insumo');
+
+        $ventasDiariasRaw = \Illuminate\Support\Facades\DB::table('ventas_tasca_detalles')
+            ->join('ventas_tasca', 'ventas_tasca.id', '=', 'ventas_tasca_detalles.id_venta')
+            ->join('productos_tasca', 'productos_tasca.id', '=', 'ventas_tasca_detalles.id_producto')
+            ->where('ventas_tasca.fecha', '>=', $tresMesesAtras)
+            ->whereRaw("LOWER(ventas_tasca.estado) NOT IN ('anulada', 'anulado')")
+            ->select(
+                'productos_tasca.id_insumo', 
+                'ventas_tasca.fecha', 
+                \Illuminate\Support\Facades\DB::raw('SUM(ventas_tasca_detalles.cantidad * productos_tasca.medida_descuento) as cantidad_diaria')
+            )
+            ->groupBy('productos_tasca.id_insumo', 'ventas_tasca.fecha')
+            ->get();
+            
+        $ventasDiariasAgrupadas = $ventasDiariasRaw->groupBy('id_insumo');
+
+        $insumos->transform(function ($insumo) use ($ventasPorInsumo, $ventasDiariasAgrupadas, $diasPeriodo) {
+            $totalVendidas3m = $ventasPorInsumo->get($insumo->id, 0);
+            
+            // Promedio mensual para el Stock Máximo
+            $promedioMensual = $totalVendidas3m / 3;
+            $stockMaximo = $promedioMensual * 3; 
+
+            // CÁLCULO DE STOCK DE SEGURIDAD CON FÓRMULA ESTADÍSTICA
+            $Z = 1.65; // Factor para 95% de nivel de servicio
+            $LT = 7;   // Lead Time de 7 días
+            
+            $promedioDiario = $totalVendidas3m / $diasPeriodo;
+            $ventasDelInsumo = $ventasDiariasAgrupadas->get($insumo->id, collect());
+            
+            $sumaCuadrados = 0;
+            $diasConVentas = 0;
+            
+            foreach ($ventasDelInsumo as $ventaDia) {
+                $sumaCuadrados += pow($ventaDia->cantidad_diaria - $promedioDiario, 2);
+                $diasConVentas++;
+            }
+            
+            // Añadir la varianza de los días donde no hubo ninguna venta (cantidad = 0)
+            $diasSinVentas = $diasPeriodo - $diasConVentas;
+            if ($diasSinVentas > 0) {
+                $sumaCuadrados += $diasSinVentas * pow(0 - $promedioDiario, 2);
+            }
+            
+            $varianza = $sumaCuadrados / $diasPeriodo;
+            $desviacionEstandar = sqrt($varianza);
+            
+            $stockSeguridad = $Z * $desviacionEstandar * sqrt($LT);
+            
+            $insumo->stock_seguridad = round($stockSeguridad, 2);
+            $insumo->stock_maximo = round($stockMaximo, 2);
+            $insumo->ventas_3m = round($totalVendidas3m, 2);
+            
+            return $insumo;
+        });
+
+        return response()->json($insumos);
     }
 
     public function storeInsumo(Request $request)
@@ -587,17 +660,20 @@ class InventarioTascaController extends Controller
         $ventas_detalladas = \Illuminate\Support\Facades\DB::table('ventas_tasca_detalles')
             ->join('ventas_tasca', 'ventas_tasca_detalles.id_venta', '=', 'ventas_tasca.id')
             ->join('productos_tasca', 'ventas_tasca_detalles.id_producto', '=', 'productos_tasca.id')
-            ->leftJoin('miembros', 'ventas_tasca.id_miembro', '=', 'miembros.id')
+            ->leftJoin('miembros', 'ventas_tasca.id_cliente_miembro', '=', 'miembros.id')
+            ->leftJoin('clientes_tasca', 'ventas_tasca.id_cliente_tasca', '=', 'clientes_tasca.id')
             ->where('productos_tasca.id_insumo', $id)
             ->whereRaw("LOWER(ventas_tasca.estado) NOT IN ('anulada', 'anulado')")
             ->select(
+                'ventas_tasca.id as id_venta',
                 'ventas_tasca.fecha',
                 'ventas_tasca.estado',
-                'miembros.nombres as miembro_nombre',
-                'miembros.apellidos as miembro_apellido',
+                'miembros.razon_social as miembro_nombre',
+                'miembros.acronimo as miembro_apellido',
+                'clientes_tasca.nombre as cliente_foraneo_nombre',
                 'productos_tasca.nombre as presentacion',
                 'ventas_tasca_detalles.cantidad',
-                'ventas_tasca_detalles.total',
+                'ventas_tasca_detalles.subtotal as total',
                 'productos_tasca.medida_descuento'
             )
             ->orderBy('ventas_tasca.fecha', 'desc')
@@ -659,7 +735,7 @@ class InventarioTascaController extends Controller
                     'total' => 0,
                     'pendiente' => 0,
                     'descuento' => 0,
-                    'id_miembro' => null,
+                    'id_cliente_miembro' => null,
                     'created_at' => now(),
                     'updated_at' => now()
                 ]);
@@ -669,7 +745,7 @@ class InventarioTascaController extends Controller
                     'id_producto' => $producto->id,
                     'cantidad' => $qty,
                     'precio_unitario' => 0,
-                    'total' => 0,
+                    'subtotal' => 0,
                     'created_at' => now(),
                     'updated_at' => now()
                 ]);

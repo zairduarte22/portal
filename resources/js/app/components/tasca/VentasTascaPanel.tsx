@@ -14,6 +14,7 @@ export function VentasTascaPanel() {
   const [ventas, setVentas] = useState<any[]>([]);
   const [estadisticas, setEstadisticas] = useState<any>(null);
   const [search, setSearch] = useState("");
+  const [filterEstado, setFilterEstado] = useState("");
   const [showNuevaVenta, setShowNuevaVenta] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
   const [activeTab, setActiveTab] = useState<'historial' | 'abonos' | 'inventario'>('historial');
@@ -307,10 +308,12 @@ export function VentasTascaPanel() {
     }
   };
 
-  const filtered = ventas.filter(v => 
-    getClienteNombre(v).toLowerCase().includes(search.toLowerCase()) || 
-    v.id.toString().includes(search)
-  );
+  const filtered = ventas.filter(v => {
+    const matchSearch = getClienteNombre(v).toLowerCase().includes(search.toLowerCase()) || 
+                        v.id.toString().includes(search);
+    const matchEstado = filterEstado === "" || v.estado === filterEstado;
+    return matchSearch && matchEstado;
+  });
 
   return (
     <div className="space-y-5">
@@ -422,16 +425,32 @@ export function VentasTascaPanel() {
       )}
 
       <div className="p-6 rounded-2xl shadow-sm" style={{ backgroundColor: "var(--card)", border: "1px solid var(--border)" }}>
-        <div className="relative mb-6">
-          <Search className="absolute left-3 top-3 text-gray-400" size={18} />
-          <input
-            type="text"
-            placeholder="Buscar por cliente o ID de venta..."
-            className="w-full pl-10 pr-4 py-2 rounded-xl border focus:outline-none focus:ring-2 focus:ring-green-500"
-            style={{ backgroundColor: "var(--background)", color: "var(--foreground)", borderColor: "var(--border)" }}
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
+        <div className="flex gap-4 mb-6">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-3 text-gray-400" size={18} />
+            <input
+              type="text"
+              placeholder="Buscar por cliente o ID de venta..."
+              className="w-full pl-10 pr-4 py-2 rounded-xl border focus:outline-none focus:ring-2 focus:ring-green-500"
+              style={{ backgroundColor: "var(--background)", color: "var(--foreground)", borderColor: "var(--border)" }}
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+          <div className="w-64">
+            <select
+              className="w-full px-4 py-2 rounded-xl border focus:outline-none focus:ring-2 focus:ring-green-500"
+              style={{ backgroundColor: "var(--background)", color: "var(--foreground)", borderColor: "var(--border)" }}
+              value={filterEstado}
+              onChange={(e) => setFilterEstado(e.target.value)}
+            >
+              <option value="">Todos los estados</option>
+              <option value="Pagada">Pagada</option>
+              <option value="Pendiente">Pendiente</option>
+              <option value="Crédito">Crédito</option>
+              <option value="Anulada">Anulada</option>
+            </select>
+          </div>
         </div>
 
         <div className="overflow-x-auto">

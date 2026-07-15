@@ -245,6 +245,7 @@ class TascaController extends Controller
     public function pagarVenta(Request $request, $id)
     {
         $venta = VentaTasca::with('pagos')->findOrFail($id);
+        $estadoAnterior = $venta->estado;
         
         if ($venta->estado === 'Pagada' || $venta->estado === 'Anulada') {
             return response()->json(['error' => 'La venta ya está pagada o anulada.'], 400);
@@ -306,16 +307,19 @@ class TascaController extends Controller
             }
             
             // Verificación unificada para crédito o saldo parcial (crédito)
+            // SOLO si la venta no era ya un crédito o parcial anteriormente
             if (($venta->estado === 'Parcial' || $venta->estado === 'Credito') && $totalPagado < $totalVenta) {
-                if ($request->id_autorizador) {
-                    $venta->id_autorizador = $request->id_autorizador;
-                } else {
-                    if (!$venta->id_cliente_miembro) {
-                        throw new \Exception("Se requiere autorización de un director para créditos a clientes foráneos.");
-                    }
-                    $miembro = Miembro::find($venta->id_cliente_miembro);
-                    if ($miembro->solvencia !== 'Solvente') {
-                        throw new \Exception("Se requiere autorización de un director para créditos a miembros insolventes.");
+                if ($estadoAnterior !== 'Credito' && $estadoAnterior !== 'Parcial') {
+                    if ($request->id_autorizador) {
+                        $venta->id_autorizador = $request->id_autorizador;
+                    } else {
+                        if (!$venta->id_cliente_miembro) {
+                            throw new \Exception("Se requiere autorización de un director para créditos a clientes foráneos.");
+                        }
+                        $miembro = Miembro::find($venta->id_cliente_miembro);
+                        if ($miembro->solvencia !== 'Solvente') {
+                            throw new \Exception("Se requiere autorización de un director para créditos a miembros insolventes.");
+                        }
                     }
                 }
             }

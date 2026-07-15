@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { Plus, Edit2, Trash2, Search, Package, Beaker, ChevronDown, ChevronUp } from "lucide-react";
+import { Plus, Edit2, Trash2, Search, Package, Beaker, ChevronDown, ChevronUp, History } from "lucide-react";
+import { MovimientosInsumoView } from "./MovimientosInsumoView";
 
 interface Presentacion {
   id?: number;
@@ -15,6 +16,7 @@ export default function ProductosTab() {
   const [showModal, setShowModal] = useState(false);
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [movimientosInsumo, setMovimientosInsumo] = useState<{id: number, nombre: string} | null>(null);
   
   // Modal state
   const [formData, setFormData] = useState({
@@ -146,7 +148,16 @@ export default function ProductosTab() {
 
   return (
     <div className="p-6 rounded-2xl shadow-sm" style={{ backgroundColor: "var(--card)", border: "1px solid var(--border)" }}>
-      <div className="flex justify-between mb-6">
+      {movimientosInsumo ? (
+        <MovimientosInsumoView
+          insumoId={movimientosInsumo.id}
+          insumoNombre={movimientosInsumo.nombre}
+          onClose={() => setMovimientosInsumo(null)}
+          onAdjusted={loadProductos}
+        />
+      ) : (
+        <>
+          <div className="flex justify-between mb-6">
         <div className="relative w-1/2">
           <Search className="absolute left-3 top-3 text-gray-400" size={18} />
           <input
@@ -174,7 +185,9 @@ export default function ProductosTab() {
               <th className="pb-3 font-semibold text-sm w-8"></th>
               <th className="pb-3 font-semibold text-sm">Producto Base</th>
               <th className="pb-3 font-semibold text-sm">Categoría</th>
-              <th className="pb-3 font-semibold text-sm">Stock Total (Unidades)</th>
+              <th className="pb-3 font-semibold text-sm text-center">Stock Actual</th>
+              <th className="pb-3 font-semibold text-sm text-center">Stock Seguridad</th>
+              <th className="pb-3 font-semibold text-sm text-center">Stock Máximo</th>
               <th className="pb-3 font-semibold text-sm text-right">Acciones</th>
             </tr>
           </thead>
@@ -192,12 +205,29 @@ export default function ProductosTab() {
                     {p.nombre}
                   </td>
                   <td className="py-3 text-sm text-gray-600">{p.categoria || '-'}</td>
-                  <td className="py-3">
-                    <span className={`px-3 py-1 rounded-full text-xs font-bold ${p.stock_total > 5 ? 'bg-green-100 text-green-700' : p.stock_total > 0 ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'}`}>
-                      {parseFloat(p.stock_total).toFixed(2)} Unds
+                  <td className="py-3 text-center">
+                    <span className={`px-3 py-1 rounded-full text-xs font-bold ${
+                      p.stock_total <= (p.stock_seguridad || 0) && p.stock_total > 0
+                        ? 'bg-yellow-100 text-yellow-700' // Alerta si está por debajo del stock de seguridad
+                        : p.stock_total === 0 
+                          ? 'bg-red-100 text-red-700' 
+                          : p.stock_total > (p.stock_maximo || 999999) 
+                            ? 'bg-purple-100 text-purple-700' // Exceso de stock
+                            : 'bg-green-100 text-green-700'
+                    }`}>
+                      {parseFloat(p.stock_total).toFixed(2)}
                     </span>
                   </td>
+                  <td className="py-3 text-center text-sm font-semibold text-gray-500">
+                    {p.stock_seguridad !== undefined ? parseFloat(p.stock_seguridad).toFixed(2) : '-'}
+                  </td>
+                  <td className="py-3 text-center text-sm font-semibold text-gray-500">
+                    {p.stock_maximo !== undefined ? parseFloat(p.stock_maximo).toFixed(2) : '-'}
+                  </td>
                   <td className="py-3 text-right space-x-2 whitespace-nowrap">
+                    <button onClick={() => setMovimientosInsumo({id: p.id, nombre: p.nombre})} className="p-2 bg-purple-50 text-purple-600 rounded-lg hover:bg-purple-100 transition-colors" title="Historial de Movimientos y Ajustes">
+                      <History size={16} />
+                    </button>
                     <button onClick={() => openEdit(p)} className="p-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors" title="Editar Producto y Presentaciones">
                       <Edit2 size={16} />
                     </button>
@@ -208,7 +238,7 @@ export default function ProductosTab() {
                 </tr>
                 {expandedId === p.id && (
                   <tr className="bg-gray-50/50">
-                    <td colSpan={5} className="px-10 py-4">
+                    <td colSpan={7} className="px-10 py-4">
                       <h4 className="text-sm font-bold text-gray-600 mb-2 flex items-center gap-1">
                         <Beaker size={14} className="text-purple-500" /> Presentaciones de Venta Asociadas
                       </h4>
@@ -237,7 +267,7 @@ export default function ProductosTab() {
             ))}
             {filtered.length === 0 && (
               <tr>
-                <td colSpan={5} className="py-8 text-center text-gray-500">No se encontraron productos.</td>
+                <td colSpan={7} className="py-8 text-center text-gray-500">No se encontraron productos.</td>
               </tr>
             )}
           </tbody>
@@ -352,6 +382,9 @@ export default function ProductosTab() {
             </form>
           </div>
         </div>
+      )}
+
+        </>
       )}
     </div>
   );
