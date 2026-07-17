@@ -18,11 +18,49 @@ class ProductoTasca extends Model
 
     public function getCostoCalculadoAttribute()
     {
-        if ($this->id_insumo && $this->insumo && $this->insumo->lotesActivos) {
-            $lote = $this->insumo->lotesActivos->first();
-            if ($lote) {
-                $medida = $this->medida_descuento > 0 ? $this->medida_descuento : 1;
-                return round($lote->costo_unitario * $medida, 2);
+        if ($this->tipo === 'servicio') {
+            return 0; // Services do not have an inventory cost
+        }
+
+        if ($this->tipo === 'compuesto') {
+            $costoTotal = 0;
+            if ($this->relationLoaded('componentes')) {
+                foreach ($this->componentes as $comp) {
+                    $costoTotal += $comp->costo_calculado * $comp->pivot->cantidad;
+                }
+            } else {
+                foreach ($this->componentes()->get() as $comp) {
+                    $costoTotal += $comp->costo_calculado * $comp->pivot->cantidad;
+                }
+            }
+            return $costoTotal;
+        }
+
+        if ($this->id_insumo) {
+            $insumo = $this->relationLoaded('insumo') ? $this->insumo : null;
+            if ($insumo) {
+                $lote = null;
+                if ($insumo->relationLoaded('lotesActivos')) {
+                    $lote = $insumo->lotesActivos->first();
+                } elseif ($insumo->relationLoaded('lotes')) {
+                    $lote = $insumo->lotes->where('estado', 'Activo')->where('stock_actual', '>', 0)->sortBy('fecha_compra')->first();
+                } else {
+                    $lote = $insumo->lotesActivos()->first();
+                }
+                
+                if ($lote) {
+                    $medida = $this->medida_descuento > 0 ? $this->medida_descuento : 1;
+                    return round($lote->costo_unitario * $medida, 2);
+                }
+            } else if (!$this->relationLoaded('insumo')) {
+                // Si la relación no está cargada, fall back al DB (esto ocurre si es un solo producto)
+                if ($this->insumo && $this->insumo->lotesActivos) {
+                    $lote = $this->insumo->lotesActivos->first();
+                    if ($lote) {
+                        $medida = $this->medida_descuento > 0 ? $this->medida_descuento : 1;
+                        return round($lote->costo_unitario * $medida, 2);
+                    }
+                }
             }
         }
         return $this->precio; // Fallback to normal price if no cost found
@@ -30,12 +68,14 @@ class ProductoTasca extends Model
 
     public function getNombreCompletoAttribute()
     {
-        if ($this->id_insumo && $this->insumo) {
-            // Si el nombre de la presentación ya contiene el nombre del insumo, no lo duplicamos (ej. "Cacique" en ambos)
-            if (stripos($this->nombre, $this->insumo->nombre) !== false) {
-                return $this->nombre;
+        if ($this->id_insumo) {
+            $insumo = $this->relationLoaded('insumo') ? $this->insumo : InsumoTasca::find($this->id_insumo);
+            if ($insumo) {
+                if (stripos($this->nombre, $insumo->nombre) !== false) {
+                    return $this->nombre;
+                }
+                return $insumo->nombre . ' - ' . $this->nombre;
             }
-            return $this->insumo->nombre . ' - ' . $this->nombre;
         }
         return $this->nombre;
     }
@@ -50,13 +90,39 @@ class ProductoTasca extends Model
         return $this->belongsTo(InsumoTasca::class, 'id_insumo');
     }
 
+    public function componentes()
+    {
+        return $this->belongsToMany(ProductoTasca::class, 'productos_compuestos_detalles', 'id_padre', 'id_hijo')
+                    ->withPivot('cantidad');
+    }
+
     public function getStockAttribute()
     {
+        if ($this->tipo === 'servicio') {
+            return 999999; // Unlimited stock for services
+        }
+
+        if ($this->tipo === 'compuesto') {
+            $maxCombos = 999999;
+            $comps = $this->relationLoaded('componentes') ? $this->componentes : $this->componentes()->get();
+            if ($comps->isEmpty()) return 0;
+            
+            foreach ($comps as $comp) {
+                if ($comp->pivot->cantidad > 0) {
+                    $possible = floor($comp->stock / $comp->pivot->cantidad);
+                    if ($possible < $maxCombos) {
+                        $maxCombos = $possible;
+                    }
+                }
+            }
+            return $maxCombos;
+        }
+
         if (!$this->id_insumo) {
             return 0;
         }
         
-        $insumo = $this->insumo;
+        $insumo = $this->relationLoaded('insumo') ? $this->insumo : InsumoTasca::find($this->id_insumo);
         if (!$insumo) return 0;
         
         $totalMl = $insumo->stock_total;

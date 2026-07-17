@@ -210,7 +210,18 @@ export function ReporteVentasModal({ onClose }: { onClose: () => void }) {
                 
                 docToDraw.setFont("helvetica", "normal");
                 data.ventasCredito.forEach((vc: any) => {
-                    const nombre = vc.miembro ? vc.miembro.razon_social : (vc.cliente_foraneo ? vc.cliente_foraneo.nombre : `Factura #${vc.id}`);
+                    let nombre = "";
+                    if (vc.miembro) {
+                        if (vc.persona) {
+                            nombre = `${vc.persona.nombre} (${vc.miembro.razon_social})`;
+                        } else {
+                            nombre = vc.miembro.razon_social;
+                        }
+                    } else if (vc.cliente_foraneo) {
+                        nombre = vc.cliente_foraneo.nombre;
+                    } else {
+                        nombre = `Factura #${vc.id}`;
+                    }
                     docToDraw.text(nombre.substring(0, 20), marginX, cursorY);
                     const p = `$${Number(vc.pendiente).toFixed(2)}`;
                     docToDraw.text(p, pageWidth - marginX - docToDraw.getTextWidth(p), cursorY);

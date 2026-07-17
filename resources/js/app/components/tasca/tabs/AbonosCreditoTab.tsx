@@ -1,12 +1,14 @@
 import { useState, useEffect, useMemo } from "react";
 import { Search, DollarSign, Calendar, FileText, CheckSquare, Square, User } from "lucide-react";
 import { format } from "date-fns";
-
+import { jsPDF } from "jspdf";
+import autoTable from "jspdf-autotable";
 export function AbonosCreditoTab({ onOpenDetalle }: { onOpenDetalle: (venta: any) => void }) {
   const [ventas, setVentas] = useState<any[]>([]);
   const [search, setSearch] = useState("");
   
   const [showAbonoModal, setShowAbonoModal] = useState<any>(null);
+  const [showReportModal, setShowReportModal] = useState(false);
   const [selectedInvoices, setSelectedInvoices] = useState<number[]>([]);
   
   const [montoAbono, setMontoAbono] = useState("");
@@ -36,8 +38,11 @@ export function AbonosCreditoTab({ onOpenDetalle }: { onOpenDetalle: (venta: any
   }, []);
 
   const getClienteNombre = (v: any) => {
+    if (v.miembro) {
+      if (v.persona) return `${v.persona.nombre} (${v.miembro.razon_social})`;
+      return v.miembro.razon_social;
+    }
     if (v.cliente_foraneo) return v.cliente_foraneo.nombre;
-    if (v.miembro) return v.miembro.razon_social;
     return "Desconocido";
   };
 
@@ -152,6 +157,156 @@ export function AbonosCreditoTab({ onOpenDetalle }: { onOpenDetalle: (venta: any
     }
   };
 
+  const generarReporteGeneral = () => {
+    const doc = new jsPDF();
+    
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(22);
+    doc.setTextColor(30, 41, 59);
+    doc.text("REPORTE GENERAL DE CRÉDITOS", 14, 22);
+    
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(12);
+    doc.setTextColor(71, 85, 105);
+    doc.text(`Fecha de emisión: ${format(new Date(), 'dd/MM/yyyy - hh:mm a')}`, 14, 32);
+    
+    doc.setDrawColor(22, 163, 74);
+    doc.setLineWidth(1);
+    doc.line(14, 36, 196, 36);
+
+    let totalDeudaGlobal = 0;
+    const tableData = [] as any[];
+    
+    clientesAgrupados.forEach(grupo => {
+      totalDeudaGlobal += grupo.totalDeuda;
+      tableData.push([
+         grupo.clienteNombre,
+         grupo.ventas.length.toString(),
+         `$${grupo.totalDeuda.toFixed(2)}`
+      ]);
+    });
+    
+    autoTable(doc, {
+      startY: 45,
+      head: [['Cliente', 'Facturas Pendientes', 'Total Deuda']],
+      body: tableData,
+      foot: [[
+        { content: 'Total de Crédito Pendiente por Cobrar:', colSpan: 2, styles: { halign: 'right', fontStyle: 'bold', textColor: [0, 0, 0] } },
+        { content: `$${totalDeudaGlobal.toFixed(2)}`, styles: { halign: 'right', fontStyle: 'bold', textColor: [185, 28, 28] } }
+      ]],
+      theme: 'striped',
+      styles: { fontSize: 11, textColor: [0, 0, 0], cellPadding: 5, fontStyle: "bold", valign: 'middle' },
+      headStyles: { fillColor: [10, 65, 35], fontSize: 12, fontStyle: "bold", textColor: [255, 255, 255], valign: 'middle', halign: 'center' },
+      footStyles: { fillColor: [241, 245, 249], fontSize: 13 },
+      alternateRowStyles: { fillColor: [240, 253, 244] },
+      columnStyles: {
+        0: { halign: 'left' },
+        1: { halign: 'center' },
+        2: { halign: 'right', textColor: [185, 28, 28] }
+      }
+    });
+    
+    doc.save(`Reporte_General_Creditos_${format(new Date(), 'dd-MM-yyyy')}.pdf`);
+    setShowReportModal(false);
+  };
+
+  const generarReporteDeudores = () => {
+    const doc = new jsPDF();
+    
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(22);
+    doc.setTextColor(30, 41, 59);
+    doc.text("REPORTE DE DEUDORES - UGAVI BAR", 14, 22);
+    
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(12);
+    doc.setTextColor(71, 85, 105);
+    doc.text(`Fecha de emisión: ${format(new Date(), 'dd/MM/yyyy - hh:mm a')}`, 14, 32);
+    
+    doc.setDrawColor(22, 163, 74);
+    doc.setLineWidth(1);
+    doc.line(14, 36, 196, 36);
+
+    let startY = 45;
+    let totalDeudaGlobal = 0;
+    
+    clientesAgrupados.forEach(grupo => {
+      totalDeudaGlobal += grupo.totalDeuda;
+      
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(15);
+      doc.setTextColor(0, 0, 0);
+      doc.text(grupo.clienteNombre, 14, startY);
+      
+      const tableData = [] as any[];
+      
+      grupo.ventas.forEach((v: any) => {
+         const pagado = v.pagos?.reduce((acc: number, p: any) => acc + parseFloat(p.pivot?.monto_abonado_usd || 0), 0) || 0;
+         const totalFactura = parseFloat(v.total) - parseFloat(v.descuento || "0");
+         const saldo = getSaldoPendiente(v);
+         
+         const productosStr = v.detalles?.map((d:any) => `${d.cantidad}x ${d.producto?.nombre_completo || 'Producto'}`).join(', ') || 'Sin detalles';
+         
+         tableData.push([
+            `#${v.id}`,
+            format(new Date(v.fecha), 'dd/MM/yyyy'),
+            productosStr,
+            `$${totalFactura.toFixed(2)}`,
+            `$${pagado.toFixed(2)}`,
+            `$${saldo.toFixed(2)}`
+         ]);
+      });
+      
+      autoTable(doc, {
+        startY: startY + 5,
+        head: [['Factura', 'Fecha', 'Detalles de Compra', 'Total', 'Abonado', 'Saldo']],
+        body: tableData,
+        foot: [[
+          { content: 'Total de Crédito Pendiente por Cobrar:', colSpan: 5, styles: { halign: 'right', fontStyle: 'bold', textColor: [0, 0, 0] } },
+          { content: `$${grupo.totalDeuda.toFixed(2)}`, styles: { halign: 'right', fontStyle: 'bold', textColor: [185, 28, 28] } }
+        ]],
+        theme: 'striped',
+        styles: { fontSize: 10, textColor: [0, 0, 0], cellPadding: 4, fontStyle: "bold", valign: 'middle' },
+        headStyles: { fillColor: [10, 65, 35], fontSize: 11, fontStyle: "bold", textColor: [255, 255, 255], valign: 'middle', halign: 'center' },
+        footStyles: { fillColor: [241, 245, 249], fontSize: 12 },
+        alternateRowStyles: { fillColor: [240, 253, 244] },
+        columnStyles: {
+          0: { halign: 'center' },
+          1: { halign: 'center' },
+          2: { cellWidth: 'auto', halign: 'left' },
+          3: { halign: 'right' },
+          4: { halign: 'right' },
+          5: { halign: 'right', textColor: [185, 28, 28] }
+        }
+      });
+      
+      startY = (doc as any).lastAutoTable.finalY + 10;
+      
+      if (startY > 250) {
+         doc.addPage();
+         startY = 20;
+      }
+    });
+    
+    doc.setFillColor(241, 245, 249);
+    doc.setDrawColor(22, 163, 74);
+    doc.setLineWidth(1);
+    doc.rect(14, startY, 182, 20, 'FD');
+    
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(16);
+    doc.setTextColor(0, 0, 0);
+    doc.text("Total Créditos Pendientes Por Cobro:", 20, startY + 14);
+    
+    const globalText = `$${totalDeudaGlobal.toFixed(2)}`;
+    doc.setTextColor(185, 28, 28);
+    const gTextWidth = doc.getTextWidth(globalText);
+    doc.text(globalText, 190 - gTextWidth, startY + 14);
+    
+    doc.save(`Reporte_Deudores_UGAVIBAR_${format(new Date(), 'dd-MM-yyyy')}.pdf`);
+    setShowReportModal(false);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex gap-4 mb-4">
@@ -166,6 +321,13 @@ export function AbonosCreditoTab({ onOpenDetalle }: { onOpenDetalle: (venta: any
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
+        <button
+          onClick={() => setShowReportModal(true)}
+          className="flex items-center gap-2 px-4 py-2 text-sm font-bold bg-white border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors shadow-sm whitespace-nowrap"
+        >
+          <FileText size={18} className="text-red-500" />
+          Descargar PDF
+        </button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -307,6 +469,43 @@ export function AbonosCreditoTab({ onOpenDetalle }: { onOpenDetalle: (venta: any
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {showReportModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <div className="w-full max-w-md bg-white rounded-2xl shadow-xl overflow-hidden">
+            <div className="p-6">
+              <div className="w-12 h-12 bg-red-100 text-red-600 rounded-full flex items-center justify-center mb-4 mx-auto">
+                <FileText size={24} />
+              </div>
+              <h2 className="text-xl font-bold text-center text-gray-800 mb-2">Descargar Reporte PDF</h2>
+              <p className="text-sm text-gray-500 text-center mb-6">¿Qué tipo de reporte deseas generar?</p>
+              
+              <div className="space-y-3">
+                <button 
+                  onClick={generarReporteGeneral}
+                  className="w-full text-left p-4 rounded-xl border-2 border-transparent bg-gray-50 hover:bg-green-50 hover:border-green-200 transition-colors group"
+                >
+                  <h3 className="font-bold text-gray-800 group-hover:text-green-700">Reporte General (Resumido)</h3>
+                  <p className="text-xs text-gray-500 mt-1">Muestra solo la lista de clientes, cantidad de facturas pendientes y el total que debe cada uno.</p>
+                </button>
+
+                <button 
+                  onClick={generarReporteDeudores}
+                  className="w-full text-left p-4 rounded-xl border-2 border-transparent bg-gray-50 hover:bg-blue-50 hover:border-blue-200 transition-colors group"
+                >
+                  <h3 className="font-bold text-gray-800 group-hover:text-blue-700">Reporte Completo (Detallado)</h3>
+                  <p className="text-xs text-gray-500 mt-1">Muestra cada cliente desglosado con cada una de sus facturas y lo que compró.</p>
+                </button>
+              </div>
+            </div>
+            <div className="p-4 border-t bg-gray-50 flex justify-end">
+              <button onClick={() => setShowReportModal(false)} className="px-4 py-2 font-semibold text-gray-500 hover:text-gray-700 hover:bg-gray-200 rounded-lg transition-colors">
+                Cancelar
+              </button>
+            </div>
           </div>
         </div>
       )}

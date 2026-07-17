@@ -280,7 +280,7 @@ const ROLE_BADGES = [
 ];
 
 function initials(nombre: string) {
-  return nombre.split(" ").slice(0, 2).map((w) => w[0]).join("").toUpperCase();
+  return String(nombre || "").substring(0, 2).toUpperCase();
 }
 
 const AVATAR_GRADIENTS = [

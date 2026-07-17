@@ -179,6 +179,43 @@ Route::get('/recalcular-existencias', function () {
     }
 });
 
+Route::get('/aplicar-cambios', function () {
+    try {
+        // Ejecutar migraciones pendientes
+        \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
+        $migrateOutput = \Illuminate\Support\Facades\Artisan::output();
+
+        // Limpiar caché
+        \Illuminate\Support\Facades\Artisan::call('optimize:clear');
+        $optimizeOutput = \Illuminate\Support\Facades\Artisan::output();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Sistema actualizado correctamente.',
+            'migrate' => $migrateOutput,
+            'optimize' => $optimizeOutput
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error durante la actualización.',
+            'error' => $e->getMessage()
+        ], 500);
+    }
+});
+
+Route::get('/fix-storage', function () {
+    $path = public_path('storage');
+    if (is_link($path)) {
+        unlink($path);
+    } elseif (is_dir($path)) {
+        \Illuminate\Support\Facades\File::deleteDirectory($path);
+    } elseif (file_exists($path)) {
+        unlink($path);
+    }
+    \Illuminate\Support\Facades\Artisan::call('storage:link');
+    return 'Enlace de storage reparado con exito. Artisan output: ' . \Illuminate\Support\Facades\Artisan::output();
+});
 
 Route::get('/{any}', function () {
     return view('app');

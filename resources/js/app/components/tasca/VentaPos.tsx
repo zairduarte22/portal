@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, ShoppingCart, Check, Percent, CreditCard, Ban, Trash2, Search } from "lucide-react";
+import { ArrowLeft, ShoppingCart, Check, Percent, CreditCard, Ban, Trash2, Search, Package } from "lucide-react";
 
 export function VentaPos() {
   const { id } = useParams();
@@ -43,7 +43,10 @@ export function VentaPos() {
   const isUgavi = venta.cliente_foraneo && venta.cliente_foraneo.nombre?.toLowerCase() === 'ugavi';
   
   const subtotal = venta.detalles?.reduce((acc: number, d: any) => acc + parseFloat(d.subtotal), 0) || 0;
-  const total = subtotal;
+  
+  // Calcular descuento en vivo en el POS
+  const descuentoAplicable = isSolvente ? subtotal * 0.10 : 0;
+  const total = subtotal - descuentoAplicable;
 
   // Calculamos el saldo pendiente tomando en cuenta lo pagado anteriormente (si hubiera) y los pagos en memoria
   const pagadoAnteriormente = venta.pagos?.reduce((acc: number, p: any) => acc + parseFloat(p.pivot?.monto_abonado_usd || 0), 0) || 0;
@@ -217,7 +220,7 @@ export function VentaPos() {
           <div>
             <h1 className="text-2xl font-bold flex items-center gap-2">Venta #{venta.id}</h1>
             <p className="text-sm text-gray-500 font-medium mt-1 flex items-center gap-2">
-              {venta.miembro ? `${venta.miembro.razon_social} (Miembro)` : venta.cliente_foraneo ? `${venta.cliente_foraneo.nombre} (Foráneo)` : `Desconocido`} 
+              {venta.miembro ? (venta.persona ? `${venta.persona.nombre} (${venta.miembro.razon_social})` : `${venta.miembro.razon_social} (Miembro)`) : venta.cliente_foraneo ? `${venta.cliente_foraneo.nombre} (Foráneo)` : `Desconocido`}
               {venta.miembro && (
                  isSolvente 
                    ? <span className="px-2 py-0.5 bg-green-100 text-green-700 rounded-md font-bold text-xs">SOLVENTE</span>
@@ -278,16 +281,25 @@ export function VentaPos() {
                   key={p.id} 
                   onClick={() => handleAddProducto(p)}
                   disabled={isReadOnly || p.stock <= 0}
-                  className={`p-4 rounded-xl border text-left transition-all flex flex-col justify-between ${p.stock > 0 ? 'hover:border-green-500 hover:shadow-md cursor-pointer' : 'opacity-50 cursor-not-allowed'}`}
+                  className={`relative overflow-hidden rounded-xl border text-left transition-all flex flex-col justify-between ${p.stock > 0 ? 'hover:border-green-500 hover:shadow-md cursor-pointer' : 'opacity-50 cursor-not-allowed'}`}
                 >
-                  <div>
-                    <p className="font-bold text-sm mb-1 leading-tight break-words" title={p.nombre_completo || p.nombre}>{p.nombre_completo || p.nombre}</p>
-                    <p className="text-green-600 font-bold">
-                      ${isUgavi ? parseFloat(p.costo_calculado || p.precio).toFixed(2) : parseFloat(p.precio).toFixed(2)}
-                      {isUgavi && p.costo_calculado !== undefined && <span className="text-xs text-orange-500 ml-2">(Costo)</span>}
-                    </p>
+                  <div className="w-full h-24 bg-gray-100 flex items-center justify-center border-b">
+                    {p.insumo?.imagen_url || p.insumo?.imagen ? (
+                      <img src={p.insumo?.imagen_url || `/storage/${p.insumo.imagen}`} alt={p.nombre} className="w-full h-full object-cover" />
+                    ) : (
+                      <Package size={32} className="text-gray-300" />
+                    )}
                   </div>
-                  <p className="text-xs text-gray-400 mt-2">Stock: {p.stock}</p>
+                  <div className="p-3 flex-1 flex flex-col justify-between w-full">
+                    <div>
+                      <p className="font-bold text-sm mb-1 leading-tight break-words" title={p.nombre_completo || p.nombre}>{p.nombre_completo || p.nombre}</p>
+                      <p className="text-green-600 font-bold">
+                        ${isUgavi ? parseFloat(p.costo_calculado || p.precio).toFixed(2) : parseFloat(p.precio).toFixed(2)}
+                        {isUgavi && p.costo_calculado !== undefined && <span className="text-xs text-orange-500 ml-2">(Costo)</span>}
+                      </p>
+                    </div>
+                    <p className="text-xs text-gray-400 mt-2">Stock: {p.stock}</p>
+                  </div>
                 </button>
               ))}
             </div>
@@ -342,6 +354,15 @@ export function VentaPos() {
                   <span className="text-xs ml-1 opacity-70">Bs. {(subtotal * parseFloat(tasa || "1")).toFixed(2)}</span>
                 </div>
               </div>
+              {descuentoAplicable > 0 && (
+                <div className="flex justify-between text-green-600 font-bold bg-green-50 p-2 rounded-lg -mx-2">
+                  <span className="flex items-center gap-1">Descuento (10%) <span className="text-[10px] bg-green-200 text-green-800 px-1.5 py-0.5 rounded ml-1">Solvente</span></span>
+                  <div className="text-right">
+                    <span>-${descuentoAplicable.toFixed(2)}</span>
+                    <span className="text-xs ml-1 opacity-70">Bs. -{(descuentoAplicable * parseFloat(tasa || "1")).toFixed(2)}</span>
+                  </div>
+                </div>
+              )}
               <div className="flex justify-between text-lg font-bold border-t pt-2">
                 <span className="text-blue-600">Total Venta</span>
                 <div className="text-right text-blue-700">

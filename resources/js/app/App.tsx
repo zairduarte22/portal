@@ -14,11 +14,13 @@ import { ObligacionesPanel } from "./components/ObligacionesPanel";
 import { VentasTascaPanel } from "./components/tasca/VentasTascaPanel";
 import { VentaPos } from "./components/tasca/VentaPos";
 import { GestionTascaPanel } from "./components/tasca/GestionTascaPanel";
+import { ReportesTascaPanel } from "./components/tasca/ReportesTascaPanel";
 import { Miembro, Persona, Vinculacion, RelacionFamiliar } from "./components/mockData";
 import { Settings } from "lucide-react";
 import { Login } from "./components/Login";
 import { ConfiguracionesPanel } from "./components/ConfiguracionesPanel";
 import { CarnetPublico } from "./components/public/CarnetPublico";
+import { MenuPublico } from "./components/public/MenuPublico";
 // Placeholder for Public Portal
 function PublicPortal() {
   return (
@@ -201,6 +203,7 @@ export default function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/c/:id" element={<CarnetPublico />} />
+          <Route path="/menu" element={<MenuPublico />} />
           <Route path="/personal/login" element={<Login onLogin={setUser} />} />
           <Route path="*" element={<Navigate to="/personal/login" replace />} />
         </Routes>
@@ -212,6 +215,7 @@ export default function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/c/:id" element={<CarnetPublico />} />
+        <Route path="/menu" element={<MenuPublico />} />
         <Route path="/" element={<Navigate to={user.default_route ? `/gestion/${user.default_route}` : "/gestion/dashboard"} replace />} />
         
         <Route path="/gestion" element={<AdminLayout currentUser={user} onLogout={() => setUser(null)} />}>
@@ -256,6 +260,7 @@ export default function App() {
           <Route path="ventas-tasca" element={<ProtectedRoute moduleId="VentasTascaPanel" user={user}><VentasTascaPanel /></ProtectedRoute>} />
           <Route path="ventas-tasca/:id" element={<ProtectedRoute moduleId="VentasTascaPanel" user={user}><VentaPos /></ProtectedRoute>} />
           <Route path="tasca/gestion" element={<ProtectedRoute moduleId="GestionTascaPanel" user={user}><GestionTascaPanel /></ProtectedRoute>} />
+          <Route path="tasca/reportes" element={<ProtectedRoute moduleId="ReportesTascaPanel" user={user}><ReportesTascaPanel /></ProtectedRoute>} />
           <Route path="configuraciones" element={<ProtectedRoute moduleId="ConfiguracionesPanel" user={user}><ConfiguracionesPanel currentUser={user} /></ProtectedRoute>} />
           <Route path="reportes" element={<ProtectedRoute moduleId="Reports" user={user}><Reports members={members} personas={personas} /></ProtectedRoute>} />
           <Route path="" element={<Navigate to={user.default_route ? `/gestion/${user.default_route}` : "/gestion/dashboard"} replace />} />

@@ -26,7 +26,8 @@ const navGroups = [
     title: "La Tasca",
     items: [
       { id: "ventas-tasca", label: "Ventas (POS)", icon: Store, moduleId: "VentasTascaPanel" },
-      { id: "tasca/gestion", label: "Inventario y Reportes", icon: Package, moduleId: "GestionTascaPanel" },
+      { id: "tasca/gestion", label: "Inventario y Compras", icon: Package, moduleId: "GestionTascaPanel" },
+      { id: "tasca/reportes", label: "Reportes", icon: BarChart3, moduleId: "ReportesTascaPanel" },
     ]
   },
   {

@@ -14,6 +14,7 @@ export function NuevaVentaModal({ onClose, onVentaCreated }: { onClose: () => vo
   const [showFormNuevoCliente, setShowFormNuevoCliente] = useState(false);
   const [nuevoCliente, setNuevoCliente] = useState({ nombre: "", cedula: "", telefono: "" });
   const [loading, setLoading] = useState(false);
+  const [selectedMiembroForPersonas, setSelectedMiembroForPersonas] = useState<any | null>(null);
   const qrInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -27,12 +28,12 @@ export function NuevaVentaModal({ onClose, onVentaCreated }: { onClose: () => vo
     }
   }, [activeTab]);
 
-  const createVenta = (id_cliente_miembro: number | null, id_cliente_tasca: number | null) => {
+  const createVenta = (id_cliente_miembro: number | null, id_cliente_tasca: number | null, id_persona: number | null = null) => {
     setLoading(true);
     fetch("/api/tasca/ventas", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id_cliente_miembro, id_cliente_tasca })
+      body: JSON.stringify({ id_cliente_miembro, id_cliente_tasca, id_persona })
     }).then(async res => {
       if (!res.ok) throw new Error("Error al crear venta");
       const data = await res.json();
@@ -49,10 +50,11 @@ export function NuevaVentaModal({ onClose, onVentaCreated }: { onClose: () => vo
     const match = qrInput.match(/\/c\/([a-zA-Z0-9\-]+)/i);
     if (match && match[1]) {
       const carnetId = match[1];
-      const carnet = carnetsEmitidos.find(c => c.id == carnetId);
+      const safeCarnets = Array.isArray(carnetsEmitidos) ? carnetsEmitidos : [];
+      const carnet = safeCarnets.find(c => c.id == carnetId);
       
       if (carnet && carnet.id_miembro) {
-        createVenta(carnet.id_miembro, null);
+        createVenta(carnet.id_miembro, null, carnet.id_persona || null);
       } else {
         alert("El código QR pertenece a un carnet que no está vinculado a ningún miembro o no existe.");
         setQrInput("");
@@ -80,22 +82,27 @@ export function NuevaVentaModal({ onClose, onVentaCreated }: { onClose: () => vo
     });
   };
 
-  const filteredMiembros = miembros.filter(m => {
+  const safeMiembros = Array.isArray(miembros) ? miembros : [];
+  const safeForaneos = Array.isArray(clientesForaneos) ? clientesForaneos : [];
+
+  const filteredMiembros = safeMiembros.filter(m => {
+    if (!m) return false;
     const searchLower = searchMiembro.toLowerCase();
     return (
-      (m.razon_social && m.razon_social.toLowerCase().includes(searchLower)) ||
-      (m.rif && m.rif.toLowerCase().includes(searchLower)) ||
-      (m.acronimo && m.acronimo.toLowerCase().includes(searchLower)) ||
-      m.id.toString().includes(searchLower)
+      (m.razon_social && String(m.razon_social).toLowerCase().includes(searchLower)) ||
+      (m.rif && String(m.rif).toLowerCase().includes(searchLower)) ||
+      (m.acronimo && String(m.acronimo).toLowerCase().includes(searchLower)) ||
+      String(m.id).includes(searchLower)
     );
   });
 
-  const filteredForaneos = clientesForaneos.filter(c => {
+  const filteredForaneos = safeForaneos.filter(c => {
+    if (!c) return false;
     const searchLower = searchForaneo.toLowerCase();
     return (
-      (c.nombre && c.nombre.toLowerCase().includes(searchLower)) ||
-      (c.cedula && c.cedula.toLowerCase().includes(searchLower)) ||
-      (c.telefono && c.telefono.toLowerCase().includes(searchLower))
+      (c.nombre && String(c.nombre).toLowerCase().includes(searchLower)) ||
+      (c.cedula && String(c.cedula).toLowerCase().includes(searchLower)) ||
+      (c.telefono && String(c.telefono).toLowerCase().includes(searchLower))
     );
   });
 
@@ -135,43 +142,86 @@ export function NuevaVentaModal({ onClose, onVentaCreated }: { onClose: () => vo
 
         {activeTab === 'manual' && (
           <div className="space-y-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-3 text-gray-400" size={18} />
-              <input
-                type="text"
-                placeholder="Buscar miembro por Razón Social o RIF..."
-                className="w-full pl-10 pr-4 py-2 rounded-xl border focus:outline-none focus:ring-2 focus:ring-green-500"
-                style={{ backgroundColor: "var(--background)", color: "var(--foreground)" }}
-                value={searchMiembro}
-                onChange={(e) => setSearchMiembro(e.target.value)}
-              />
-            </div>
-            <div className="max-h-60 overflow-y-auto space-y-2 pr-2">
-              {filteredMiembros.map(m => {
-                return (
-                  <div key={m.id} className="flex justify-between items-center p-3 rounded-xl border hover:bg-gray-50/5 cursor-pointer transition-colors"
-                       onClick={() => createVenta(m.id, null)}>
-                    <div>
-                      <p className="font-semibold flex items-center gap-2">
-                        {m.razon_social}
-                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${m.solvencia === 'Solvente' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                          {m.solvencia === 'Solvente' ? 'SOLVENTE' : 'INSOLVENTE'}
-                        </span>
-                      </p>
-                      <p className="text-xs text-gray-500">{m.rif} • {m.acronimo}</p>
-                    </div>
-                    <button disabled={loading} className="px-3 py-1 bg-green-100 text-green-700 rounded-lg text-sm font-bold">
-                      Seleccionar
-                    </button>
-                  </div>
-                );
-              })}
-              {filteredMiembros.length === 0 && (
-                <div className="text-center py-4 text-sm text-gray-500 border border-dashed rounded-xl mt-2">
-                  No se encontró ningún miembro con esa búsqueda.
+            {!selectedMiembroForPersonas ? (
+              <>
+                <div className="relative">
+                  <Search className="absolute left-3 top-3 text-gray-400" size={18} />
+                  <input
+                    type="text"
+                    placeholder="Buscar miembro por Razón Social o RIF..."
+                    className="w-full pl-10 pr-4 py-2 rounded-xl border focus:outline-none focus:ring-2 focus:ring-green-500"
+                    style={{ backgroundColor: "var(--background)", color: "var(--foreground)" }}
+                    value={searchMiembro}
+                    onChange={(e) => setSearchMiembro(e.target.value)}
+                  />
                 </div>
-              )}
-            </div>
+                <div className="max-h-60 overflow-y-auto space-y-2 pr-2">
+                  {filteredMiembros.map(m => {
+                    return (
+                      <div key={m.id} className="flex justify-between items-center p-3 rounded-xl border hover:bg-gray-50/5 cursor-pointer transition-colors"
+                           onClick={() => setSelectedMiembroForPersonas(m)}>
+                        <div>
+                          <p className="font-semibold flex items-center gap-2">
+                            {m.razon_social || 'Sin Razón Social'}
+                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${m.solvencia === 'Solvente' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                              {m.solvencia === 'Solvente' ? 'SOLVENTE' : 'INSOLVENTE'}
+                            </span>
+                          </p>
+                          <p className="text-xs text-gray-500">{m.rif || 'Sin RIF'} • {m.acronimo || 'Sin Acrónimo'}</p>
+                        </div>
+                        <button className="px-3 py-1 bg-gray-100 text-gray-700 rounded-lg text-sm font-bold">
+                          Elegir
+                        </button>
+                      </div>
+                    );
+                  })}
+                  {filteredMiembros.length === 0 && (
+                    <div className="text-center py-4 text-sm text-gray-500 border border-dashed rounded-xl mt-2">
+                      No se encontró ningún miembro con esa búsqueda.
+                    </div>
+                  )}
+                </div>
+              </>
+            ) : (
+              <div className="space-y-4">
+                <div className="flex justify-between items-center mb-2">
+                  <div>
+                    <h3 className="font-bold text-gray-700">Seleccionar Persona a facturar</h3>
+                    <p className="text-sm text-gray-500">Miembro: {selectedMiembroForPersonas.razon_social}</p>
+                  </div>
+                  <button type="button" onClick={() => setSelectedMiembroForPersonas(null)} className="text-sm text-gray-500 hover:text-gray-700">Volver</button>
+                </div>
+                <div className="max-h-60 overflow-y-auto space-y-2 pr-2">
+                  {vinculaciones
+                    .filter(v => v.id_miembro === selectedMiembroForPersonas.id)
+                    .map(v => {
+                      const p = personas.find(per => per.id === v.id_persona);
+                      if (!p) return null;
+                      return (
+                        <div key={p.id} className="flex justify-between items-center p-3 rounded-xl border hover:bg-gray-50/5 cursor-pointer transition-colors"
+                             onClick={() => createVenta(selectedMiembroForPersonas.id, null, p.id)}>
+                          <div>
+                            <p className="font-semibold flex items-center gap-2">
+                              {p.nombre}
+                              {v.representante ? <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-700">REPRESENTANTE</span> : null}
+                            </p>
+                            <p className="text-xs text-gray-500">C.I: {p.ci_numero || 'N/A'} • {v.parentesco || 'Familiar'}</p>
+                          </div>
+                          <button disabled={loading} className="px-3 py-1 bg-green-100 text-green-700 rounded-lg text-sm font-bold">
+                            Facturar
+                          </button>
+                        </div>
+                      );
+                    })}
+                  {vinculaciones.filter(v => v.id_miembro === selectedMiembroForPersonas.id).length === 0 && (
+                    <div className="text-center py-4 text-sm text-gray-500 border border-dashed rounded-xl mt-2">
+                      Este miembro no tiene personas registradas.
+                      <button onClick={() => createVenta(selectedMiembroForPersonas.id, null, null)} className="block w-full mt-2 text-green-600 underline">Facturar directo al Miembro</button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         )}
 

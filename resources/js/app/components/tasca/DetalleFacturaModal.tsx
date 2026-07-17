@@ -13,9 +13,20 @@ export function DetalleFacturaModal({ venta, onClose }: { venta: any, onClose: (
   const saldoPendiente = Math.max(0, total - pagado);
 
   const getClienteNombre = () => {
+    if (venta.miembro) {
+      if (venta.persona) {
+        return `${venta.persona.nombre} (${venta.miembro.razon_social})`;
+      }
+      return venta.miembro.razon_social;
+    }
     if (venta.cliente_foraneo) return venta.cliente_foraneo.nombre;
-    if (venta.miembro) return venta.miembro.razon_social;
-    return "Desconocido";
+    return "Consumidor Final";
+  };
+
+  const getClienteInfo = () => {
+    if (venta.miembro) return `RIF: ${venta.miembro.rif}`;
+    if (venta.cliente_foraneo) return `C.I/RIF: ${venta.cliente_foraneo.cedula_rif || 'N/A'} - Tlf: ${venta.cliente_foraneo.telefono || 'N/A'}`;
+    return "";
   };
 
   return (
@@ -57,6 +68,9 @@ export function DetalleFacturaModal({ venta, onClose }: { venta: any, onClose: (
               }`}>
                 {venta.estado}
               </span>
+              {venta.fecha_vencimiento && (venta.estado === 'Credito' || venta.estado === 'Parcial') && (
+                <p className="text-xs text-red-500 mt-2 font-bold">Vence: {format(new Date(venta.fecha_vencimiento), 'dd/MM/yyyy')}</p>
+              )}
             </div>
             {venta.autorizador && (
               <div className="p-4 rounded-xl bg-orange-50 border border-orange-100 col-span-2 flex items-center justify-between">
@@ -95,17 +109,17 @@ export function DetalleFacturaModal({ venta, onClose }: { venta: any, onClose: (
           </div>
 
           <div className="bg-gray-50 p-4 rounded-2xl border border-gray-200 text-sm space-y-2">
-            <div className="flex justify-between text-gray-600">
+            <div className="flex justify-between items-center text-sm font-bold text-gray-500 pt-2 border-t border-gray-200 border-dashed">
               <span>Subtotal</span>
               <span>${subtotal.toFixed(2)}</span>
             </div>
             {descuento > 0 && (
-              <div className="flex justify-between text-green-600 font-bold">
-                <span>Descuento (5%)</span>
+              <div className="flex justify-between items-center text-sm font-bold text-green-600">
+                <span>Descuento Solvencia (10%)</span>
                 <span>-${descuento.toFixed(2)}</span>
               </div>
             )}
-            <div className="flex justify-between text-xl font-black text-blue-900 border-t border-gray-200 pt-3 mt-2">
+            <div className="flex justify-between items-center text-lg font-black text-gray-800 pt-2 border-t border-gray-200">
               <span>Total Facturado</span>
               <span>${total.toFixed(2)}</span>
             </div>

@@ -10,44 +10,19 @@ export function GestionTascaPanel() {
   const [showNotifications, setShowNotifications] = useState(false);
 
   const fetchNotifications = () => {
-    fetch("/api/tasca/insumos")
+    fetch("/api/tasca/notificaciones")
       .then(res => res.json())
       .then(data => {
         if (Array.isArray(data)) {
-          const today = new Date();
-          const thirtyDaysFromNow = new Date();
-          thirtyDaysFromNow.setDate(today.getDate() + 30);
-
-          const expiring: any[] = [];
-          data.forEach(insumo => {
-            if (insumo.lotes) {
-              insumo.lotes.forEach((lote: any) => {
-                if (lote.fecha_caducidad && parseFloat(lote.stock_actual) > 0) {
-                  // Ajustar fecha sumando 12 horas para evitar problemas de zona horaria si cae en día anterior
-                  const expDate = new Date(`${lote.fecha_caducidad}T12:00:00Z`);
-                  if (expDate <= thirtyDaysFromNow) {
-                    expiring.push({
-                      id: lote.id || Math.random(),
-                      insumo_nombre: insumo.nombre,
-                      fecha_caducidad: lote.fecha_caducidad,
-                      stock: lote.stock_actual,
-                      isExpired: expDate < today
-                    });
-                  }
-                }
-              });
-            }
-          });
-          setExpiringLotes(expiring);
+          setExpiringLotes(data);
         }
       })
       .catch(console.error);
   };
 
   useEffect(() => {
-    fetchNotifications();
-    const interval = setInterval(fetchNotifications, 5000); // Polling cada 5 segundos
-    return () => clearInterval(interval);
+    const timer = setTimeout(fetchNotifications, 1000); // Cargar notificaciones 1 segundo después
+    return () => clearTimeout(timer);
   }, []);
 
   return (
@@ -98,37 +73,50 @@ export function GestionTascaPanel() {
           {showNotifications && (
             <div className="absolute right-0 mt-2 w-80 bg-white border rounded-xl shadow-xl z-50 overflow-hidden">
               <div className="px-4 py-3 bg-gray-50 border-b flex items-center justify-between">
-                <span className="font-bold text-sm text-gray-700">Notificaciones</span>
-                <span className="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded-full font-bold">
-                  {expiringLotes.length} Alertas
+                <span className="font-bold text-gray-700">Notificaciones</span>
+                <span className="text-xs font-semibold text-gray-500 bg-gray-200 px-2 py-0.5 rounded-full">
+                  {expiringLotes.length} alertas
                 </span>
               </div>
-              <div className="max-h-80 overflow-y-auto">
+              <div className="bg-white">
                 {expiringLotes.length === 0 ? (
-                  <div className="p-4 text-center text-sm text-gray-500">
-                    No hay productos próximos a vencer.
+                  <div className="p-8 text-center text-gray-500 text-sm">
+                    No hay notificaciones ni alertas activas.
                   </div>
                 ) : (
-                  <div className="divide-y">
-                    {expiringLotes.map((lote) => (
-                      <div key={lote.id} className={`p-4 flex gap-3 ${lote.isExpired ? 'bg-red-50' : 'hover:bg-gray-50'}`}>
-                        <div className={`mt-0.5 ${lote.isExpired ? 'text-red-600' : 'text-amber-500'}`}>
+                  <div className="max-h-96 overflow-y-auto">
+                    {expiringLotes.map((notif: any) => (
+                      <div key={notif.id} className={`p-4 flex gap-3 ${notif.isExpired || notif.type === 'low_stock' ? 'bg-red-50' : 'hover:bg-gray-50'}`}>
+                        <div className={`mt-0.5 ${notif.isExpired || notif.type === 'low_stock' ? 'text-red-600' : 'text-amber-500'}`}>
                           <AlertTriangle size={16} />
                         </div>
                         <div>
                           <p className="text-sm font-bold text-gray-800">
-                            {lote.insumo_nombre}
+                            {notif.insumo_nombre}
                           </p>
-                          <p className="text-xs text-gray-600 mt-1">
-                            {lote.isExpired ? (
-                              <span className="text-red-600 font-semibold">¡Vencido el {lote.fecha_caducidad}!</span>
-                            ) : (
-                              <span>Vence el: <span className="font-semibold text-amber-600">{lote.fecha_caducidad}</span></span>
-                            )}
-                          </p>
-                          <p className="text-xs text-gray-500 mt-0.5">
-                            Stock restante: {lote.stock}
-                          </p>
+                          {notif.type === 'low_stock' ? (
+                            <>
+                              <p className="text-xs text-red-600 font-semibold mt-1">
+                                ¡Stock Crítico!
+                              </p>
+                              <p className="text-xs text-gray-500 mt-0.5">
+                                Stock actual: {notif.stock} (Mínimo: {notif.stock_seguridad})
+                              </p>
+                            </>
+                          ) : (
+                            <>
+                              <p className="text-xs text-gray-600 mt-1">
+                                {notif.isExpired ? (
+                                  <span className="text-red-600 font-semibold">¡Vencido el {notif.fecha_caducidad}!</span>
+                                ) : (
+                                  <span>Vence el: <span className="font-semibold text-amber-600">{notif.fecha_caducidad}</span></span>
+                                )}
+                              </p>
+                              <p className="text-xs text-gray-500 mt-0.5">
+                                Stock restante: {notif.stock}
+                              </p>
+                            </>
+                          )}
                         </div>
                       </div>
                     ))}

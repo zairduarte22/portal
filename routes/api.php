@@ -21,6 +21,7 @@ use App\Http\Controllers\TascaController;
 
 Route::post('/login', [AuthController::class, 'login']);
 Route::get('/carnets/public/{id}', [CarnetEmitidoController::class, 'showPublic']);
+Route::get('/tasca/menu-publico', [TascaController::class, 'getMenuPublico']);
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
@@ -158,6 +159,7 @@ Route::prefix('tasca')->group(function () {
     Route::get('/ventas/estadisticas', [TascaController::class, 'getEstadisticas']);
     Route::get('/ventas/reporte-pdf', [TascaController::class, 'reporteVentasPdf']);
     Route::get('/ventas/reporte-data', [TascaController::class, 'reporteVentasData']);
+    Route::get('/reportes/rendimiento', [TascaController::class, 'getReporteRendimiento']);
     Route::get('/ventas/{id}', [TascaController::class, 'getVenta']);
     Route::get('/ventas/{id}/ticket', [TascaController::class, 'ticketVentaPdf']);
     Route::post('/ventas', [TascaController::class, 'storeVenta']);
@@ -167,6 +169,7 @@ Route::prefix('tasca')->group(function () {
     Route::post('/ventas/{id}/anular', [TascaController::class, 'anularVenta']);
 
     // Inventario Avanzado (Insumos y Lotes)
+    Route::get('/notificaciones', [\App\Http\Controllers\InventarioTascaController::class, 'getNotificaciones']);
     Route::get('/insumos', [\App\Http\Controllers\InventarioTascaController::class, 'getInsumos']);
     Route::get('/insumos/reporte', [\App\Http\Controllers\InventarioTascaController::class, 'reporteInventario']);
     Route::post('/insumos', [\App\Http\Controllers\InventarioTascaController::class, 'storeInsumo']);

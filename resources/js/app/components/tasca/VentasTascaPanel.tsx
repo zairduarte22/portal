@@ -139,7 +139,18 @@ export function VentasTascaPanel() {
           docToDraw.text("CLIENTE:", marginX, cursorY);
           cursorY += 4;
           docToDraw.setFont("helvetica", "normal");
-          const clienteName = ventaDetallada.miembro ? ventaDetallada.miembro.razon_social : (ventaDetallada.cliente_foraneo ? ventaDetallada.cliente_foraneo.nombre : "Consumidor Final");
+          const personaNombre = ventaDetallada.persona ? ventaDetallada.persona.nombre : null;
+          const miembroNombre = ventaDetallada.miembro ? ventaDetallada.miembro.razon_social : null;
+          let clienteName = "";
+          if (personaNombre && miembroNombre) {
+              clienteName = `${personaNombre} (${miembroNombre})`;
+          } else if (miembroNombre) {
+              clienteName = miembroNombre;
+          } else if (ventaDetallada.cliente_foraneo) {
+              clienteName = ventaDetallada.cliente_foraneo.nombre;
+          } else {
+              clienteName = "Consumidor Final";
+          }
           const clienteRif = ventaDetallada.miembro ? ventaDetallada.miembro.rif : (ventaDetallada.cliente_foraneo ? ventaDetallada.cliente_foraneo.cedula_rif : "");
           
           const nameLines = docToDraw.splitTextToSize(clienteName, pageWidth - marginX * 2);
@@ -183,9 +194,7 @@ export function VentasTascaPanel() {
           if (ventaDetallada.detalles) {
               const tasaBcv = Number(ventaDetallada.tasa_bcv || 36.5);
               ventaDetallada.detalles.forEach((det: any) => {
-                 const nombreInsumo = det.producto?.insumo?.nombre || "";
-                 const nombreProd = det.producto?.nombre_completo || det.producto?.nombre || "Producto";
-                 const nombre = nombreInsumo ? `${nombreInsumo} - ${nombreProd}` : nombreProd;
+                 const nombre = det.producto?.nombre_completo || det.producto?.nombre || "Producto";
                  const nombreLines = docToDraw.splitTextToSize(nombre, 38 - marginX - 2);
                  
                  let firstLine = true;
@@ -210,12 +219,35 @@ export function VentasTascaPanel() {
           printDashedLine();
           cursorY += 5;
 
+          const tasaBcv = Number(ventaDetallada.tasa_bcv || 36.5);
+          
+          if (Number(ventaDetallada.descuento) > 0) {
+              docToDraw.setFontSize(8);
+              docToDraw.setFont("helvetica", "bold");
+              docToDraw.text("SUBTOTAL:", marginX, cursorY);
+              const subUsdStr = Number(ventaDetallada.total).toFixed(2);
+              const subBsStr = (Number(ventaDetallada.total) * tasaBcv).toFixed(2);
+              docToDraw.text(subUsdStr, 50 + docToDraw.getTextWidth("USD")/2 - docToDraw.getTextWidth(subUsdStr)/2, cursorY);
+              docToDraw.text(subBsStr, pageWidth - marginX - docToDraw.getTextWidth(subBsStr), cursorY);
+              cursorY += 5;
+
+              docToDraw.setFontSize(7);
+              docToDraw.setFont("helvetica", "bold");
+              docToDraw.text("DESC. SOLVENCIA 10%:", marginX, cursorY);
+              const descUsdStr = "-" + Number(ventaDetallada.descuento).toFixed(2);
+              const descBsStr = "-" + (Number(ventaDetallada.descuento) * tasaBcv).toFixed(2);
+              docToDraw.text(descUsdStr, 50 + docToDraw.getTextWidth("USD")/2 - docToDraw.getTextWidth(descUsdStr)/2, cursorY);
+              docToDraw.text(descBsStr, pageWidth - marginX - docToDraw.getTextWidth(descBsStr), cursorY);
+              cursorY += 5;
+              
+              docToDraw.setFontSize(8);
+          }
+
           docToDraw.setFont("helvetica", "bold");
           docToDraw.text("TOTAL:", marginX, cursorY);
           
-          const tasaBcv = Number(ventaDetallada.tasa_bcv || 36.5);
-          const totalUsdStr = Number(ventaDetallada.total).toFixed(2);
-          const totalBsStr = (Number(ventaDetallada.total) * tasaBcv).toFixed(2);
+          const totalUsdStr = (Number(ventaDetallada.total) - Number(ventaDetallada.descuento)).toFixed(2);
+          const totalBsStr = ((Number(ventaDetallada.total) - Number(ventaDetallada.descuento)) * tasaBcv).toFixed(2);
 
           docToDraw.text(totalUsdStr, 50 + docToDraw.getTextWidth("USD")/2 - docToDraw.getTextWidth(totalUsdStr)/2, cursorY);
           docToDraw.text(totalBsStr, pageWidth - marginX - docToDraw.getTextWidth(totalBsStr), cursorY);
@@ -279,6 +311,10 @@ export function VentasTascaPanel() {
               printCenter("Firma del Cliente", cursorY, 8);
               cursorY += 4;
               printCenter(`Saldo pendiente: $${Number(ventaDetallada.pendiente || 0).toFixed(2)}`, cursorY, 8, true);
+              if (ventaDetallada.fecha_vencimiento) {
+                  cursorY += 4;
+                  printCenter(`Vence el: ${format(new Date(ventaDetallada.fecha_vencimiento), 'dd/MM/yyyy')}`, cursorY, 8, true);
+              }
           }
 
           cursorY += 6;
@@ -386,7 +422,10 @@ export function VentasTascaPanel() {
         </button>
       </div>
 
-      {activeTab === 'historial' ? (
+      {activeTab === 'abonos' && <AbonosCreditoTab onOpenDetalle={(v) => setVentaSeleccionada(v)} />}
+      {activeTab === 'inventario' && <InventarioRapidoTab />}
+
+      {activeTab === 'historial' && (
         <>
           {estadisticas && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
@@ -470,7 +509,28 @@ export function VentasTascaPanel() {
                 <tr key={v.id} style={{ borderBottom: "1px solid var(--border)" }} className="hover:bg-gray-50/5">
                   <td className="py-3 font-medium">#{v.id}</td>
                   <td className="py-3 text-sm">{format(new Date(v.fecha), 'dd/MM/yyyy')}</td>
-                  <td className="py-3 text-sm font-medium">{getClienteNombre(v)}</td>
+                  <td className="py-3 px-4">
+                    {v.miembro ? (
+                      v.persona ? (
+                        <div>
+                          <span className="font-medium text-gray-900">{v.persona.nombre}</span>
+                          <br/><span className="text-xs text-gray-500">{v.miembro.razon_social} (Miembro)</span>
+                        </div>
+                      ) : (
+                        <div>
+                          <span className="font-medium text-gray-900">{v.miembro.razon_social}</span>
+                          <br/><span className="text-xs text-gray-500">Miembro</span>
+                        </div>
+                      )
+                    ) : v.cliente_foraneo ? (
+                      <div>
+                        <span className="font-medium text-gray-900">{v.cliente_foraneo.nombre}</span>
+                        <br/><span className="text-xs text-gray-500">Foráneo</span>
+                      </div>
+                    ) : (
+                      <span className="text-gray-500">Desconocido</span>
+                    )}
+                  </td>
                   <td className="py-3">
                     <span className={`px-2 py-1 rounded-full text-xs font-bold ${
                       v.estado === 'Pagada' ? 'bg-green-100 text-green-700' :
@@ -510,10 +570,6 @@ export function VentasTascaPanel() {
         </div>
       </div>
       </>
-      ) : activeTab === 'abonos' ? (
-        <AbonosCreditoTab onOpenDetalle={(v) => setVentaSeleccionada(v)} />
-      ) : (
-        <InventarioRapidoTab />
       )}
 
       {showNuevaVenta && (

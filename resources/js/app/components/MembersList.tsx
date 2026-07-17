@@ -75,11 +75,11 @@ export function MembersList({
       .filter((m) => {
         const q = search.toLowerCase();
         return (
-          (m.razon_social || "").toLowerCase().includes(q) ||
-          (m.rif || "").toLowerCase().includes(q) ||
-          (m.acronimo || "").toLowerCase().includes(q) ||
-          (m.hacienda || "").toLowerCase().includes(q) ||
-          (m.municipio || "").toLowerCase().includes(q)
+          String(m.razon_social || "").toLowerCase().includes(q) ||
+          String(m.rif || "").toLowerCase().includes(q) ||
+          String(m.acronimo || "").toLowerCase().includes(q) ||
+          String(m.hacienda || "").toLowerCase().includes(q) ||
+          String(m.municipio || "").toLowerCase().includes(q)
         );
       })
       .filter((m) => filterSolvencia === "Todos" || m.solvencia === filterSolvencia)

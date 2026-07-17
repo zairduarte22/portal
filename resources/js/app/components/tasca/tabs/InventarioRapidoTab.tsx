@@ -30,52 +30,47 @@ export function InventarioRapidoTab() {
         />
       </div>
 
-      <div className="overflow-x-auto">
-        <table className="w-full text-left border-collapse">
-          <thead>
-            <tr className="border-b text-gray-500">
-              <th className="pb-3 font-semibold text-sm">Producto / Características</th>
-              <th className="pb-3 font-semibold text-sm">Categoría</th>
-              <th className="pb-3 font-semibold text-sm text-right">Inventario Restante (Stock)</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.map(i => (
-              <tr key={i.id} className="border-b hover:bg-gray-50/50">
-                <td className="py-3 font-medium flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-green-100 text-green-600 flex items-center justify-center">
-                    <Package size={20} />
-                  </div>
-                  <div>
-                    <p className="font-bold text-gray-800">{i.nombre}</p>
-                    {i.productos && i.productos.length > 0 && (
-                      <p className="text-xs text-gray-400">
-                        Presentaciones: {i.productos.map((p: any) => p.nombre).join(", ")}
-                      </p>
-                    )}
-                  </div>
-                </td>
-                <td className="py-3 text-sm text-gray-600">
-                  {i.categoria || "Sin categoría"}
-                </td>
-                <td className="py-3 text-right">
-                  <span className={`px-3 py-1 rounded-full text-sm font-bold ${
-                    i.stock_total > 10 ? 'bg-green-100 text-green-700' :
-                    i.stock_total > 0 ? 'bg-yellow-100 text-yellow-700' :
-                    'bg-red-100 text-red-700'
-                  }`}>
-                    {i.stock_total || 0}
-                  </span>
-                </td>
-              </tr>
-            ))}
-            {filtered.length === 0 && (
-              <tr>
-                <td colSpan={3} className="py-8 text-center text-gray-500">No hay productos disponibles.</td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mt-4">
+        {filtered.map(i => (
+          <div key={i.id} className="bg-white rounded-2xl border shadow-sm overflow-hidden flex flex-col">
+            <div className="w-full h-32 bg-gray-100 flex items-center justify-center border-b">
+              {i.imagen_url || i.imagen ? (
+                <img src={i.imagen_url || `/storage/${i.imagen}`} alt={i.nombre} className="w-full h-full object-cover" />
+              ) : (
+                <Package size={32} className="text-gray-300" />
+              )}
+            </div>
+            <div className="p-4 flex flex-col flex-1">
+              <h3 className="font-bold text-gray-800 text-lg mb-1">{i.nombre}</h3>
+              <p className="text-sm text-gray-500 mb-3">{i.categoria || "Sin categoría"}</p>
+              
+              {i.productos && i.productos.length > 0 && (
+                <div className="mb-4">
+                  <p className="text-xs text-gray-400 mb-1">Presentaciones:</p>
+                  <p className="text-xs text-gray-600 font-medium line-clamp-2">
+                    {i.productos.map((p: any) => p.nombre).join(", ")}
+                  </p>
+                </div>
+              )}
+              
+              <div className="mt-auto flex items-center justify-between">
+                <span className="text-xs font-semibold text-gray-500">Stock Total</span>
+                <span className={`px-3 py-1 rounded-full text-sm font-bold ${
+                  i.stock_total > 10 ? 'bg-green-100 text-green-700' :
+                  i.stock_total > 0 ? 'bg-yellow-100 text-yellow-700' :
+                  'bg-red-100 text-red-700'
+                }`}>
+                  {i.stock_total || 0}
+                </span>
+              </div>
+            </div>
+          </div>
+        ))}
+        {filtered.length === 0 && (
+          <div className="col-span-full py-8 text-center text-gray-500">
+            No hay productos disponibles.
+          </div>
+        )}
       </div>
     </div>
   );

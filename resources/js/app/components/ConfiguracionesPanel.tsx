@@ -16,8 +16,9 @@ export function ConfiguracionesPanel({ currentUser }: { currentUser: any }) {
     { id: 'LibrosPanel', nombre: 'Libros', route: 'libros' },
     { id: 'ConciliacionPanel', nombre: 'Conciliación', route: 'conciliacion' },
     { id: 'ObligacionesPanel', nombre: 'Obligaciones', route: 'obligaciones' },
-    { id: 'VentasTascaPanel', nombre: 'Punto de Venta (Tasca)', route: 'ventas-tasca' },
-    { id: 'GestionTascaPanel', nombre: 'Gestión de Tasca', route: 'tasca/gestion' },
+    { id: 'VentasTascaPanel', nombre: 'Ventas de Tasca', route: 'ventas-tasca' },
+    { id: 'GestionTascaPanel', nombre: 'Inventario y Compras', route: 'tasca/gestion' },
+    { id: 'ReportesTascaPanel', nombre: 'Reportes de Tasca', route: 'tasca/reportes' },
     { id: 'ConfiguracionesPanel', nombre: 'Configuraciones', route: 'configuraciones' },
   ];
 

@@ -13,7 +13,7 @@ const AVATAR_GRADIENTS = [
 ];
 
 function initials(name: string) {
-  return name.substring(0, 2).toUpperCase();
+  return String(name || "").substring(0, 2).toUpperCase();
 }
 
 interface PersonasListProps {
@@ -59,9 +59,9 @@ export function PersonasList({
       // Filtrar por búsqueda
       const q = search.toLowerCase();
       const matchSearch = 
-        (p.nombre || "").toLowerCase().includes(q) ||
-        (p.ci_numero || "").toLowerCase().includes(q) ||
-        (p.correo || "").toLowerCase().includes(q);
+        String(p.nombre || "").toLowerCase().includes(q) ||
+        String(p.ci_numero || "").toLowerCase().includes(q) ||
+        String(p.correo || "").toLowerCase().includes(q);
 
       if (!matchSearch) return false;
 
@@ -73,7 +73,7 @@ export function PersonasList({
       }
 
       return true;
-    }).sort((a, b) => a.nombre.localeCompare(b.nombre, "es", { sensitivity: "base" }));
+    }).sort((a, b) => String(a.nombre || "").localeCompare(String(b.nombre || ""), "es", { sensitivity: "base" }));
   }, [personas, search, filterMiembro, vinculaciones]);
 
   const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);

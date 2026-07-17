@@ -13,10 +13,19 @@ class InsumoTasca extends Model
 
     protected $fillable = [
         'nombre',
-        'categoria'
+        'categoria',
+        'imagen'
     ];
 
-    protected $appends = ['stock_total'];
+    protected $appends = ['stock_total', 'imagen_url'];
+
+    public function getImagenUrlAttribute()
+    {
+        if ($this->imagen) {
+            return asset('storage/' . $this->imagen);
+        }
+        return null;
+    }
 
     public function lotes()
     {
@@ -38,6 +47,12 @@ class InsumoTasca extends Model
 
     public function getStockTotalAttribute()
     {
+        if ($this->relationLoaded('lotesActivos')) {
+            return $this->lotesActivos->sum('stock_actual');
+        }
+        if ($this->relationLoaded('lotes')) {
+            return $this->lotes->where('estado', 'Activo')->sum('stock_actual');
+        }
         return $this->lotesActivos()->sum('stock_actual');
     }
 }

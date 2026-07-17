@@ -1,0 +1,10 @@
+{
+  "description": "Showcase a responsive menu for UGAVI Bar featuring product images, categories, and pricing in both $ and Bs, with a discount for members and elegant design.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}

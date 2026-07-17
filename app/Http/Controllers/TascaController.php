@@ -107,7 +107,7 @@ class TascaController extends Controller
     // ==========================================
     public function getVentas(Request $request)
     {
-        $query = VentaTasca::with(['clienteForaneo', 'miembro', 'detalles.producto.insumo', 'pagos', 'autorizador'])
+        $query = VentaTasca::with(['clienteForaneo', 'miembro', 'persona', 'pagos', 'detalles.producto.insumo'])
                             ->orderBy('id', 'desc');
                             
         if ($request->filled('start_date') && $request->filled('end_date')) {
@@ -119,9 +119,17 @@ class TascaController extends Controller
 
     public function getVenta($id)
     {
-        $venta = VentaTasca::with(['clienteForaneo', 'miembro', 'detalles.producto.insumo', 'pagos', 'autorizador'])->findOrFail($id);
+        $venta = VentaTasca::with(['clienteForaneo', 'miembro', 'persona', 'detalles.producto.insumo', 'pagos', 'autorizador'])->findOrFail($id);
+        
+        // Sincronizar el descuento real con el atributo de descuento en la BD de forma lazy
+        if ($venta->descuento > 0 && $venta->descuento_real == 0) {
+            $venta->descuento = 0;
+            $venta->save();
+        }
+
         $tasa = \DB::table('tasas')->orderBy('fecha', 'desc')->first();
         $venta->tasa_bcv = $venta->tasa_bcv ?: ($tasa ? (float) $tasa->monto : 36.5);
+        $venta->append('descuento_real');
         return response()->json($venta);
     }
 
@@ -131,6 +139,7 @@ class TascaController extends Controller
         $request->validate([
             'id_cliente_miembro' => 'nullable|exists:miembros,id',
             'id_cliente_tasca' => 'nullable|exists:clientes_tasca,id',
+            'id_persona' => 'nullable|exists:personas,id'
         ]);
 
         if (!$request->id_cliente_miembro && !$request->id_cliente_tasca) {
@@ -142,6 +151,7 @@ class TascaController extends Controller
 
         $venta = VentaTasca::create([
             'id_cliente_miembro' => $request->id_cliente_miembro,
+            'id_persona' => $request->id_persona,
             'id_cliente_tasca' => $request->id_cliente_tasca,
             'total' => 0,
             'descuento' => 0,
@@ -168,15 +178,33 @@ class TascaController extends Controller
             // Eliminar detalles anteriores y reponer stock
             foreach ($venta->detalles as $detalle) {
                 $prod = ProductoTasca::find($detalle->id_producto);
-                if ($prod && $prod->insumo) {
-                    $mlAReponer = $detalle->cantidad * ($prod->medida_descuento > 0 ? $prod->medida_descuento : 1);
-                    $lote = $prod->insumo->lotes()->orderBy('created_at', 'desc')->first();
-                    if ($lote) {
-                        $lote->stock_actual += $mlAReponer;
-                        if ($lote->estado === 'Agotado' && $lote->stock_actual > 0) {
-                            $lote->estado = 'Activo';
+                if ($prod) {
+                    if ($prod->tipo === 'servicio') {
+                        continue;
+                    }
+
+                    $productosAReponer = [];
+                    if ($prod->tipo === 'compuesto') {
+                        foreach ($prod->componentes as $comp) {
+                            $productosAReponer[] = ['prod' => $comp, 'qty' => $detalle->cantidad * $comp->pivot->cantidad];
                         }
-                        $lote->save();
+                    } else {
+                        $productosAReponer[] = ['prod' => $prod, 'qty' => $detalle->cantidad];
+                    }
+
+                    foreach ($productosAReponer as $item) {
+                        $p = $item['prod'];
+                        if ($p->insumo) {
+                            $mlAReponer = $item['qty'] * ($p->medida_descuento > 0 ? $p->medida_descuento : 1);
+                            $lote = $p->insumo->lotes()->orderBy('created_at', 'desc')->first();
+                            if ($lote) {
+                                $lote->stock_actual += $mlAReponer;
+                                if ($lote->estado === 'Agotado' && $lote->stock_actual > 0) {
+                                    $lote->estado = 'Activo';
+                                }
+                                $lote->save();
+                            }
+                        }
                     }
                 }
             }
@@ -206,40 +234,54 @@ class TascaController extends Controller
                 ]);
 
                 // Descontar stock de los lotes (FIFO)
-                $insumo = $producto->insumo;
-                if ($insumo) {
-                    $mlADescontar = $det['cantidad'] * ($producto->medida_descuento > 0 ? $producto->medida_descuento : 1);
-                    $lotes = $insumo->lotesActivos;
-                    
-                    foreach ($lotes as $lote) {
-                        if ($mlADescontar <= 0) break;
-
-                        if ($lote->stock_actual >= $mlADescontar) {
-                            $lote->stock_actual -= $mlADescontar;
-                            $lote->save();
-                            $mlADescontar = 0;
-                        } else {
-                            $mlADescontar -= $lote->stock_actual;
-                            $lote->stock_actual = 0;
-                            $lote->estado = 'Agotado';
-                            $lote->save();
+                if ($producto->tipo !== 'servicio') {
+                    $productosADescontar = [];
+                    if ($producto->tipo === 'compuesto') {
+                        foreach ($producto->componentes as $comp) {
+                            $productosADescontar[] = ['prod' => $comp, 'qty' => $det['cantidad'] * $comp->pivot->cantidad];
                         }
+                    } else {
+                        $productosADescontar[] = ['prod' => $producto, 'qty' => $det['cantidad']];
                     }
 
-                    if ($mlADescontar > 0) {
-                        // Opcional: Permitir stock negativo en el último lote o tirar error. Ya validamos el stock virtual arriba.
+                    foreach ($productosADescontar as $item) {
+                        $p = $item['prod'];
+                        $insumo = $p->insumo;
+                        if ($insumo) {
+                            $mlADescontar = $item['qty'] * ($p->medida_descuento > 0 ? $p->medida_descuento : 1);
+                            $lotes = $insumo->lotesActivos;
+                            
+                            foreach ($lotes as $lote) {
+                                if ($mlADescontar <= 0) break;
+
+                                if ($lote->stock_actual >= $mlADescontar) {
+                                    $lote->stock_actual -= $mlADescontar;
+                                    $lote->save();
+                                    $mlADescontar = 0;
+                                } else {
+                                    $mlADescontar -= $lote->stock_actual;
+                                    $lote->stock_actual = 0;
+                                    $lote->estado = 'Agotado';
+                                    $lote->save();
+                                }
+                            }
+                        }
                     }
                 }
             } // END foreach $request->detalles
 
-            $descuento = 0; // Descuento removido a petición
+            // Calcular descuento del 10% si el cliente es Miembro y está Solvente
+            $descuento = 0;
+            if ($venta->miembro && $venta->miembro->solvencia === 'Solvente') {
+                $descuento = $total * 0.10;
+            }
 
             $venta->total = $total;
             $venta->descuento = $descuento;
             $venta->save();
 
             DB::commit();
-            return response()->json(VentaTasca::with(['clienteForaneo', 'miembro', 'detalles.producto.insumo', 'pagos', 'autorizador'])->find($id));
+            return response()->json(VentaTasca::with(['clienteForaneo', 'miembro', 'persona', 'detalles.producto.insumo', 'pagos', 'autorizador'])->find($id));
         } catch (\Exception $e) {
             DB::rollBack();
             return response()->json(['error' => $e->getMessage()], 400);
@@ -328,10 +370,22 @@ class TascaController extends Controller
                 }
             }
 
+            // Si pasa a Crédito o Parcial, establecer fecha de vencimiento a 10 días desde la fecha de facturación.
+            if (($venta->estado === 'Credito' || $venta->estado === 'Parcial') && !$venta->fecha_vencimiento) {
+                $venta->fecha_vencimiento = Carbon::parse($venta->fecha)->addDays(10)->toDateString();
+            }
+
+            // Si es Crédito o Parcial pero la fecha de vencimiento ya pasó, remover el descuento definitivamente
+            if (($venta->estado === 'Credito' || $venta->estado === 'Parcial') && $venta->fecha_vencimiento) {
+                if (now()->startOfDay()->gt(Carbon::parse($venta->fecha_vencimiento)->startOfDay())) {
+                    $venta->descuento = 0;
+                }
+            }
+
             $venta->save();
 
             DB::commit();
-            return response()->json(VentaTasca::with(['clienteForaneo', 'miembro', 'detalles.producto.insumo', 'pagos', 'autorizador'])->find($id));
+            return response()->json(VentaTasca::with(['clienteForaneo', 'miembro', 'persona', 'detalles.producto.insumo', 'pagos', 'autorizador'])->find($id));
         } catch (\Exception $e) {
             DB::rollBack();
             return response()->json(['error' => $e->getMessage()], 400);
@@ -344,7 +398,7 @@ class TascaController extends Controller
         $endDate = $request->query('end_date', Carbon::now()->toDateString());
 
         // 1. Ventas del Periodo (Total USD de ventas cobradas o hechas en el periodo)
-        $ventasHoy = VentaTasca::whereBetween('fecha', [$startDate, $endDate])
+        $ventasHoy = VentaTasca::with('pagos')->whereBetween('fecha', [$startDate, $endDate])
             ->whereNotIn('estado', ['Anulada', 'anulada'])
             ->get();
         $totalVentasHoy = $ventasHoy->sum(function($v) { return $v->total - $v->descuento; });
@@ -431,7 +485,7 @@ class TascaController extends Controller
             }
         }
 
-        $ventasPeriodo = VentaTasca::with(['miembro', 'clienteForaneo'])
+        $ventasPeriodo = VentaTasca::with(['miembro', 'persona', 'clienteForaneo'])
             ->whereBetween('fecha', [$startDate, $endDate])
             ->whereIn('estado', ['Pagada', 'Credito', 'Parcial'])
             ->get();
@@ -911,7 +965,7 @@ class TascaController extends Controller
 
     public function ticketVentaPdf($id)
     {
-        $venta = VentaTasca::with(['clienteForaneo', 'miembro', 'detalles.producto.insumo', 'pagos'])->findOrFail($id);
+        $venta = VentaTasca::with(['clienteForaneo', 'miembro', 'persona', 'detalles.producto.insumo', 'pagos'])->findOrFail($id);
         
         // Calcular altura dinámica
         $baseHeight = 110;
@@ -1043,5 +1097,181 @@ class TascaController extends Controller
         $pdf->writeHTML($html, true, false, true, false, '');
         return response($pdf->Output('ticket_venta_'.$venta->id.'.pdf', 'S'))
             ->header('Content-Type', 'application/pdf');
+    }
+
+    public function getReporteRendimiento(Request $request)
+    {
+        $startDate = $request->query('start_date', Carbon::now()->startOfMonth()->toDateString());
+        $endDate = $request->query('end_date', Carbon::now()->toDateString());
+
+        // Traer ventas dentro del rango (solo no anuladas)
+        $ventas = VentaTasca::with(['detalles.producto'])
+            ->whereBetween('fecha', [$startDate, $endDate])
+            ->whereNotIn('estado', ['Anulada', 'anulada'])
+            ->get();
+
+        $ingresosTotales = 0;
+        $costoTotal = 0;
+        $productosVendidos = 0;
+
+        $ventasDiarias = [];
+        $topProductos = [];
+
+        // Pre-cargar todos los productos para incluir los "olvidados" (con 0 ventas en el periodo)
+        $todosLosProductos = \App\Models\ProductoTasca::all();
+        foreach ($todosLosProductos as $prod) {
+            $topProductos[$prod->id] = [
+                'nombre' => $prod->nombre_completo,
+                'cantidad' => 0,
+                'ingresos' => 0
+            ];
+        }
+
+        foreach ($ventas as $venta) {
+            $fecha = \Carbon\Carbon::parse($venta->fecha)->toDateString();
+            if (!isset($ventasDiarias[$fecha])) {
+                $ventasDiarias[$fecha] = 0;
+            }
+            
+            $ingresoVenta = $venta->total - $venta->descuento;
+            $ingresosTotales += $ingresoVenta;
+            $ventasDiarias[$fecha] += $ingresoVenta;
+
+            foreach ($venta->detalles as $detalle) {
+                $producto = $detalle->producto;
+                $costoUnitario = $producto ? $producto->costo_calculado : 0;
+                $costoDetalle = $costoUnitario * $detalle->cantidad;
+                $costoTotal += $costoDetalle;
+                $productosVendidos += $detalle->cantidad;
+
+                if ($producto) {
+                    $idProd = $producto->id;
+                    if (!isset($topProductos[$idProd])) {
+                        $topProductos[$idProd] = [
+                            'nombre' => $producto->nombre_completo,
+                            'cantidad' => 0,
+                            'ingresos' => 0
+                        ];
+                    }
+                    $topProductos[$idProd]['cantidad'] += $detalle->cantidad;
+                    $topProductos[$idProd]['ingresos'] += $detalle->subtotal;
+                }
+            }
+        }
+
+        $gananciaBruta = $ingresosTotales - $costoTotal;
+        $margen = $ingresosTotales > 0 ? ($gananciaBruta / $ingresosTotales) * 100 : 0;
+        $ticketPromedio = $ventas->count() > 0 ? $ingresosTotales / $ventas->count() : 0;
+
+        // 1. Los 5 productos que generan mas liquidez (ingresos)
+        $topLiquidez = $topProductos;
+        usort($topLiquidez, function($a, $b) {
+            return $b['ingresos'] <=> $a['ingresos'];
+        });
+        $topLiquidez = array_slice($topLiquidez, 0, 5);
+
+        // 2. Los 5 productos con mas salida (cantidad)
+        $topSalida = $topProductos;
+        usort($topSalida, function($a, $b) {
+            return $b['cantidad'] <=> $a['cantidad'];
+        });
+        $topSalida = array_slice($topSalida, 0, 5);
+
+        // 3. Los 10 productos con menos salida (cantidad > 0)
+        $menosSalida = array_filter($topProductos, function($prod) {
+            return $prod['cantidad'] > 0;
+        });
+        usort($menosSalida, function($a, $b) {
+            return $a['cantidad'] <=> $b['cantidad'];
+        });
+        $menosSalida = array_slice($menosSalida, 0, 10);
+
+        // 4. Productos olvidados (0 ventas en su historia total)
+        // Obtenemos los IDs de productos que sí tienen ventas registradas en alguna venta no anulada
+        $productosConVentas = DB::table('ventas_tasca_detalles')
+            ->join('ventas_tasca', 'ventas_tasca_detalles.id_venta', '=', 'ventas_tasca.id')
+            ->whereNotIn('ventas_tasca.estado', ['Anulada', 'anulada'])
+            ->pluck('ventas_tasca_detalles.id_producto')
+            ->unique()
+            ->toArray();
+            
+        $productosOlvidados = \App\Models\ProductoTasca::whereNotIn('id', $productosConVentas)
+            ->get()
+            ->map(function($prod) {
+                return [
+                    'nombre' => $prod->nombre_completo,
+                    'cantidad' => 0,
+                    'ingresos' => 0
+                ];
+            })
+            ->toArray();
+
+        // Formatear ventas diarias para Recharts
+        $graficaVentas = [];
+        foreach ($ventasDiarias as $fecha => $ingresos) {
+            $graficaVentas[] = [
+                'fecha' => $fecha,
+                'ingresos' => round($ingresos, 2)
+            ];
+        }
+        usort($graficaVentas, function($a, $b) {
+            return strtotime($a['fecha']) <=> strtotime($b['fecha']);
+        });
+
+        // Desglose de pagos en el rango
+        $pagos = DB::table('pago_venta_tasca')
+            ->join('pagos_tasca', 'pago_venta_tasca.id_pago', '=', 'pagos_tasca.id')
+            ->whereBetween('pagos_tasca.fecha_pago', [$startDate, $endDate])
+            ->select('pagos_tasca.metodo_pago', DB::raw('SUM(pago_venta_tasca.monto_abonado_usd) as total'))
+            ->groupBy('pagos_tasca.metodo_pago')
+            ->get();
+            
+        $ventasPorMetodo = $pagos->map(function($p) {
+            return [
+                'metodo' => $p->metodo_pago,
+                'monto' => round($p->total, 2)
+            ];
+        });
+
+        return response()->json([
+            'kpis' => [
+                'total_ventas' => $ventas->count(),
+                'productos_vendidos' => $productosVendidos,
+                'ingresos_totales' => round($ingresosTotales, 2),
+                'costo_total' => round($costoTotal, 2),
+                'ganancia_bruta' => round($gananciaBruta, 2),
+                'margen' => round($margen, 2),
+                'ticket_promedio' => round($ticketPromedio, 2)
+            ],
+            'grafica_ventas_diarias' => $graficaVentas,
+            'top_liquidez' => $topLiquidez,
+            'top_salida' => $topSalida,
+            'menos_salida' => $menosSalida,
+            'olvidados' => $productosOlvidados,
+            'ventas_por_metodo' => $ventasPorMetodo
+        ]);
+    }
+
+    public function getMenuPublico()
+    {
+        $productos = \App\Models\ProductoTasca::with('insumo')->get();
+        $disponibles = $productos->filter(function($p) {
+            return $p->stock > 0;
+        })->map(function($p) {
+            return [
+                'id' => $p->id,
+                'nombre' => $p->nombre_completo,
+                'categoria' => $p->insumo ? $p->insumo->categoria : 'General',
+                'precio' => $p->precio,
+                'imagen' => $p->insumo ? $p->insumo->imagen : null
+            ];
+        })->values();
+        $tasa = \DB::table('tasas')->orderBy('fecha', 'desc')->first();
+        $tasaBcv = $tasa ? (float) $tasa->monto : 36.5;
+
+        return response()->json([
+            'productos' => $disponibles,
+            'tasa_bcv' => $tasaBcv
+        ]);
     }
 }

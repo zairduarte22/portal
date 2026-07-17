@@ -4,6 +4,5 @@ $app = require_once __DIR__ . '/bootstrap/app.php';
 $kernel = $app->make(Illuminate\Contracts\Console\Kernel::class);
 $kernel->bootstrap();
 
-$controller = new \App\Http\Controllers\InventarioTascaController();
-$response = $controller->getInsumos();
-echo json_encode($response->getData(), JSON_PRETTY_PRINT);
+$prod = \App\Models\ProductoTasca::with('insumo')->first();
+echo json_encode($prod->toArray(), JSON_PRETTY_PRINT);

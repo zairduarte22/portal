@@ -273,7 +273,7 @@ export function MovimientosInsumoView({ insumoId, insumoNombre, onClose, onAdjus
                         <tr key={idx} className="border-b hover:bg-gray-50">
                           <td className="px-4 py-3 whitespace-nowrap">{formatDate(v.fecha)}</td>
                           <td className="px-4 py-3">
-                            {v.miembro_nombre ? `${v.miembro_nombre} ${v.miembro_apellido || ''}` : (v.cliente_foraneo_nombre ? v.cliente_foraneo_nombre : 'Consumidor Final')}
+                            {v.miembro_nombre ? (v.persona_nombre ? `${v.persona_nombre} (${v.miembro_nombre})` : `${v.miembro_nombre} ${v.miembro_apellido || ''}`) : (v.cliente_foraneo_nombre ? v.cliente_foraneo_nombre : 'Consumidor Final')}
                           </td>
                           <td className="px-4 py-3">{v.presentacion}</td>
                           <td className="px-4 py-3 text-right font-semibold text-red-600">-{v.cantidad}</td>

@@ -8,9 +8,48 @@ use App\Models\LoteTasca;
 
 class InventarioTascaController extends Controller
 {
+    public function getNotificaciones()
+    {
+        $thirtyDaysFromNow = \Carbon\Carbon::now()->addDays(30)->toDateString();
+        $today = \Carbon\Carbon::now()->toDateString();
+        
+        $expiringLotes = \App\Models\LoteTasca::with('insumo:id,nombre')
+            ->where('estado', 'Activo')
+            ->where('stock_actual', '>', 0)
+            ->whereNotNull('fecha_caducidad')
+            ->whereDate('fecha_caducidad', '<=', $thirtyDaysFromNow)
+            ->get()
+            ->map(function ($lote) use ($today) {
+                return [
+                    'id' => 'lote_' . $lote->id,
+                    'type' => 'expiration',
+                    'insumo_nombre' => $lote->insumo ? $lote->insumo->nombre : 'Desconocido',
+                    'fecha_caducidad' => $lote->fecha_caducidad,
+                    'stock' => $lote->stock_actual,
+                    'isExpired' => $lote->fecha_caducidad < $today
+                ];
+            });
+
+        // Obtener insumos con bajo stock (usamos getInsumos internamente que ya hace el cálculo complejo)
+        $insumos = $this->getInsumos()->getData();
+        $lowStockInsumos = collect($insumos)->filter(function ($insumo) {
+            return $insumo->stock_total <= $insumo->stock_seguridad && $insumo->stock_total > 0;
+        })->map(function ($insumo) {
+            return [
+                'id' => 'insumo_' . $insumo->id,
+                'type' => 'low_stock',
+                'insumo_nombre' => $insumo->nombre,
+                'stock' => $insumo->stock_total,
+                'stock_seguridad' => $insumo->stock_seguridad
+            ];
+        });
+            
+        return response()->json($expiringLotes->concat($lowStockInsumos)->values());
+    }
+
     public function getInsumos()
     {
-        $insumos = InsumoTasca::with(['lotes', 'productos'])->get();
+        $insumos = InsumoTasca::with(['lotes', 'productos.insumo.lotesActivos', 'lotesActivos', 'productos.componentes'])->get();
         
         $fechaHoy = \Carbon\Carbon::now();
         $fechaHace3Meses = \Carbon\Carbon::now()->subMonths(3);
@@ -99,28 +138,93 @@ class InventarioTascaController extends Controller
 
     public function storeProductoCompleto(Request $request)
     {
+        if (is_string($request->presentaciones)) {
+            $request->merge(['presentaciones' => json_decode($request->presentaciones, true)]);
+        }
+
         $request->validate([
             'nombre' => 'required|string|max:255',
             'categoria' => 'nullable|string',
+            'tipo' => 'nullable|string|in:fisico,servicio,compuesto',
             'inventario_inicial' => 'nullable|numeric|min:0',
             'costo_inicial' => 'nullable|numeric|min:0',
             'presentaciones' => 'required|array|min:1',
             'presentaciones.*.nombre' => 'required|string|max:255',
             'presentaciones.*.precio' => 'required|numeric|min:0',
             'presentaciones.*.medida_descuento' => 'required|numeric|min:0.01',
-            'presentaciones.*.codigo_barras' => 'nullable|string'
+            'presentaciones.*.codigo_barras' => 'nullable|string',
+            'componentes' => 'nullable|array',
+            'componentes.*.id' => 'required|exists:productos_tasca,id',
+            'componentes.*.cantidad' => 'required|numeric|min:0.01',
         ]);
 
         \Illuminate\Support\Facades\DB::beginTransaction();
         try {
-            // 1. Crear Insumo Base
+            $imagePath = null;
+            if ($request->hasFile('imagen')) {
+                $file = $request->file('imagen');
+                $extension = strtolower($file->getClientOriginalExtension());
+                
+                if (in_array($extension, ['jpg', 'jpeg', 'png', 'webp'])) {
+                    $filename = 'productos_tasca/' . uniqid() . '.' . $extension;
+                    $path = storage_path('app/public/' . $filename);
+                    if (!file_exists(dirname($path))) mkdir(dirname($path), 0755, true);
+                    
+                    list($width, $height) = getimagesize($file->getPathname());
+                    $max = 800;
+                    
+                    if ($width > $max || $height > $max) {
+                        $ratio = $width / $height;
+                        if ($width > $height) {
+                            $newWidth = $max;
+                            $newHeight = $max / $ratio;
+                        } else {
+                            $newHeight = $max;
+                            $newWidth = $max * $ratio;
+                        }
+                        
+                        $src = null;
+                        if ($extension == 'jpg' || $extension == 'jpeg') $src = imagecreatefromjpeg($file->getPathname());
+                        elseif ($extension == 'png') $src = imagecreatefrompng($file->getPathname());
+                        elseif ($extension == 'webp') $src = imagecreatefromwebp($file->getPathname());
+                        
+                        if ($src) {
+                            $dst = imagecreatetruecolor($newWidth, $newHeight);
+                            if ($extension == 'png' || $extension == 'webp') {
+                                imagealphablending($dst, false);
+                                imagesavealpha($dst, true);
+                            }
+                            imagecopyresampled($dst, $src, 0, 0, 0, 0, $newWidth, $newHeight, $width, $height);
+                            
+                            if ($extension == 'jpg' || $extension == 'jpeg') imagejpeg($dst, $path, 80);
+                            elseif ($extension == 'png') imagepng($dst, $path, 8);
+                            elseif ($extension == 'webp') imagewebp($dst, $path, 80);
+                            
+                            imagedestroy($src);
+                            imagedestroy($dst);
+                            $imagePath = $filename;
+                        } else {
+                            $imagePath = $file->store('productos_tasca', 'public');
+                        }
+                    } else {
+                        $imagePath = $file->store('productos_tasca', 'public');
+                    }
+                } else {
+                    $imagePath = $file->store('productos_tasca', 'public');
+                }
+            }
+
+            $tipo = $request->tipo ?? 'fisico';
+
+            // 1. Crear Insumo Base (Siempre se crea para que aparezca en el UI)
             $insumo = InsumoTasca::create([
                 'nombre' => $request->nombre,
-                'categoria' => $request->categoria
+                'categoria' => $request->categoria,
+                'imagen' => $imagePath
             ]);
 
-            // 2. Crear Inventario Inicial si es mayor a 0
-            if ($request->filled('inventario_inicial') && $request->inventario_inicial > 0) {
+            // 2. Crear Inventario Inicial si es mayor a 0 y es físico
+            if ($tipo === 'fisico' && $request->filled('inventario_inicial') && $request->inventario_inicial > 0) {
                 LoteTasca::create([
                     'id_insumo' => $insumo->id,
                     'codigo_lote' => 'INICIAL',
@@ -134,13 +238,27 @@ class InventarioTascaController extends Controller
 
             // 3. Crear Presentaciones de Venta
             foreach ($request->presentaciones as $pres) {
-                \App\Models\ProductoTasca::create([
+                $producto = \App\Models\ProductoTasca::create([
                     'id_insumo' => $insumo->id,
                     'nombre' => $pres['nombre'],
                     'precio' => $pres['precio'],
                     'medida_descuento' => $pres['medida_descuento'],
-                    'codigo_barras' => $pres['codigo_barras'] ?? null
+                    'codigo_barras' => empty($pres['codigo_barras']) ? null : $pres['codigo_barras'],
+                    'tipo' => $tipo
                 ]);
+
+                // Si es compuesto y es la primera presentación, agregar componentes
+                if ($tipo === 'compuesto' && $request->has('componentes')) {
+                    foreach ($request->componentes as $comp) {
+                        \Illuminate\Support\Facades\DB::table('productos_compuestos_detalles')->insert([
+                            'id_padre' => $producto->id,
+                            'id_hijo' => $comp['id'],
+                            'cantidad' => $comp['cantidad'],
+                            'created_at' => \Carbon\Carbon::now(),
+                            'updated_at' => \Carbon\Carbon::now(),
+                        ]);
+                    }
+                }
             }
 
             \Illuminate\Support\Facades\DB::commit();
@@ -153,6 +271,10 @@ class InventarioTascaController extends Controller
 
     public function updateProductoCompleto(Request $request, $id)
     {
+        if (is_string($request->presentaciones)) {
+            $request->merge(['presentaciones' => json_decode($request->presentaciones, true)]);
+        }
+
         $request->validate([
             'nombre' => 'required|string|max:255',
             'categoria' => 'nullable|string',
@@ -166,10 +288,18 @@ class InventarioTascaController extends Controller
         \Illuminate\Support\Facades\DB::beginTransaction();
         try {
             $insumo = InsumoTasca::findOrFail($id);
-            $insumo->update([
+            
+            $dataToUpdate = [
                 'nombre' => $request->nombre,
                 'categoria' => $request->categoria
-            ]);
+            ];
+
+            if ($request->hasFile('imagen')) {
+                // optionally delete old image if exists
+                $dataToUpdate['imagen'] = $request->file('imagen')->store('productos_tasca', 'public');
+            }
+
+            $insumo->update($dataToUpdate);
 
             $presentacionesRequest = collect($request->presentaciones);
             $idsToKeep = $presentacionesRequest->pluck('id')->filter()->toArray();
@@ -195,7 +325,7 @@ class InventarioTascaController extends Controller
                             'nombre' => $pres['nombre'],
                             'precio' => $pres['precio'],
                             'medida_descuento' => $pres['medida_descuento'],
-                            'codigo_barras' => $pres['codigo_barras'] ?? null
+                            'codigo_barras' => empty($pres['codigo_barras']) ? null : $pres['codigo_barras']
                         ]);
                     }
                 } else {
@@ -204,7 +334,7 @@ class InventarioTascaController extends Controller
                         'nombre' => $pres['nombre'],
                         'precio' => $pres['precio'],
                         'medida_descuento' => $pres['medida_descuento'],
-                        'codigo_barras' => $pres['codigo_barras'] ?? null
+                        'codigo_barras' => empty($pres['codigo_barras']) ? null : $pres['codigo_barras']
                     ]);
                 }
             }
@@ -268,7 +398,7 @@ class InventarioTascaController extends Controller
 
     public function getCompras()
     {
-        return response()->json(\App\Models\CompraTasca::with(['lotes.insumo', 'proveedor', 'gastos'])->orderBy('fecha_compra', 'desc')->get());
+        return response()->json(\App\Models\CompraTasca::with(['lotes.insumo.lotesActivos', 'proveedor', 'gastos'])->orderBy('fecha_compra', 'desc')->get());
     }
 
     public function storeCompra(Request $request)
@@ -661,6 +791,7 @@ class InventarioTascaController extends Controller
             ->join('ventas_tasca', 'ventas_tasca_detalles.id_venta', '=', 'ventas_tasca.id')
             ->join('productos_tasca', 'ventas_tasca_detalles.id_producto', '=', 'productos_tasca.id')
             ->leftJoin('miembros', 'ventas_tasca.id_cliente_miembro', '=', 'miembros.id')
+            ->leftJoin('personas', 'ventas_tasca.id_persona', '=', 'personas.id')
             ->leftJoin('clientes_tasca', 'ventas_tasca.id_cliente_tasca', '=', 'clientes_tasca.id')
             ->where('productos_tasca.id_insumo', $id)
             ->whereRaw("LOWER(ventas_tasca.estado) NOT IN ('anulada', 'anulado')")
@@ -670,6 +801,7 @@ class InventarioTascaController extends Controller
                 'ventas_tasca.estado',
                 'miembros.razon_social as miembro_nombre',
                 'miembros.acronimo as miembro_apellido',
+                'personas.nombre as persona_nombre',
                 'clientes_tasca.nombre as cliente_foraneo_nombre',
                 'productos_tasca.nombre as presentacion',
                 'ventas_tasca_detalles.cantidad',
