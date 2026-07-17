@@ -210,7 +210,7 @@ export function MenuPublico() {
             </span>
             <input
               type="text"
-              placeholder="Buscar bebida o plato..."
+              placeholder="Buscar bebida o snack..."
               value={search}
               onChange={e => setSearch(e.target.value)}
               className="w-full pl-10 pr-4 py-3 rounded-2xl bg-white/10 border border-white/20 text-white placeholder-[#8A9CC8] text-sm focus:outline-none focus:border-[#C9A843]/60 focus:bg-white/15 transition-all shadow-none"
