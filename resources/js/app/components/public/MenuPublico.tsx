@@ -200,8 +200,12 @@ export function MenuPublico() {
           </div>
         </div>
 
-        {/* Search bar — fija visualmente al fondo del hero */}
-        <div className="pb-5">
+      </div>
+
+      {/* Sticky Header: Search + Category Tabs */}
+      <div id="menu" className="sticky top-0 z-30 bg-[#0B1749]/95 backdrop-blur-md border-b border-white/10 shadow-md">
+        <div className="max-w-3xl mx-auto px-4 py-3 space-y-3">
+          {/* Search bar */}
           <div className="relative max-w-md mx-auto">
             <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#8A9CC8] pointer-events-none">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -213,7 +217,7 @@ export function MenuPublico() {
               placeholder="Buscar bebida o snack..."
               value={search}
               onChange={e => setSearch(e.target.value)}
-              className="w-full pl-10 pr-4 py-3 rounded-2xl bg-white/10 border border-white/20 text-white placeholder-[#8A9CC8] text-sm focus:outline-none focus:border-[#C9A843]/60 focus:bg-white/15 transition-all shadow-none"
+              className="w-full pl-10 pr-4 py-2.5 rounded-2xl bg-white/10 border border-white/20 text-white placeholder-[#8A9CC8] text-sm focus:outline-none focus:border-[#C9A843]/60 focus:bg-white/15 transition-all shadow-none"
             />
             {search && (
               <button
@@ -224,14 +228,10 @@ export function MenuPublico() {
               </button>
             )}
           </div>
-        </div>
-      </div>
 
-      {/* Category Tabs — sticky */}
-      {!loading && CATEGORIES.length > 1 && (
-        <div id="menu" className="sticky top-0 z-30 bg-[#0B1749]/95 backdrop-blur-md border-b border-white/10">
-          <div className="max-w-3xl mx-auto px-4">
-            <div className="flex gap-1 overflow-x-auto py-3" style={{ scrollbarWidth: 'none' }}>
+          {/* Category Tabs */}
+          {!loading && CATEGORIES.length > 1 && (
+            <div className="flex gap-1 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
               {CATEGORIES.map(cat => (
                 <button
                   key={cat}
@@ -246,9 +246,9 @@ export function MenuPublico() {
                 </button>
               ))}
             </div>
-          </div>
+          )}
         </div>
-      )}
+      </div>
 
       {/* Product Grid */}
       <main className="max-w-3xl mx-auto px-4 py-6">
