@@ -62,8 +62,8 @@ export function VentaPos() {
   const addProductoToCart = (prod: any, qty: number = 1) => {
     if (qty <= 0) return alert("La cantidad debe ser mayor a 0");
     const currentDetalles = venta.detalles || [];
-    const existing = currentDetalles.find((d: any) => d.id_producto === prod.id);
-    const existingQty = existing ? existing.cantidad : 0;
+    const existing = currentDetalles.find((d: any) => Number(d.id_producto) === Number(prod.id));
+    const existingQty = existing ? Number(existing.cantidad) : 0;
     
     if (existingQty + qty > prod.stock) {
         return alert(`Stock insuficiente. Quedan ${prod.stock}`);
@@ -73,8 +73,8 @@ export function VentaPos() {
 
     const newDetalles = existing 
       ? currentDetalles.map((d: any) => {
-          if (d.id_producto === prod.id) {
-            const newQty = d.cantidad + qty;
+          if (Number(d.id_producto) === Number(prod.id)) {
+            const newQty = Number(d.cantidad) + qty;
             return { ...d, cantidad: newQty, subtotal: precioReal * newQty };
           }
           return d;
@@ -101,14 +101,14 @@ export function VentaPos() {
     const currentDetalles = venta.detalles || [];
     
     // Validar stock (buscamos en `productos` que está en memoria)
-    const p = productos.find(prod => prod.id === id_producto);
+    const p = productos.find(prod => Number(prod.id) === Number(id_producto));
     if (p && newCantidad > p.stock) {
       alert(`Stock insuficiente. Quedan ${p.stock}`);
       return;
     }
 
     const newDetalles = currentDetalles.map((d: any) => {
-      if (d.id_producto === id_producto) {
+      if (Number(d.id_producto) === Number(id_producto)) {
         const precioReal = isUgavi ? parseFloat(p?.costo_calculado || d.precio_unitario) : parseFloat(p?.precio || d.precio_unitario);
         return { ...d, cantidad: newCantidad, subtotal: precioReal * newCantidad };
       }
@@ -119,14 +119,14 @@ export function VentaPos() {
 
   const handleRemoveDetalle = (id_producto: number) => {
     const currentDetalles = venta.detalles || [];
-    const existing = currentDetalles.find((d: any) => d.id_producto === id_producto);
+    const existing = currentDetalles.find((d: any) => Number(d.id_producto) === Number(id_producto));
     if (!existing) return;
 
     let newDetalles;
     if (existing.cantidad > 1) {
-      newDetalles = currentDetalles.map((d: any) => d.id_producto === id_producto ? { ...d, cantidad: d.cantidad - 1 } : d);
+      newDetalles = currentDetalles.map((d: any) => Number(d.id_producto) === Number(id_producto) ? { ...d, cantidad: d.cantidad - 1 } : d);
     } else {
-      newDetalles = currentDetalles.filter((d: any) => d.id_producto !== id_producto);
+      newDetalles = currentDetalles.filter((d: any) => Number(d.id_producto) !== Number(id_producto));
     }
     updateDetalles(newDetalles);
   };
@@ -136,9 +136,15 @@ export function VentaPos() {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ detalles })
-    }).then(res => res.json()).then(data => {
+    }).then(async res => {
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || data.message || "Error al actualizar la orden");
+      }
+      return data;
+    }).then(data => {
       setVenta(data);
-    }).catch(err => alert("Error al actualizar la orden"));
+    }).catch(err => alert(err.message));
   };
 
   const handleAddPago = () => {
@@ -283,13 +289,6 @@ export function VentaPos() {
                   disabled={isReadOnly || p.stock <= 0}
                   className={`relative overflow-hidden rounded-xl border text-left transition-all flex flex-col justify-between ${p.stock > 0 ? 'hover:border-green-500 hover:shadow-md cursor-pointer' : 'opacity-50 cursor-not-allowed'}`}
                 >
-                  <div className="w-full h-24 bg-gray-100 flex items-center justify-center border-b">
-                    {p.insumo?.imagen_url || p.insumo?.imagen ? (
-                      <img src={p.insumo?.imagen_url || `/storage/${p.insumo.imagen}`} alt={p.nombre} className="w-full h-full object-cover" />
-                    ) : (
-                      <Package size={32} className="text-gray-300" />
-                    )}
-                  </div>
                   <div className="p-3 flex-1 flex flex-col justify-between w-full">
                     <div>
                       <p className="font-bold text-sm mb-1 leading-tight break-words" title={p.nombre_completo || p.nombre}>{p.nombre_completo || p.nombre}</p>

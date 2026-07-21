@@ -18,6 +18,7 @@ use App\Http\Controllers\PagoCarnetController;
 use App\Http\Controllers\FinanzasController;
 use App\Http\Controllers\CarnetEmitidoController;
 use App\Http\Controllers\TascaController;
+use App\Http\Controllers\CobranzaController;
 
 Route::post('/login', [AuthController::class, 'login']);
 Route::get('/carnets/public/{id}', [CarnetEmitidoController::class, 'showPublic']);
@@ -42,7 +43,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/', [MiembroController::class, 'store']);
     Route::put('/{id}', [MiembroController::class, 'update']);
     Route::delete('/{id}', [MiembroController::class, 'destroy']);
-});
+    });
+    
+    Route::post('/cobranzas/enviar-masivo', [CobranzaController::class, 'enviarMasivo']);
+    Route::get('/cobranzas/logs', [CobranzaController::class, 'getLogs']);
+    Route::get('/cobranzas/logs/recientes', [CobranzaController::class, 'getLogsRecientes']);
 
 Route::prefix('documentos-miembros')->group(function () {
     Route::get('/{id_miembro}', [DocumentoMiembroController::class, 'index']);

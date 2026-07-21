@@ -865,6 +865,7 @@ class InventarioTascaController extends Controller
                     'fecha' => \Carbon\Carbon::now()->toDateString(),
                     'estado' => 'Ajuste', // Ignorado en reportes, pero descontado en recalculo
                     'total' => 0,
+                    'pendiente' => 0,
                     'descuento' => 0,
                     'id_cliente_miembro' => null,
                     'created_at' => now(),

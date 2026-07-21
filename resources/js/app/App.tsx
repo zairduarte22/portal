@@ -21,6 +21,8 @@ import { Login } from "./components/Login";
 import { ConfiguracionesPanel } from "./components/ConfiguracionesPanel";
 import { CarnetPublico } from "./components/public/CarnetPublico";
 import { MenuPublico } from "./components/public/MenuPublico";
+import { WhatsappPolling } from "./components/WhatsappPolling";
+import { WhatsappLogsPanel } from "./components/WhatsappLogsPanel";
 // Placeholder for Public Portal
 function PublicPortal() {
   return (
@@ -213,6 +215,7 @@ export default function App() {
 
   return (
     <BrowserRouter>
+      <WhatsappPolling />
       <Routes>
         <Route path="/c/:id" element={<CarnetPublico />} />
         <Route path="/menu" element={<MenuPublico />} />
@@ -263,6 +266,7 @@ export default function App() {
           <Route path="tasca/reportes" element={<ProtectedRoute moduleId="ReportesTascaPanel" user={user}><ReportesTascaPanel /></ProtectedRoute>} />
           <Route path="configuraciones" element={<ProtectedRoute moduleId="ConfiguracionesPanel" user={user}><ConfiguracionesPanel currentUser={user} /></ProtectedRoute>} />
           <Route path="reportes" element={<ProtectedRoute moduleId="Reports" user={user}><Reports members={members} personas={personas} /></ProtectedRoute>} />
+          <Route path="whatsapp-logs" element={<ProtectedRoute moduleId="MembersList" user={user}><WhatsappLogsPanel /></ProtectedRoute>} />
           <Route path="" element={<Navigate to={user.default_route ? `/gestion/${user.default_route}` : "/gestion/dashboard"} replace />} />
         </Route>
         <Route path="*" element={<Navigate to={user.default_route ? `/gestion/${user.default_route}` : "/gestion/dashboard"} replace />} />
