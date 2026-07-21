@@ -104,7 +104,7 @@ class SendWhatsAppReminderJob implements ShouldQueue
         $url = env('NODE_WA_API_URL', 'http://localhost:3000/wa-api/enviar-recordatorio');
         
         try {
-            $response = Http::timeout(10)->post($url, [
+            $response = Http::withoutVerifying()->timeout(10)->post($url, [
                 'telefono' => $telefono_limpio,
                 'mensaje' => $mensaje
             ]);
