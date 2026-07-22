@@ -126,10 +126,10 @@ export default function ProductosTab() {
       const file = e.target.files[0];
       try {
         const options = {
-          maxSizeMB: 0.5, // Máximo 500KB
-          maxWidthOrHeight: 1200, // Máximo 1200px de ancho o alto
+          maxSizeMB: 0.2, // Reducir a 200KB para carga más rápida
+          maxWidthOrHeight: 800, // Reducir a 800px (suficiente para catálogos y POS)
           useWebWorker: true,
-          initialQuality: 0.8, // 80% de calidad inicial
+          initialQuality: 0.7, // 70% de calidad inicial
         };
         const compressedFile = await imageCompression(file, options);
         setImageFile(compressedFile);
