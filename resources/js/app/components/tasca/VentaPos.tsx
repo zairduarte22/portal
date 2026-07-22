@@ -54,8 +54,11 @@ export function VentaPos() {
   const saldoPendiente = Math.max(0, total - pagadoAnteriormente - pagadoAhora);
 
   const handleAddProducto = (prod: any) => {
-    if (prod.stock <= 0) return alert("Sin stock");
-    setSelectedProduct(prod);
+    const qtyInCart = venta.detalles?.find((d: any) => Number(d.id_producto) === Number(prod.id))?.cantidad || 0;
+    const availableStock = prod.stock - qtyInCart;
+    
+    if (availableStock <= 0) return alert("Sin stock");
+    setSelectedProduct({ ...prod, stock: availableStock });
     setQuantityInput(1);
   };
 
@@ -282,25 +285,30 @@ export function VentaPos() {
           </div>
           <div className="flex-1 overflow-y-auto p-4">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {filteredProd.map(p => (
-                <button 
-                  key={p.id} 
-                  onClick={() => handleAddProducto(p)}
-                  disabled={isReadOnly || p.stock <= 0}
-                  className={`relative overflow-hidden rounded-xl border text-left transition-all flex flex-col justify-between ${p.stock > 0 ? 'hover:border-green-500 hover:shadow-md cursor-pointer' : 'opacity-50 cursor-not-allowed'}`}
-                >
-                  <div className="p-3 flex-1 flex flex-col justify-between w-full">
-                    <div>
-                      <p className="font-bold text-sm mb-1 leading-tight break-words" title={p.nombre_completo || p.nombre}>{p.nombre_completo || p.nombre}</p>
-                      <p className="text-green-600 font-bold">
-                        ${isUgavi ? parseFloat(p.costo_calculado || p.precio).toFixed(2) : parseFloat(p.precio).toFixed(2)}
-                        {isUgavi && p.costo_calculado !== undefined && <span className="text-xs text-orange-500 ml-2">(Costo)</span>}
-                      </p>
+              {filteredProd.map(p => {
+                const qtyInCart = venta.detalles?.find((d: any) => Number(d.id_producto) === Number(p.id))?.cantidad || 0;
+                const availableStock = p.stock - qtyInCart;
+                
+                return (
+                  <button 
+                    key={p.id} 
+                    onClick={() => handleAddProducto(p)}
+                    disabled={isReadOnly || availableStock <= 0}
+                    className={`relative overflow-hidden rounded-xl border text-left transition-all flex flex-col justify-between ${availableStock > 0 ? 'hover:border-green-500 hover:shadow-md cursor-pointer' : 'opacity-50 cursor-not-allowed'}`}
+                  >
+                    <div className="p-3 flex-1 flex flex-col justify-between w-full">
+                      <div>
+                        <p className="font-bold text-sm mb-1 leading-tight break-words" title={p.nombre_completo || p.nombre}>{p.nombre_completo || p.nombre}</p>
+                        <p className="text-green-600 font-bold">
+                          ${isUgavi ? parseFloat(p.costo_calculado || p.precio).toFixed(2) : parseFloat(p.precio).toFixed(2)}
+                          {isUgavi && p.costo_calculado !== undefined && <span className="text-xs text-orange-500 ml-2">(Costo)</span>}
+                        </p>
+                      </div>
+                      <p className="text-xs text-gray-400 mt-2">Stock: {availableStock}</p>
                     </div>
-                    <p className="text-xs text-gray-400 mt-2">Stock: {p.stock}</p>
-                  </div>
-                </button>
-              ))}
+                  </button>
+                );
+              })}
             </div>
           </div>
         </div>
