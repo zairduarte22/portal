@@ -77,11 +77,16 @@ export function VentaPos() {
   const addProductoToCart = (prod: any, qty: number = 1) => {
     if (qty <= 0) return alert("La cantidad debe ser mayor a 0");
     const currentDetalles = venta.detalles || [];
+    const p = productos.find(p => Number(p.id) === Number(prod.id));
+    
     const existing = currentDetalles.find((d: any) => Number(d.id_producto) === Number(prod.id));
     const existingQty = existing ? Number(existing.cantidad) : 0;
+    const originalQty = existing ? Number(existing.original_cantidad || 0) : 0;
     
-    if (existingQty + qty > prod.stock) {
-        return alert(`Stock insuficiente. Quedan ${prod.stock}`);
+    const newAddedQty = existingQty - originalQty;
+    
+    if (p && newAddedQty + qty > p.stock) {
+        return alert(`Stock insuficiente. Quedan ${p.stock - newAddedQty}`);
     }
 
     const precioReal = isUgavi ? parseFloat(prod.costo_calculado || prod.precio) : parseFloat(prod.precio);
@@ -115,10 +120,15 @@ export function VentaPos() {
     if (newCantidad <= 0) return;
     const currentDetalles = venta.detalles || [];
     
-    // Validar stock (buscamos en `productos` que está en memoria)
+    // Validar stock usando original_cantidad
     const p = productos.find(prod => Number(prod.id) === Number(id_producto));
-    if (p && newCantidad > p.stock) {
-      alert(`Stock insuficiente. Quedan ${p.stock}`);
+    const existingDetail = currentDetalles.find((d: any) => Number(d.id_producto) === Number(id_producto));
+    const originalQty = existingDetail ? Number(existingDetail.original_cantidad || 0) : 0;
+    
+    const newAddedQty = newCantidad - originalQty;
+    
+    if (p && newAddedQty > p.stock) {
+      alert(`Stock insuficiente. Quedan ${p.stock + originalQty} en total, de los cuales ${originalQty} ya estaban en la factura. Puedes agregar hasta ${p.stock} más.`);
       return;
     }
 
