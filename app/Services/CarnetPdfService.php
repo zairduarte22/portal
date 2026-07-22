@@ -143,13 +143,13 @@ class CarnetPdfService
                 // Negro
                 $pdf->SetTextColor(0, 0, 0);
                 $pdf->SetFont($this->getFontName('Poppins-Bold'), '', 9);
-                $anchoMaximo = 21;
-                $espacioEntreLineas = 10;
+                $anchoMaximo = 30;
+                $espacioEntreLineas = 9;
             }
 
             $lineasAnverso = explode("\n", wordwrap($textoAnverso, $anchoMaximo, "\n", true));
             
-            $yBasePython = count($lineasAnverso) > 1 ? 130 : 133;
+            $yBasePython = count($lineasAnverso) > 1 ? 132 : 135;
             // Python Y_rl = CARD_HEIGHT - yBasePython
             // TCPDF Y_tc = CARD_HEIGHT - Y_rl = yBasePython
             $yInicialTcpf = $yBasePython - ($esRutaEspecial ? 11 : 9);
