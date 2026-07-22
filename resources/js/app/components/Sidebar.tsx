@@ -1,4 +1,4 @@
-import { LayoutDashboard, Users, BarChart3, Settings, Leaf, ChevronRight, Wallet, IdCard, BookOpen, Landmark, Store, Package } from "lucide-react";
+import { LayoutDashboard, Users, BarChart3, Settings, Leaf, ChevronRight, Wallet, IdCard, BookOpen, Landmark, Store, Package, MessageCircle } from "lucide-react";
 import { NavLink } from "react-router-dom";
 
 interface SidebarProps {
@@ -20,6 +20,7 @@ const navGroups = [
       { id: "miembros", label: "Miembros", icon: Users, moduleId: "MembersList" },
       { id: "personas", label: "Personas", icon: Users, moduleId: "PersonasList" },
       { id: "carnets", label: "Carnets", icon: IdCard, moduleId: "CarnetsPanel" },
+      { id: "whatsapp-logs", label: "Historial WhatsApp", icon: MessageCircle, moduleId: "MembersList" },
     ]
   },
   {

@@ -202,11 +202,11 @@ export function MenuPublico() {
 
       </div>
 
-      {/* Sticky Header: Search + Category Tabs */}
-      <div id="menu" className="sticky top-0 z-30 bg-[#0B1749]/95 backdrop-blur-md border-b border-white/10 shadow-md">
-        <div className="max-w-3xl mx-auto px-4 py-3 space-y-3">
+      {/* Sticky Menu: Search + Category Tabs */}
+      <div id="menu" className="sticky top-0 z-30 bg-[#0B1749]/95 backdrop-blur-md border-b border-white/10 shadow-sm">
+        <div className="max-w-3xl mx-auto px-4 py-3">
           {/* Search bar */}
-          <div className="relative max-w-md mx-auto">
+          <div className="relative w-full mx-auto">
             <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#8A9CC8] pointer-events-none">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
@@ -231,7 +231,7 @@ export function MenuPublico() {
 
           {/* Category Tabs */}
           {!loading && CATEGORIES.length > 1 && (
-            <div className="flex gap-1 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
+            <div className="flex gap-1 overflow-x-auto mt-3" style={{ scrollbarWidth: 'none' }}>
               {CATEGORIES.map(cat => (
                 <button
                   key={cat}

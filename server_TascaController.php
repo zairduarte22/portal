@@ -170,7 +170,7 @@ class TascaController extends Controller
         $request->validate([
             'detalles' => 'required|array',
             'detalles.*.id_producto' => 'required|exists:productos_tasca,id',
-            'detalles.*.cantidad' => 'required|numeric|min:0.01',
+            'detalles.*.cantidad' => 'required|integer|min:1',
         ]);
 
         DB::beginTransaction();

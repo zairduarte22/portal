@@ -29,7 +29,14 @@ export function VentaPos() {
   const [quantityInput, setQuantityInput] = useState<number>(1);
 
   useEffect(() => {
-    fetch(`/api/tasca/ventas/${id}`).then(res => res.json()).then(setVenta);
+    fetch(`/api/tasca/ventas/${id}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.detalles) {
+          data.detalles = data.detalles.map((d: any) => ({ ...d, original_cantidad: Number(d.cantidad) }));
+        }
+        setVenta(data);
+      });
     fetch("/api/tasca/productos").then(res => res.json()).then(setProductos);
     fetch("/api/pagos/init").then(res => res.json()).then(data => {
       if (data.tasa_dia) setTasa(data.tasa_dia.toString());
@@ -54,27 +61,40 @@ export function VentaPos() {
   const saldoPendiente = Math.max(0, total - pagadoAnteriormente - pagadoAhora);
 
   const handleAddProducto = (prod: any) => {
-    if (prod.stock <= 0) return alert("Sin stock");
-    setSelectedProduct(prod);
+    const existingDetail = venta.detalles?.find((d: any) => Number(d.id_producto) === Number(prod.id));
+    const qtyInCart = existingDetail ? Number(existingDetail.cantidad) : 0;
+    const originalQty = existingDetail ? Number(existingDetail.original_cantidad || 0) : 0;
+    
+    // Only subtract from stock the extra items added in this session
+    const newAddedQty = qtyInCart - originalQty;
+    const availableStock = prod.stock - newAddedQty;
+    
+    if (availableStock <= 0) return alert("Sin stock");
+    setSelectedProduct({ ...prod, stock: availableStock });
     setQuantityInput(1);
   };
 
   const addProductoToCart = (prod: any, qty: number = 1) => {
     if (qty <= 0) return alert("La cantidad debe ser mayor a 0");
     const currentDetalles = venta.detalles || [];
-    const existing = currentDetalles.find((d: any) => d.id_producto === prod.id);
-    const existingQty = existing ? existing.cantidad : 0;
+    const p = productos.find(p => Number(p.id) === Number(prod.id));
     
-    if (existingQty + qty > prod.stock) {
-        return alert(`Stock insuficiente. Quedan ${prod.stock}`);
+    const existing = currentDetalles.find((d: any) => Number(d.id_producto) === Number(prod.id));
+    const existingQty = existing ? Number(existing.cantidad) : 0;
+    const originalQty = existing ? Number(existing.original_cantidad || 0) : 0;
+    
+    const newAddedQty = existingQty - originalQty;
+    
+    if (p && newAddedQty + qty > p.stock) {
+        return alert(`Stock insuficiente. Quedan ${p.stock - newAddedQty}`);
     }
 
     const precioReal = isUgavi ? parseFloat(prod.costo_calculado || prod.precio) : parseFloat(prod.precio);
 
     const newDetalles = existing 
       ? currentDetalles.map((d: any) => {
-          if (d.id_producto === prod.id) {
-            const newQty = d.cantidad + qty;
+          if (Number(d.id_producto) === Number(prod.id)) {
+            const newQty = Number(d.cantidad) + qty;
             return { ...d, cantidad: newQty, subtotal: precioReal * newQty };
           }
           return d;
@@ -100,15 +120,20 @@ export function VentaPos() {
     if (newCantidad <= 0) return;
     const currentDetalles = venta.detalles || [];
     
-    // Validar stock (buscamos en `productos` que está en memoria)
-    const p = productos.find(prod => prod.id === id_producto);
-    if (p && newCantidad > p.stock) {
-      alert(`Stock insuficiente. Quedan ${p.stock}`);
+    // Validar stock usando original_cantidad
+    const p = productos.find(prod => Number(prod.id) === Number(id_producto));
+    const existingDetail = currentDetalles.find((d: any) => Number(d.id_producto) === Number(id_producto));
+    const originalQty = existingDetail ? Number(existingDetail.original_cantidad || 0) : 0;
+    
+    const newAddedQty = newCantidad - originalQty;
+    
+    if (p && newAddedQty > p.stock) {
+      alert(`Stock insuficiente. Quedan ${p.stock + originalQty} en total, de los cuales ${originalQty} ya estaban en la factura. Puedes agregar hasta ${p.stock} más.`);
       return;
     }
 
     const newDetalles = currentDetalles.map((d: any) => {
-      if (d.id_producto === id_producto) {
+      if (Number(d.id_producto) === Number(id_producto)) {
         const precioReal = isUgavi ? parseFloat(p?.costo_calculado || d.precio_unitario) : parseFloat(p?.precio || d.precio_unitario);
         return { ...d, cantidad: newCantidad, subtotal: precioReal * newCantidad };
       }
@@ -119,14 +144,14 @@ export function VentaPos() {
 
   const handleRemoveDetalle = (id_producto: number) => {
     const currentDetalles = venta.detalles || [];
-    const existing = currentDetalles.find((d: any) => d.id_producto === id_producto);
+    const existing = currentDetalles.find((d: any) => Number(d.id_producto) === Number(id_producto));
     if (!existing) return;
 
     let newDetalles;
     if (existing.cantidad > 1) {
-      newDetalles = currentDetalles.map((d: any) => d.id_producto === id_producto ? { ...d, cantidad: d.cantidad - 1 } : d);
+      newDetalles = currentDetalles.map((d: any) => Number(d.id_producto) === Number(id_producto) ? { ...d, cantidad: d.cantidad - 1 } : d);
     } else {
-      newDetalles = currentDetalles.filter((d: any) => d.id_producto !== id_producto);
+      newDetalles = currentDetalles.filter((d: any) => Number(d.id_producto) !== Number(id_producto));
     }
     updateDetalles(newDetalles);
   };
@@ -136,9 +161,23 @@ export function VentaPos() {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ detalles })
-    }).then(res => res.json()).then(data => {
+    }).then(async res => {
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || data.message || "Error al actualizar la orden");
+      }
+      return data;
+    }).then(data => {
+      // Restaurar original_cantidad del estado anterior para no perder la referencia 
+      // frente al array de productos (que no se vuelve a cargar de la DB en cada click)
+      if (data.detalles) {
+        data.detalles = data.detalles.map((newD: any) => {
+          const oldD = venta.detalles?.find((d: any) => Number(d.id_producto) === Number(newD.id_producto));
+          return { ...newD, original_cantidad: oldD?.original_cantidad || 0 };
+        });
+      }
       setVenta(data);
-    }).catch(err => alert("Error al actualizar la orden"));
+    }).catch(err => alert(err.message));
   };
 
   const handleAddPago = () => {
@@ -276,32 +315,34 @@ export function VentaPos() {
           </div>
           <div className="flex-1 overflow-y-auto p-4">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {filteredProd.map(p => (
-                <button 
-                  key={p.id} 
-                  onClick={() => handleAddProducto(p)}
-                  disabled={isReadOnly || p.stock <= 0}
-                  className={`relative overflow-hidden rounded-xl border text-left transition-all flex flex-col justify-between ${p.stock > 0 ? 'hover:border-green-500 hover:shadow-md cursor-pointer' : 'opacity-50 cursor-not-allowed'}`}
-                >
-                  <div className="w-full h-24 bg-gray-100 flex items-center justify-center border-b">
-                    {p.insumo?.imagen_url || p.insumo?.imagen ? (
-                      <img src={p.insumo?.imagen_url || `/storage/${p.insumo.imagen}`} alt={p.nombre} className="w-full h-full object-cover" />
-                    ) : (
-                      <Package size={32} className="text-gray-300" />
-                    )}
-                  </div>
-                  <div className="p-3 flex-1 flex flex-col justify-between w-full">
-                    <div>
-                      <p className="font-bold text-sm mb-1 leading-tight break-words" title={p.nombre_completo || p.nombre}>{p.nombre_completo || p.nombre}</p>
-                      <p className="text-green-600 font-bold">
-                        ${isUgavi ? parseFloat(p.costo_calculado || p.precio).toFixed(2) : parseFloat(p.precio).toFixed(2)}
-                        {isUgavi && p.costo_calculado !== undefined && <span className="text-xs text-orange-500 ml-2">(Costo)</span>}
-                      </p>
+              {filteredProd.map(p => {
+                const existingDetail = venta.detalles?.find((d: any) => Number(d.id_producto) === Number(p.id));
+                const qtyInCart = existingDetail ? Number(existingDetail.cantidad) : 0;
+                const originalQty = existingDetail ? Number(existingDetail.original_cantidad || 0) : 0;
+                
+                const newAddedQty = qtyInCart - originalQty;
+                const availableStock = p.stock - newAddedQty;
+                
+                return (
+                  <button 
+                    key={p.id} 
+                    onClick={() => handleAddProducto(p)}
+                    disabled={isReadOnly || availableStock <= 0}
+                    className={`relative overflow-hidden rounded-xl border text-left transition-all flex flex-col justify-between ${availableStock > 0 ? 'hover:border-green-500 hover:shadow-md cursor-pointer' : 'opacity-50 cursor-not-allowed'}`}
+                  >
+                    <div className="p-3 flex-1 flex flex-col justify-between w-full">
+                      <div>
+                        <p className="font-bold text-sm mb-1 leading-tight break-words" title={p.nombre_completo || p.nombre}>{p.nombre_completo || p.nombre}</p>
+                        <p className="text-green-600 font-bold">
+                          ${isUgavi ? parseFloat(p.costo_calculado || p.precio).toFixed(2) : parseFloat(p.precio).toFixed(2)}
+                          {isUgavi && p.costo_calculado !== undefined && <span className="text-xs text-orange-500 ml-2">(Costo)</span>}
+                        </p>
+                      </div>
+                      <p className="text-xs text-gray-400 mt-2">Stock: {availableStock}</p>
                     </div>
-                    <p className="text-xs text-gray-400 mt-2">Stock: {p.stock}</p>
-                  </div>
-                </button>
-              ))}
+                  </button>
+                );
+              })}
             </div>
           </div>
         </div>

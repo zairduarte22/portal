@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
-import { Search, Plus, Pencil, Trash2, Filter, ChevronUp, ChevronDown, Eye, Users, ChevronLeft, ChevronRight, Download, Shield } from "lucide-react";
+import { Search, Plus, Pencil, Trash2, Filter, ChevronUp, ChevronDown, Eye, Users, ChevronLeft, ChevronRight, Download, Shield, MessageCircle } from "lucide-react";
 import { Miembro, Persona, Vinculacion, RelacionFamiliar, ESTADOS_SOLVENCIA, TIPOS_EXPLOTACION } from "./mockData";
 import { MemberModal } from "./MemberModal";
 import { MemberDetail } from "./MemberDetail";
@@ -50,6 +50,8 @@ export function MembersList({
   const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null);
   const [reportModalOpen, setReportModalOpen] = useState(false);
   const [page, setPage] = useState(1);
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
+  const [isSendingWa, setIsSendingWa] = useState(false);
   const PAGE_SIZE = 50;
 
   useEffect(() => {
@@ -59,6 +61,29 @@ export function MembersList({
   const toggleSort = (key: SortKey) => {
     if (sortKey === key) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
     else { setSortKey(key); setSortDir("asc"); }
+  };
+
+  const handleSendWa = async () => {
+    if (!confirm(`¿Estás seguro de enviar recordatorios de cobranza a ${selectedIds.length} miembros?`)) return;
+    setIsSendingWa(true);
+    try {
+      const res = await fetch('/api/cobranzas/enviar-masivo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ miembro_ids: selectedIds })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        alert(data.message || 'Cola iniciada');
+        setSelectedIds([]);
+      } else {
+        alert(data.error || 'Error al encolar mensajes');
+      }
+    } catch (e) {
+      alert("Error de conexión");
+    } finally {
+      setIsSendingWa(false);
+    }
   };
 
   const personasCountMap = useMemo(() => {
@@ -118,6 +143,17 @@ export function MembersList({
           </p>
         </div>
         <div className="flex items-center gap-2">
+          {selectedIds.length > 0 && (
+            <button
+              onClick={handleSendWa}
+              disabled={isSendingWa}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-2xl text-sm transition-all hover:opacity-90"
+              style={{ background: "linear-gradient(135deg, #059669, #047857)", color: "#fff", fontWeight: 700, boxShadow: "0 4px 14px rgba(5,150,105,0.35)" }}
+            >
+              <MessageCircle size={16} />
+              {isSendingWa ? "Encolando..." : `WhatsApp Cobranza (${selectedIds.length})`}
+            </button>
+          )}
           <button
             onClick={() => setReportModalOpen(true)}
             className="flex items-center gap-2 px-4 py-2.5 rounded-2xl text-sm transition-all hover:opacity-90 border"
@@ -180,6 +216,17 @@ export function MembersList({
           <table className="w-full">
             <thead>
               <tr style={{ backgroundColor: "var(--muted)", borderBottom: "1px solid var(--border)" }}>
+                <th className="px-4 py-3.5 w-10">
+                  <input 
+                    type="checkbox" 
+                    checked={filtered.length > 0 && selectedIds.length === filtered.length}
+                    onChange={() => {
+                        if (selectedIds.length === filtered.length) setSelectedIds([]);
+                        else setSelectedIds(filtered.map(m => m.id));
+                    }}
+                    className="rounded border-gray-300 text-green-600 focus:ring-green-500 cursor-pointer w-4 h-4"
+                  />
+                </th>
                 <Th label="Cod." sk="id" />
                 <Th label="Razón Social / RIF" sk="razon_social" />
                 <Th label="Representante" />
@@ -215,8 +262,18 @@ export function MembersList({
                   <tr
                     key={m.id}
                     className="border-t transition-colors hover:bg-[var(--muted)]"
-                    style={{ borderColor: "var(--border)" }}
+                    style={{ borderColor: "var(--border)", backgroundColor: selectedIds.includes(m.id) ? "rgba(34, 197, 94, 0.05)" : undefined }}
                   >
+                    <td className="px-4 py-3.5">
+                      <input 
+                        type="checkbox" 
+                        checked={selectedIds.includes(m.id)}
+                        onChange={() => {
+                            setSelectedIds(prev => prev.includes(m.id) ? prev.filter(x => x !== m.id) : [...prev, m.id]);
+                        }}
+                        className="rounded border-gray-300 text-green-600 focus:ring-green-500 cursor-pointer w-4 h-4"
+                      />
+                    </td>
                     <td className="px-4 py-3.5 text-sm" style={{ color: "var(--muted-foreground)", fontWeight: 800 }}>
                       #{String(m.id).padStart(4, "0")}
                     </td>
@@ -329,15 +386,25 @@ export function MembersList({
             const representante = repVinc ? personas.find(p => p.id === repVinc.id_persona) : undefined;
 
             return (
-              <div key={m.id} className="p-4 space-y-3 transition-colors hover:bg-[var(--muted)]">
+              <div key={m.id} className="p-4 space-y-3 transition-colors hover:bg-[var(--muted)]" style={{ backgroundColor: selectedIds.includes(m.id) ? "rgba(34, 197, 94, 0.05)" : undefined }}>
                 <div className="flex justify-between items-start gap-2">
-                  <div>
-                    <p className="text-sm" style={{ fontWeight: 800, color: "var(--foreground)", fontFamily: "Nunito, sans-serif" }}>
-                      {m.razon_social}
-                    </p>
-                    <div className="flex items-center gap-2 mt-1">
-                      <span className="text-xs font-bold" style={{ color: "var(--muted-foreground)" }}>#{String(m.id).padStart(4, "0")}</span>
-                      <span className="text-xs" style={{ color: "var(--muted-foreground)" }}>{m.rif}</span>
+                  <div className="flex items-start gap-3">
+                    <input 
+                      type="checkbox" 
+                      checked={selectedIds.includes(m.id)}
+                      onChange={() => {
+                          setSelectedIds(prev => prev.includes(m.id) ? prev.filter(x => x !== m.id) : [...prev, m.id]);
+                      }}
+                      className="rounded border-gray-300 text-green-600 focus:ring-green-500 cursor-pointer w-5 h-5 mt-0.5"
+                    />
+                    <div>
+                      <p className="text-sm" style={{ fontWeight: 800, color: "var(--foreground)", fontFamily: "Nunito, sans-serif" }}>
+                        {m.razon_social}
+                      </p>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="text-xs font-bold" style={{ color: "var(--muted-foreground)" }}>#{String(m.id).padStart(4, "0")}</span>
+                        <span className="text-xs" style={{ color: "var(--muted-foreground)" }}>{m.rif}</span>
+                      </div>
                     </div>
                   </div>
                   <span className="px-2.5 py-1 rounded-full text-[10px] whitespace-nowrap" style={{ backgroundColor: solv.bg, color: solv.color, fontWeight: 700 }}>

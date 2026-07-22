@@ -8,6 +8,18 @@ Route::get('/api/unauthenticated', function () {
     return response()->json(['message' => 'Unauthenticated.'], 401);
 })->name('login');
 
+Route::get('/migrar-whatsapp', function () {
+    try {
+        \Illuminate\Support\Facades\Artisan::call('migrate', [
+            '--path' => 'database/migrations/2026_07_21_152531_create_whatsapp_logs_table.php',
+            '--force' => true
+        ]);
+        return 'Migración de logs de WhatsApp ejecutada con éxito:<br><pre>' . \Illuminate\Support\Facades\Artisan::output() . '</pre>';
+    } catch (\Exception $e) {
+        return 'Error: ' . $e->getMessage();
+    }
+});
+
 Route::get('/ejecutar-actualizaciones', function () {
     try {
         // 1. Ya no intentamos actualizar el trigger por DB (Error de permisos de Postgres).
