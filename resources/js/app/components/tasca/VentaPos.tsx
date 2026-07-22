@@ -29,7 +29,14 @@ export function VentaPos() {
   const [quantityInput, setQuantityInput] = useState<number>(1);
 
   useEffect(() => {
-    fetch(`/api/tasca/ventas/${id}`).then(res => res.json()).then(setVenta);
+    fetch(`/api/tasca/ventas/${id}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.detalles) {
+          data.detalles = data.detalles.map((d: any) => ({ ...d, original_cantidad: Number(d.cantidad) }));
+        }
+        setVenta(data);
+      });
     fetch("/api/tasca/productos").then(res => res.json()).then(setProductos);
     fetch("/api/pagos/init").then(res => res.json()).then(data => {
       if (data.tasa_dia) setTasa(data.tasa_dia.toString());
@@ -54,8 +61,13 @@ export function VentaPos() {
   const saldoPendiente = Math.max(0, total - pagadoAnteriormente - pagadoAhora);
 
   const handleAddProducto = (prod: any) => {
-    const qtyInCart = venta.detalles?.find((d: any) => Number(d.id_producto) === Number(prod.id))?.cantidad || 0;
-    const availableStock = prod.stock - qtyInCart;
+    const existingDetail = venta.detalles?.find((d: any) => Number(d.id_producto) === Number(prod.id));
+    const qtyInCart = existingDetail ? Number(existingDetail.cantidad) : 0;
+    const originalQty = existingDetail ? Number(existingDetail.original_cantidad || 0) : 0;
+    
+    // Only subtract from stock the extra items added in this session
+    const newAddedQty = qtyInCart - originalQty;
+    const availableStock = prod.stock - newAddedQty;
     
     if (availableStock <= 0) return alert("Sin stock");
     setSelectedProduct({ ...prod, stock: availableStock });
@@ -286,8 +298,12 @@ export function VentaPos() {
           <div className="flex-1 overflow-y-auto p-4">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {filteredProd.map(p => {
-                const qtyInCart = venta.detalles?.find((d: any) => Number(d.id_producto) === Number(p.id))?.cantidad || 0;
-                const availableStock = p.stock - qtyInCart;
+                const existingDetail = venta.detalles?.find((d: any) => Number(d.id_producto) === Number(p.id));
+                const qtyInCart = existingDetail ? Number(existingDetail.cantidad) : 0;
+                const originalQty = existingDetail ? Number(existingDetail.original_cantidad || 0) : 0;
+                
+                const newAddedQty = qtyInCart - originalQty;
+                const availableStock = p.stock - newAddedQty;
                 
                 return (
                   <button 
