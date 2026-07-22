@@ -168,6 +168,14 @@ export function VentaPos() {
       }
       return data;
     }).then(data => {
+      // Restaurar original_cantidad del estado anterior para no perder la referencia 
+      // frente al array de productos (que no se vuelve a cargar de la DB en cada click)
+      if (data.detalles) {
+        data.detalles = data.detalles.map((newD: any) => {
+          const oldD = venta.detalles?.find((d: any) => Number(d.id_producto) === Number(newD.id_producto));
+          return { ...newD, original_cantidad: oldD?.original_cantidad || 0 };
+        });
+      }
       setVenta(data);
     }).catch(err => alert(err.message));
   };
