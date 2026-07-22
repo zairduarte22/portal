@@ -229,6 +229,8 @@ Route::get('/fix-storage', function () {
     return 'Enlace de storage reparado con exito. Artisan output: ' . \Illuminate\Support\Facades\Artisan::output();
 });
 
+Route::get('/optimizar-imagenes-tasca', [\App\Http\Controllers\OptimizeImagesController::class, 'optimize']);
+
 Route::get('/{any}', function () {
     return view('app');
 })->where('any', '.*');

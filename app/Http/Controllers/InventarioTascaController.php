@@ -162,56 +162,7 @@ class InventarioTascaController extends Controller
         try {
             $imagePath = null;
             if ($request->hasFile('imagen')) {
-                $file = $request->file('imagen');
-                $extension = strtolower($file->getClientOriginalExtension());
-                
-                if (in_array($extension, ['jpg', 'jpeg', 'png', 'webp'])) {
-                    $filename = 'productos_tasca/' . uniqid() . '.' . $extension;
-                    $path = storage_path('app/public/' . $filename);
-                    if (!file_exists(dirname($path))) mkdir(dirname($path), 0755, true);
-                    
-                    list($width, $height) = getimagesize($file->getPathname());
-                    $max = 800;
-                    
-                    if ($width > $max || $height > $max) {
-                        $ratio = $width / $height;
-                        if ($width > $height) {
-                            $newWidth = $max;
-                            $newHeight = $max / $ratio;
-                        } else {
-                            $newHeight = $max;
-                            $newWidth = $max * $ratio;
-                        }
-                        
-                        $src = null;
-                        if ($extension == 'jpg' || $extension == 'jpeg') $src = imagecreatefromjpeg($file->getPathname());
-                        elseif ($extension == 'png') $src = imagecreatefrompng($file->getPathname());
-                        elseif ($extension == 'webp') $src = imagecreatefromwebp($file->getPathname());
-                        
-                        if ($src) {
-                            $dst = imagecreatetruecolor($newWidth, $newHeight);
-                            if ($extension == 'png' || $extension == 'webp') {
-                                imagealphablending($dst, false);
-                                imagesavealpha($dst, true);
-                            }
-                            imagecopyresampled($dst, $src, 0, 0, 0, 0, $newWidth, $newHeight, $width, $height);
-                            
-                            if ($extension == 'jpg' || $extension == 'jpeg') imagejpeg($dst, $path, 80);
-                            elseif ($extension == 'png') imagepng($dst, $path, 8);
-                            elseif ($extension == 'webp') imagewebp($dst, $path, 80);
-                            
-                            imagedestroy($src);
-                            imagedestroy($dst);
-                            $imagePath = $filename;
-                        } else {
-                            $imagePath = $file->store('productos_tasca', 'public');
-                        }
-                    } else {
-                        $imagePath = $file->store('productos_tasca', 'public');
-                    }
-                } else {
-                    $imagePath = $file->store('productos_tasca', 'public');
-                }
+                $imagePath = $this->processAndSaveImage($request->file('imagen'));
             }
 
             $tipo = $request->tipo ?? 'fisico';
@@ -296,7 +247,7 @@ class InventarioTascaController extends Controller
 
             if ($request->hasFile('imagen')) {
                 // optionally delete old image if exists
-                $dataToUpdate['imagen'] = $request->file('imagen')->store('productos_tasca', 'public');
+                $dataToUpdate['imagen'] = $this->processAndSaveImage($request->file('imagen'));
             }
 
             $insumo->update($dataToUpdate);
@@ -911,5 +862,69 @@ class InventarioTascaController extends Controller
             \Illuminate\Support\Facades\DB::rollBack();
             return response()->json(['error' => $e->getMessage()], 500);
         }
+    }
+    private function processAndSaveImage($file)
+    {
+        $extension = strtolower($file->getClientOriginalExtension());
+        
+        if (!in_array($extension, ['jpg', 'jpeg', 'png', 'webp'])) {
+            return $file->store('productos_tasca', 'public');
+        }
+
+        $filename = 'productos_tasca/' . uniqid() . '.webp';
+        $path = storage_path('app/public/' . $filename);
+        
+        if (!file_exists(dirname($path))) {
+            mkdir(dirname($path), 0755, true);
+        }
+        
+        list($width, $height) = @getimagesize($file->getPathname());
+        if (!$width || !$height) {
+            return $file->store('productos_tasca', 'public');
+        }
+
+        $max = 800;
+        $newWidth = $width;
+        $newHeight = $height;
+
+        if ($width > $max || $height > $max) {
+            $ratio = $width / $height;
+            if ($width > $height) {
+                $newWidth = $max;
+                $newHeight = $max / $ratio;
+            } else {
+                $newHeight = $max;
+                $newWidth = $max * $ratio;
+            }
+        }
+        
+        $src = null;
+        if ($extension == 'jpg' || $extension == 'jpeg') $src = @imagecreatefromjpeg($file->getPathname());
+        elseif ($extension == 'png') $src = @imagecreatefrompng($file->getPathname());
+        elseif ($extension == 'webp') $src = @imagecreatefromwebp($file->getPathname());
+        
+        if ($src) {
+            $dst = imagecreatetruecolor($newWidth, $newHeight);
+            
+            // Transparencia para PNG/WEBP
+            imagealphablending($dst, false);
+            imagesavealpha($dst, true);
+            $transparent = imagecolorallocatealpha($dst, 255, 255, 255, 127);
+            imagefilledrectangle($dst, 0, 0, $newWidth, $newHeight, $transparent);
+            
+            imagecopyresampled($dst, $src, 0, 0, 0, 0, $newWidth, $newHeight, $width, $height);
+            
+            // Siempre guardar como webp
+            if (imagewebp($dst, $path, 80)) {
+                imagedestroy($src);
+                imagedestroy($dst);
+                return $filename;
+            }
+            
+            imagedestroy($src);
+            imagedestroy($dst);
+        }
+        
+        return $file->store('productos_tasca', 'public');
     }
 }

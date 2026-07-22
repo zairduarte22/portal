@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import toast from "react-hot-toast";
+import { toast } from "sonner";
 
 export function WhatsappPolling() {
   const lastCheckRef = useRef<string | null>(null);
