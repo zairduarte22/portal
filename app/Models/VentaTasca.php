@@ -12,6 +12,7 @@ class VentaTasca extends Model
     protected $casts = [
         'total' => 'decimal:2',
         'descuento' => 'decimal:2',
+        'cargo_servicio' => 'decimal:2',
         'fecha' => 'date',
         'fecha_vencimiento' => 'date',
     ];
@@ -35,7 +36,7 @@ class VentaTasca extends Model
         }
         
         $descuentoReal = $this->getDescuentoRealAttribute();
-        $totalVenta = $this->total - $descuentoReal;
+        $totalVenta = $this->total + $this->cargo_servicio - $descuentoReal;
         $pendiente = $totalVenta - $totalPagado;
         return max(0, round($pendiente, 2));
     }

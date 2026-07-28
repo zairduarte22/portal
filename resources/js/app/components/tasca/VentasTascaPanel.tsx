@@ -221,7 +221,7 @@ export function VentasTascaPanel() {
 
           const tasaBcv = Number(ventaDetallada.tasa_bcv || 36.5);
           
-          if (Number(ventaDetallada.descuento) > 0) {
+          if (Number(ventaDetallada.descuento) > 0 || Number(ventaDetallada.cargo_servicio) > 0) {
               docToDraw.setFontSize(8);
               docToDraw.setFont("helvetica", "bold");
               docToDraw.text("SUBTOTAL:", marginX, cursorY);
@@ -233,12 +233,24 @@ export function VentasTascaPanel() {
 
               docToDraw.setFontSize(7);
               docToDraw.setFont("helvetica", "bold");
-              docToDraw.text("DESC. SOLVENCIA 10%:", marginX, cursorY);
-              const descUsdStr = "-" + Number(ventaDetallada.descuento).toFixed(2);
-              const descBsStr = "-" + (Number(ventaDetallada.descuento) * tasaBcv).toFixed(2);
-              docToDraw.text(descUsdStr, 50 + docToDraw.getTextWidth("USD")/2 - docToDraw.getTextWidth(descUsdStr)/2, cursorY);
-              docToDraw.text(descBsStr, pageWidth - marginX - docToDraw.getTextWidth(descBsStr), cursorY);
-              cursorY += 5;
+              
+              if (Number(ventaDetallada.descuento) > 0) {
+                  docToDraw.text("DESC. SOLVENCIA:", marginX, cursorY);
+                  const descUsdStr = "-" + Number(ventaDetallada.descuento).toFixed(2);
+                  const descBsStr = "-" + (Number(ventaDetallada.descuento) * tasaBcv).toFixed(2);
+                  docToDraw.text(descUsdStr, 50 + docToDraw.getTextWidth("USD")/2 - docToDraw.getTextWidth(descUsdStr)/2, cursorY);
+                  docToDraw.text(descBsStr, pageWidth - marginX - docToDraw.getTextWidth(descBsStr), cursorY);
+                  cursorY += 5;
+              }
+
+              if (Number(ventaDetallada.cargo_servicio) > 0) {
+                  docToDraw.text("CARGO SERVICIO (10%):", marginX, cursorY);
+                  const cargoUsdStr = Number(ventaDetallada.cargo_servicio).toFixed(2);
+                  const cargoBsStr = (Number(ventaDetallada.cargo_servicio) * tasaBcv).toFixed(2);
+                  docToDraw.text(cargoUsdStr, 50 + docToDraw.getTextWidth("USD")/2 - docToDraw.getTextWidth(cargoUsdStr)/2, cursorY);
+                  docToDraw.text(cargoBsStr, pageWidth - marginX - docToDraw.getTextWidth(cargoBsStr), cursorY);
+                  cursorY += 5;
+              }
               
               docToDraw.setFontSize(8);
           }
@@ -246,8 +258,9 @@ export function VentasTascaPanel() {
           docToDraw.setFont("helvetica", "bold");
           docToDraw.text("TOTAL:", marginX, cursorY);
           
-          const totalUsdStr = (Number(ventaDetallada.total) - Number(ventaDetallada.descuento)).toFixed(2);
-          const totalBsStr = ((Number(ventaDetallada.total) - Number(ventaDetallada.descuento)) * tasaBcv).toFixed(2);
+          const finalUsd = Number(ventaDetallada.total) - Number(ventaDetallada.descuento) + Number(ventaDetallada.cargo_servicio || 0);
+          const totalUsdStr = finalUsd.toFixed(2);
+          const totalBsStr = (finalUsd * tasaBcv).toFixed(2);
 
           docToDraw.text(totalUsdStr, 50 + docToDraw.getTextWidth("USD")/2 - docToDraw.getTextWidth(totalUsdStr)/2, cursorY);
           docToDraw.text(totalBsStr, pageWidth - marginX - docToDraw.getTextWidth(totalBsStr), cursorY);
@@ -542,7 +555,7 @@ export function VentasTascaPanel() {
                       {v.estado}
                     </span>
                   </td>
-                  <td className="py-3 font-bold text-gray-800">${(parseFloat(v.total) - parseFloat(v.descuento || "0")).toFixed(2)}</td>
+                  <td className="py-3 font-bold text-gray-800">${(parseFloat(v.total) - parseFloat(v.descuento || "0") + parseFloat(v.cargo_servicio || "0")).toFixed(2)}</td>
                   <td className="py-3">
                     <div className="flex justify-end items-center gap-2">
                       <button onClick={() => handleVerDetalles(v)} className="p-2 flex items-center justify-center bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors" title="Ver Detalles">

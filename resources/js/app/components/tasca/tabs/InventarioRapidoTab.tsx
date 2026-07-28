@@ -45,11 +45,19 @@ export function InventarioRapidoTab() {
               <p className="text-sm text-gray-500 mb-3">{i.categoria || "Sin categoría"}</p>
               
               {i.productos && i.productos.length > 0 && (
-                <div className="mb-4">
-                  <p className="text-xs text-gray-400 mb-1">Presentaciones:</p>
-                  <p className="text-xs text-gray-600 font-medium line-clamp-2">
-                    {i.productos.map((p: any) => p.nombre).join(", ")}
-                  </p>
+                <div className="mb-4 space-y-2">
+                  <p className="text-xs text-gray-400 mb-1 border-b pb-1">Presentaciones y Precios:</p>
+                  {i.productos.map((p: any) => (
+                    <div key={p.id} className="flex justify-between text-xs items-center border-b border-gray-50 pb-1">
+                      <span className="font-medium text-gray-700 truncate mr-2" title={p.nombre}>{p.nombre}</span>
+                      <div className="text-right flex flex-col shrink-0">
+                        <span className="text-green-600 font-bold">${parseFloat(p.precio).toFixed(2)}</span>
+                        {p.precio_miembro !== null && p.precio_miembro !== undefined && (
+                          <span className="text-blue-600 font-bold text-[10px]">M: ${parseFloat(p.precio_miembro).toFixed(2)}</span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
                 </div>
               )}
               

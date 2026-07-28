@@ -7,10 +7,13 @@ export function DetalleFacturaModal({ venta, onClose }: { venta: any, onClose: (
   const isSolvente = venta.miembro && venta.miembro.solvencia === 'Solvente';
   const subtotal = venta.detalles?.reduce((acc: number, d: any) => acc + parseFloat(d.subtotal), 0) || 0;
   const descuento = parseFloat(venta.descuento || "0");
-  const total = parseFloat(venta.total || "0") - descuento;
+  const cargoServicio = parseFloat(venta.cargo_servicio || "0");
+  const totalOriginal = parseFloat(venta.total || "0");
+  
+  const totalFacturado = totalOriginal - descuento + cargoServicio;
 
   const pagado = venta.pagos?.reduce((acc: number, p: any) => acc + parseFloat(p.pivot?.monto_abonado_usd || 0), 0) || 0;
-  const saldoPendiente = Math.max(0, total - pagado);
+  const saldoPendiente = Math.max(0, totalFacturado - pagado);
 
   const getClienteNombre = () => {
     if (venta.miembro) {
@@ -114,14 +117,20 @@ export function DetalleFacturaModal({ venta, onClose }: { venta: any, onClose: (
               <span>${subtotal.toFixed(2)}</span>
             </div>
             {descuento > 0 && (
-              <div className="flex justify-between items-center text-sm font-bold text-green-600">
-                <span>Descuento Solvencia (10%)</span>
+              <div className="flex justify-between text-green-600 font-bold bg-green-50 p-2 rounded-lg -mx-2">
+                <span>Descuento Solvencia</span>
                 <span>-${descuento.toFixed(2)}</span>
+              </div>
+            )}
+            {Number(venta.cargo_servicio) > 0 && (
+              <div className="flex justify-between text-gray-700 font-bold mt-1">
+                <span>Cargo por Servicio (10%)</span>
+                <span>${Number(venta.cargo_servicio).toFixed(2)}</span>
               </div>
             )}
             <div className="flex justify-between items-center text-lg font-black text-gray-800 pt-2 border-t border-gray-200">
               <span>Total Facturado</span>
-              <span>${total.toFixed(2)}</span>
+              <span>${totalFacturado.toFixed(2)}</span>
             </div>
           </div>
 

@@ -27,6 +27,9 @@ export function VentaPos() {
   // Modal states for adding product quantity
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
   const [quantityInput, setQuantityInput] = useState<number>(1);
+  
+  // Cargo por servicio state
+  const [aplicaCargoServicio, setAplicaCargoServicio] = useState(false);
 
   useEffect(() => {
     fetch(`/api/tasca/ventas/${id}`)
@@ -36,6 +39,9 @@ export function VentaPos() {
           data.detalles = data.detalles.map((d: any) => ({ ...d, original_cantidad: Number(d.cantidad) }));
         }
         setVenta(data);
+        if (Number(data.cargo_servicio) > 0) {
+          setAplicaCargoServicio(true);
+        }
       });
     fetch("/api/tasca/productos").then(res => res.json()).then(setProductos);
     fetch("/api/pagos/init").then(res => res.json()).then(data => {
@@ -51,9 +57,21 @@ export function VentaPos() {
   
   const subtotal = venta.detalles?.reduce((acc: number, d: any) => acc + parseFloat(d.subtotal), 0) || 0;
   
-  // Calcular descuento en vivo en el POS
-  const descuentoAplicable = isSolvente ? subtotal * 0.10 : 0;
-  const total = subtotal - descuentoAplicable;
+  // Calcular el total a pagar en base al precio real del producto (con descuento si aplica)
+  const totalAPagar = venta.detalles?.reduce((acc: number, d: any) => {
+    const p = productos.find(prod => Number(prod.id) === Number(d.id_producto));
+    let pReal = parseFloat(d.precio_unitario);
+    if (p) {
+        if (isUgavi) pReal = parseFloat(p.costo_calculado || p.precio);
+        else if (isSolvente && p.precio_miembro !== null && p.precio_miembro !== undefined) pReal = parseFloat(p.precio_miembro);
+        else pReal = parseFloat(p.precio);
+    }
+    return acc + (pReal * d.cantidad);
+  }, 0) || 0;
+  
+  const descuentoAplicable = Math.max(0, subtotal - totalAPagar);
+  const cargoServicioAplicable = aplicaCargoServicio ? (totalAPagar * 0.10) : 0;
+  const total = totalAPagar + cargoServicioAplicable;
 
   // Calculamos el saldo pendiente tomando en cuenta lo pagado anteriormente (si hubiera) y los pagos en memoria
   const pagadoAnteriormente = venta.pagos?.reduce((acc: number, p: any) => acc + parseFloat(p.pivot?.monto_abonado_usd || 0), 0) || 0;
@@ -89,21 +107,21 @@ export function VentaPos() {
         return alert(`Stock insuficiente. Quedan ${p.stock - newAddedQty}`);
     }
 
-    const precioReal = isUgavi ? parseFloat(prod.costo_calculado || prod.precio) : parseFloat(prod.precio);
+    const precioReg = parseFloat(prod.precio);
 
     const newDetalles = existing 
       ? currentDetalles.map((d: any) => {
           if (Number(d.id_producto) === Number(prod.id)) {
             const newQty = Number(d.cantidad) + qty;
-            return { ...d, cantidad: newQty, subtotal: precioReal * newQty };
+            return { ...d, cantidad: newQty, subtotal: precioReg * newQty };
           }
           return d;
         })
       : [...currentDetalles, { 
           id_producto: prod.id, 
           cantidad: qty, 
-          precio_unitario: precioReal, 
-          subtotal: precioReal * qty 
+          precio_unitario: precioReg, 
+          subtotal: precioReg * qty 
         }];
 
     updateDetalles(newDetalles);
@@ -134,8 +152,8 @@ export function VentaPos() {
 
     const newDetalles = currentDetalles.map((d: any) => {
       if (Number(d.id_producto) === Number(id_producto)) {
-        const precioReal = isUgavi ? parseFloat(p?.costo_calculado || d.precio_unitario) : parseFloat(p?.precio || d.precio_unitario);
-        return { ...d, cantidad: newCantidad, subtotal: precioReal * newCantidad };
+        const precioReg = parseFloat(p?.precio || d.precio_unitario);
+        return { ...d, cantidad: newCantidad, subtotal: precioReg * newCantidad };
       }
       return d;
     });
@@ -156,11 +174,11 @@ export function VentaPos() {
     updateDetalles(newDetalles);
   };
 
-  const updateDetalles = (detalles: any[]) => {
+  const updateDetalles = (detalles: any[], applyCargo: boolean = aplicaCargoServicio) => {
     fetch(`/api/tasca/ventas/${id}/detalles`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ detalles })
+      body: JSON.stringify({ detalles, aplica_cargo_servicio: applyCargo })
     }).then(async res => {
       const data = await res.json();
       if (!res.ok) {
@@ -397,11 +415,37 @@ export function VentaPos() {
               </div>
               {descuentoAplicable > 0 && (
                 <div className="flex justify-between text-green-600 font-bold bg-green-50 p-2 rounded-lg -mx-2">
-                  <span className="flex items-center gap-1">Descuento (10%) <span className="text-[10px] bg-green-200 text-green-800 px-1.5 py-0.5 rounded ml-1">Solvente</span></span>
+                  <span className="flex items-center gap-1">Descuento <span className="text-[10px] bg-green-200 text-green-800 px-1.5 py-0.5 rounded ml-1">Solvente</span></span>
                   <div className="text-right">
                     <span>-${descuentoAplicable.toFixed(2)}</span>
                     <span className="text-xs ml-1 opacity-70">Bs. -{(descuentoAplicable * parseFloat(tasa || "1")).toFixed(2)}</span>
                   </div>
+                </div>
+              )}
+              {cargoServicioAplicable > 0 && (
+                <div className="flex justify-between text-gray-700">
+                  <span>Cargo por Servicio (10%)</span>
+                  <div className="text-right">
+                    <span>${cargoServicioAplicable.toFixed(2)}</span>
+                    <span className="text-xs ml-1 opacity-70">Bs. {(cargoServicioAplicable * parseFloat(tasa || "1")).toFixed(2)}</span>
+                  </div>
+                </div>
+              )}
+              {!isReadOnly && (
+                <div className="flex items-center gap-2 pt-2 border-t border-gray-100">
+                  <input 
+                    type="checkbox" 
+                    id="cargo_servicio"
+                    checked={aplicaCargoServicio}
+                    onChange={(e) => {
+                      setAplicaCargoServicio(e.target.checked);
+                      updateDetalles(venta.detalles, e.target.checked);
+                    }}
+                    className="w-4 h-4 text-blue-600 rounded"
+                  />
+                  <label htmlFor="cargo_servicio" className="text-sm font-semibold text-gray-700 cursor-pointer">
+                    Aplicar Cargo por Servicio (10%)
+                  </label>
                 </div>
               )}
               <div className="flex justify-between text-lg font-bold border-t pt-2">
@@ -413,20 +457,17 @@ export function VentaPos() {
               </div>
             </div>
 
-            <div className="flex flex-col gap-2">
-              {isPendingPay && (
-                <button onClick={handleAnular} className="w-full py-2 text-red-600 font-bold hover:bg-red-50 rounded-xl transition-colors border border-red-200 flex items-center justify-center gap-2">
-                  <Ban size={18} /> {total === 0 ? "Anular Orden Vacía" : "Anular Venta"}
+            <div className="flex flex-col gap-2 mt-2">
+              {!isReadOnly && total > 0 && (
+                <button 
+                  onClick={() => setShowPaymentModal(true)} 
+                  className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-base rounded-xl transition-all shadow-md flex items-center justify-center gap-2"
+                >
+                  <CreditCard size={18} /> Pagar
                 </button>
               )}
-              {!isReadOnly && total > 0 && (
-                <>
-                  <button 
-                    onClick={() => setShowPaymentModal(true)} 
-                    className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold text-lg rounded-xl transition-all shadow-md flex items-center justify-center gap-2"
-                  >
-                    <CreditCard size={20} /> Pagar Factura
-                  </button>
+              <div className="flex gap-2">
+                {!isReadOnly && total > 0 && (
                   <button 
                     onClick={() => {
                         if (!isSolvente) {
@@ -435,12 +476,17 @@ export function VentaPos() {
                             handleProcesar(true);
                         }
                     }} 
-                    className="w-full py-2 bg-orange-100 hover:bg-orange-200 text-orange-700 font-bold rounded-xl transition-colors flex items-center justify-center gap-2"
+                    className="flex-1 py-2 bg-orange-100 hover:bg-orange-200 text-orange-700 font-bold rounded-xl transition-colors flex items-center justify-center gap-1.5 text-sm"
                   >
-                    <Check size={18} /> Facturar a Crédito
+                    <Check size={16} /> Crédito
                   </button>
-                </>
-              )}
+                )}
+                {isPendingPay && (
+                  <button onClick={handleAnular} className="flex-1 py-2 text-red-600 font-bold hover:bg-red-50 rounded-xl transition-colors border border-red-200 flex items-center justify-center gap-1.5 text-sm">
+                    <Ban size={16} /> Anular
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         </div>
