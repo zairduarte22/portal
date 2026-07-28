@@ -7,6 +7,7 @@ interface Presentacion {
   id?: number;
   nombre: string;
   precio: number;
+  precio_miembro?: number | string;
   medida_descuento: number;
   codigo_barras?: string;
 }
@@ -33,7 +34,7 @@ export default function ProductosTab() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const [presentaciones, setPresentaciones] = useState<Presentacion[]>([
-    { nombre: "Botella/Unidad", precio: 0, medida_descuento: 1 }
+    { nombre: "Botella/Unidad", precio: 0, precio_miembro: "", medida_descuento: 1 }
   ]);
 
   // Auto-calcular precio para productos compuestos
@@ -79,7 +80,7 @@ export default function ProductosTab() {
     setImageFile(null);
     setExistingImage(null);
     setComponentes([]);
-    setPresentaciones([{ nombre: "Unidad Completa", precio: 0, medida_descuento: 1, codigo_barras: "" }]);
+    setPresentaciones([{ nombre: "Unidad Completa", precio: 0, precio_miembro: "", medida_descuento: 1, codigo_barras: "" }]);
     setShowModal(true);
   };
 
@@ -101,6 +102,7 @@ export default function ProductosTab() {
         id: p.id,
         nombre: p.nombre,
         precio: p.precio,
+        precio_miembro: p.precio_miembro !== null && p.precio_miembro !== undefined ? parseFloat(p.precio_miembro) : "",
         medida_descuento: p.medida_descuento,
         codigo_barras: p.codigo_barras || ""
       })));
@@ -115,7 +117,7 @@ export default function ProductosTab() {
         setComponentes([]);
       }
     } else {
-      setPresentaciones([{ nombre: "Unidad Completa", precio: 0, medida_descuento: 1, codigo_barras: "" }]);
+      setPresentaciones([{ nombre: "Unidad Completa", precio: 0, precio_miembro: "", medida_descuento: 1, codigo_barras: "" }]);
       setComponentes([]);
     }
     setShowModal(true);
@@ -144,7 +146,7 @@ export default function ProductosTab() {
   };
 
   const addPresentacion = () => {
-    setPresentaciones([...presentaciones, { nombre: "Trago", precio: 0, medida_descuento: 0.1, codigo_barras: "" }]);
+    setPresentaciones([...presentaciones, { nombre: "Trago", precio: 0, precio_miembro: "", medida_descuento: 0.1, codigo_barras: "" }]);
   };
 
   const updatePresentacion = (index: number, field: keyof Presentacion, value: string | number) => {
@@ -176,6 +178,7 @@ export default function ProductosTab() {
     fd.append('presentaciones', JSON.stringify(presentaciones.map(p => ({
       ...p,
       precio: parseFloat(p.precio.toString()),
+      precio_miembro: p.precio_miembro !== "" && p.precio_miembro !== undefined ? parseFloat(p.precio_miembro.toString()) : null,
       medida_descuento: parseFloat(p.medida_descuento.toString())
     }))));
 
@@ -360,6 +363,9 @@ export default function ProductosTab() {
                           </div>
                           <div className="text-right pl-2 shrink-0">
                             <p className="font-bold text-green-600 text-xs">${parseFloat(pres.precio).toFixed(2)}</p>
+                            {pres.precio_miembro !== null && pres.precio_miembro !== undefined && (
+                              <p className="font-bold text-blue-600 text-[10px]">Miembro: ${parseFloat(pres.precio_miembro).toFixed(2)}</p>
+                            )}
                           </div>
                         </div>
                       ))
@@ -518,7 +524,7 @@ export default function ProductosTab() {
                 <div className="space-y-3">
                   {presentaciones.map((pres, idx) => (
                     <div key={idx} className="grid grid-cols-1 md:grid-cols-12 gap-3 md:gap-2 items-center bg-white p-3 md:p-2 rounded-lg border shadow-sm relative">
-                      <div className="md:col-span-4">
+                      <div className={formData.tipo === 'fisico' ? "md:col-span-3" : "md:col-span-4"}>
                         <label className="block text-xs font-medium text-gray-500">Nombre Presentación</label>
                         <input required type="text" className="w-full p-2 md:p-1.5 text-sm rounded border focus:ring-1 focus:ring-purple-500"
                           value={pres.nombre} onChange={e => updatePresentacion(idx, "nombre", e.target.value)} 
@@ -527,21 +533,27 @@ export default function ProductosTab() {
                       <div className="grid grid-cols-2 md:contents gap-3">
                         {formData.tipo === 'fisico' && (
                           <div className="md:col-span-2">
-                            <label className="block text-xs font-medium text-gray-500">Unidades de Descuento</label>
+                            <label className="block text-xs font-medium text-gray-500">U. Descuento</label>
                             <input required type="number" step="0.01" min="0.01" className="w-full p-2 md:p-1.5 text-sm rounded border focus:ring-1 focus:ring-purple-500"
                               value={pres.medida_descuento} onChange={e => updatePresentacion(idx, "medida_descuento", e.target.value)} 
                               title="Cuántas unidades físicas resta del inventario al vender esta presentación" />
                           </div>
                         )}
-                        <div className={formData.tipo === 'fisico' ? "md:col-span-2" : "md:col-span-4"}>
-                          <label className="block text-xs font-medium text-gray-500">Precio Venta ($)</label>
+                        <div className="md:col-span-2">
+                          <label className="block text-xs font-medium text-gray-500">Precio ($)</label>
                           <input required type="number" step="0.01" min="0" className="w-full p-2 md:p-1.5 text-sm rounded border focus:ring-1 focus:ring-purple-500"
                             value={pres.precio} onChange={e => updatePresentacion(idx, "precio", e.target.value)} />
                         </div>
+                        <div className="md:col-span-2">
+                          <label className="block text-xs font-bold text-blue-600">P. Miembro ($)</label>
+                          <input type="number" step="0.01" min="0" className="w-full p-2 md:p-1.5 text-sm rounded border-blue-300 focus:ring-1 focus:ring-blue-500 bg-blue-50"
+                            value={pres.precio_miembro !== undefined ? pres.precio_miembro : ""} onChange={e => updatePresentacion(idx, "precio_miembro", e.target.value)}
+                            placeholder="Regular" />
+                        </div>
                       </div>
-                      <div className="md:col-span-3">
-                        <label className="block text-xs font-bold text-blue-600">Código de Barras</label>
-                        <input type="text" className="w-full p-2 md:p-1.5 text-sm rounded border-blue-300 focus:ring-1 focus:ring-blue-500"
+                      <div className={formData.tipo === 'fisico' ? "md:col-span-2" : "md:col-span-3"}>
+                        <label className="block text-xs font-medium text-gray-500">Código Barras</label>
+                        <input type="text" className="w-full p-2 md:p-1.5 text-sm rounded border focus:ring-1 focus:ring-purple-500"
                           value={pres.codigo_barras || ""} onChange={e => updatePresentacion(idx, "codigo_barras", e.target.value)} 
                           placeholder="Escanea o escribe" />
                       </div>

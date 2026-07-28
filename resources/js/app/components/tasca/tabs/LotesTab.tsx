@@ -1,6 +1,86 @@
-import { useState, useEffect } from "react";
-import { Plus, Trash2, Layers, X, PlusCircle, Eye, AlertTriangle } from "lucide-react";
+import React, { useState, useEffect, useRef } from "react";
+import { Plus, Trash2, Layers, X, PlusCircle, Eye, AlertTriangle, Search } from "lucide-react";
 import { format } from "date-fns";
+
+function SearchableSelect({ options, value, onChange, placeholder }: { options: {id: any, nombre: string}[], value: string, onChange: (val: string) => void, placeholder: string }) {
+  const [search, setSearch] = useState("");
+  const [isOpen, setIsOpen] = useState(false);
+  const selectedOption = options.find(o => o.id.toString() === value);
+  const triggerRef = useRef<HTMLDivElement>(null);
+  const [dropdownStyle, setDropdownStyle] = useState({});
+
+  useEffect(() => {
+    if (isOpen && triggerRef.current) {
+      const rect = triggerRef.current.getBoundingClientRect();
+      setDropdownStyle({
+        position: 'fixed',
+        top: rect.bottom + 'px',
+        left: rect.left + 'px',
+        width: rect.width + 'px',
+        zIndex: 999999
+      });
+    }
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (isOpen) {
+      const handleScroll = () => setIsOpen(false);
+      window.addEventListener('scroll', handleScroll, true);
+      return () => window.removeEventListener('scroll', handleScroll, true);
+    }
+  }, [isOpen]);
+
+  return (
+    <div className="relative">
+      <div 
+        ref={triggerRef}
+        className="w-full p-2 text-sm rounded-lg border focus-within:ring-2 focus-within:ring-blue-500 cursor-pointer flex justify-between items-center bg-white text-gray-800"
+        onClick={() => setIsOpen(!isOpen)}
+      >
+        <span className="truncate">{selectedOption ? selectedOption.nombre : placeholder}</span>
+        <span className="text-gray-400 text-xs">▼</span>
+      </div>
+      
+      {isOpen && (
+        <div className="fixed inset-0 z-[999998]" onClick={() => setIsOpen(false)}></div>
+      )}
+      
+      {isOpen && (
+        <div style={dropdownStyle} className="mt-1 bg-white border rounded-lg shadow-xl">
+          <div className="p-2 border-b relative">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
+            <input 
+              type="text" 
+              className="w-full pl-8 pr-2 py-1.5 border rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 text-gray-800"
+              placeholder="Escribe para buscar..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              onClick={e => e.stopPropagation()}
+              autoFocus
+            />
+          </div>
+          <div className="max-h-48 overflow-y-auto">
+            <div 
+              className="p-2 text-sm hover:bg-gray-100 cursor-pointer text-gray-500 italic"
+              onClick={() => { onChange(""); setIsOpen(false); setSearch(""); }}
+            >
+              Selecciona insumo...
+            </div>
+            {options.filter(o => o.nombre.toLowerCase().includes(search.toLowerCase())).map(o => (
+              <div 
+                key={o.id} 
+                className={`p-2 text-sm hover:bg-gray-100 cursor-pointer truncate text-gray-800 ${value === o.id.toString() ? 'bg-blue-50 text-blue-600 font-bold' : ''}`}
+                onClick={() => { onChange(o.id.toString()); setIsOpen(false); setSearch(""); }}
+              >
+                {o.nombre}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function LotesTab() {
   const [insumos, setInsumos] = useState<any[]>([]);
@@ -403,18 +483,12 @@ export default function LotesTab() {
                       {compraItems.map((item, index) => (
                         <tr key={index} className="border-b last:border-b-0 hover:bg-black/5 dark:hover:bg-white/5 transition-colors" style={{ borderColor: "var(--border)" }}>
                           <td className="p-2">
-                            <select 
-                              required 
-                              className="w-full p-2 text-sm rounded-lg border focus:ring-2 focus:ring-blue-500"
-                              style={{ backgroundColor: "var(--background)", color: "var(--foreground)", borderColor: "var(--border)" }}
+                            <SearchableSelect 
+                              options={insumos}
                               value={item.id_insumo} 
-                              onChange={e => updateCompraItem(index, 'id_insumo', e.target.value)}
-                            >
-                              <option value="">Selecciona insumo...</option>
-                              {insumos.map(i => (
-                                <option key={i.id} value={i.id}>{i.nombre}</option>
-                              ))}
-                            </select>
+                              onChange={(val: string) => updateCompraItem(index, 'id_insumo', val)}
+                              placeholder="Selecciona insumo..."
+                            />
                           </td>
                           <td className="p-2">
                             <input 

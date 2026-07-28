@@ -11,6 +11,7 @@ class ProductoTasca extends Model
 
     protected $casts = [
         'precio' => 'decimal:2',
+        'precio_miembro' => 'decimal:2',
         'medida_descuento' => 'decimal:2',
     ];
 

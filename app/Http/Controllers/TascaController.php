@@ -28,6 +28,7 @@ class TascaController extends Controller
         $request->validate([
             'nombre' => 'required|string|max:255',
             'precio' => 'required|numeric|min:0',
+            'precio_miembro' => 'nullable|numeric|min:0',
             'stock' => 'nullable|integer|min:0',
             'codigo_barras' => 'nullable|string|unique:productos_tasca',
             'id_insumo' => 'nullable|exists:insumos_tasca,id',
@@ -45,6 +46,7 @@ class TascaController extends Controller
         $request->validate([
             'nombre' => 'required|string|max:255',
             'precio' => 'required|numeric|min:0',
+            'precio_miembro' => 'nullable|numeric|min:0',
             'stock' => 'nullable|integer|min:0',
             'codigo_barras' => 'nullable|string|unique:productos_tasca,codigo_barras,'.$id,
             'id_insumo' => 'nullable|exists:insumos_tasca,id',
@@ -211,8 +213,9 @@ class TascaController extends Controller
             VentaTascaDetalle::where('id_venta', $id)->delete();
 
             $total = 0;
-            $descuento = 0;
+            $descuentoTotal = 0;
             $esUgavi = $venta->clienteForaneo && strtolower(trim($venta->clienteForaneo->nombre)) === 'ugavi';
+            $esMiembroSolvente = $venta->miembro && $venta->miembro->solvencia === 'Solvente';
             
             foreach ($request->detalles as $det) {
                 $producto = ProductoTasca::findOrFail($det['id_producto']);
@@ -221,15 +224,30 @@ class TascaController extends Controller
                     throw new \Exception("Stock insuficiente para el producto: {$producto->nombre}");
                 }
 
-                $precioReal = $esUgavi ? $producto->costo_calculado : $producto->precio;
-                $subtotal = $precioReal * $det['cantidad'];
+                $precioOriginal = $producto->precio;
+                if ($esUgavi) {
+                    $precioReal = $producto->costo_calculado;
+                } elseif ($esMiembroSolvente && !is_null($producto->precio_miembro)) {
+                    $precioReal = $producto->precio_miembro;
+                } else {
+                    $precioReal = $precioOriginal;
+                }
+                
+                // Guardamos los precios ORIGINALES en el detalle de la venta
+                // y el descuento se acumula en descuentoTotal para restarse a nivel de factura global
+                $subtotal = $precioOriginal * $det['cantidad'];
                 $total += $subtotal;
+                
+                // Track how much discount was given
+                if ($precioOriginal > $precioReal) {
+                    $descuentoTotal += ($precioOriginal - $precioReal) * $det['cantidad'];
+                }
 
                 VentaTascaDetalle::create([
                     'id_venta' => $id,
                     'id_producto' => $producto->id,
                     'cantidad' => $det['cantidad'],
-                    'precio_unitario' => $precioReal,
+                    'precio_unitario' => $precioOriginal,
                     'subtotal' => $subtotal
                 ]);
 
@@ -270,14 +288,13 @@ class TascaController extends Controller
                 }
             } // END foreach $request->detalles
 
-            // Calcular descuento del 10% si el cliente es Miembro y está Solvente
-            $descuento = 0;
-            if ($venta->miembro && $venta->miembro->solvencia === 'Solvente') {
-                $descuento = $total * 0.10;
-            }
-
             $venta->total = $total;
-            $venta->descuento = $descuento;
+            $venta->descuento = $descuentoTotal;
+            if ($request->has('aplica_cargo_servicio') && $request->aplica_cargo_servicio) {
+                $venta->cargo_servicio = ($total - $descuentoTotal) * 0.10;
+            } else {
+                $venta->cargo_servicio = 0;
+            }
             $venta->save();
 
             DB::commit();
@@ -318,7 +335,7 @@ class TascaController extends Controller
         }
 
         $totalPagado = $pagadoAnteriormente + $montoAbonarAhora;
-        $totalVenta = $venta->total - $venta->descuento;
+        $totalVenta = $venta->total - $venta->descuento + $venta->cargo_servicio;
 
         DB::beginTransaction();
         try {
@@ -399,7 +416,7 @@ class TascaController extends Controller
 
         // 1. Ventas del Periodo (Total USD de ventas cobradas o hechas en el periodo)
         $ventasHoy = VentaTasca::with('pagos')->whereBetween('fecha', [$startDate, $endDate])
-            ->whereNotIn('estado', ['Anulada', 'anulada'])
+            ->whereIn('estado', ['Pagada', 'Credito', 'Parcial'])
             ->get();
         $totalVentasHoy = $ventasHoy->sum(function($v) { return $v->total - $v->descuento; });
 
@@ -1104,10 +1121,10 @@ class TascaController extends Controller
         $startDate = $request->query('start_date', Carbon::now()->startOfMonth()->toDateString());
         $endDate = $request->query('end_date', Carbon::now()->toDateString());
 
-        // Traer ventas dentro del rango (solo no anuladas)
+        // Traer ventas dentro del rango (solo no anuladas ni pendientes)
         $ventas = VentaTasca::with(['detalles.producto'])
             ->whereBetween('fecha', [$startDate, $endDate])
-            ->whereNotIn('estado', ['Anulada', 'anulada'])
+            ->whereIn('estado', ['Pagada', 'Credito', 'Parcial'])
             ->get();
 
         $ingresosTotales = 0;

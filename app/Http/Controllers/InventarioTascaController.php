@@ -151,6 +151,7 @@ class InventarioTascaController extends Controller
             'presentaciones' => 'required|array|min:1',
             'presentaciones.*.nombre' => 'required|string|max:255',
             'presentaciones.*.precio' => 'required|numeric|min:0',
+            'presentaciones.*.precio_miembro' => 'nullable|numeric|min:0',
             'presentaciones.*.medida_descuento' => 'required|numeric|min:0.01',
             'presentaciones.*.codigo_barras' => 'nullable|string',
             'componentes' => 'nullable|array',
@@ -193,6 +194,7 @@ class InventarioTascaController extends Controller
                     'id_insumo' => $insumo->id,
                     'nombre' => $pres['nombre'],
                     'precio' => $pres['precio'],
+                    'precio_miembro' => $pres['precio_miembro'] ?? null,
                     'medida_descuento' => $pres['medida_descuento'],
                     'codigo_barras' => empty($pres['codigo_barras']) ? null : $pres['codigo_barras'],
                     'tipo' => $tipo
@@ -232,6 +234,7 @@ class InventarioTascaController extends Controller
             'presentaciones' => 'required|array|min:1',
             'presentaciones.*.nombre' => 'required|string|max:255',
             'presentaciones.*.precio' => 'required|numeric|min:0',
+            'presentaciones.*.precio_miembro' => 'nullable|numeric|min:0',
             'presentaciones.*.medida_descuento' => 'required|numeric|min:0.01',
             'presentaciones.*.codigo_barras' => 'nullable|string'
         ]);
@@ -275,6 +278,7 @@ class InventarioTascaController extends Controller
                         $producto->update([
                             'nombre' => $pres['nombre'],
                             'precio' => $pres['precio'],
+                            'precio_miembro' => $pres['precio_miembro'] ?? null,
                             'medida_descuento' => $pres['medida_descuento'],
                             'codigo_barras' => empty($pres['codigo_barras']) ? null : $pres['codigo_barras']
                         ]);
@@ -284,6 +288,7 @@ class InventarioTascaController extends Controller
                         'id_insumo' => $insumo->id,
                         'nombre' => $pres['nombre'],
                         'precio' => $pres['precio'],
+                        'precio_miembro' => $pres['precio_miembro'] ?? null,
                         'medida_descuento' => $pres['medida_descuento'],
                         'codigo_barras' => empty($pres['codigo_barras']) ? null : $pres['codigo_barras']
                     ]);

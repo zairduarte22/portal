@@ -1,20 +1,18 @@
 import { useState, useEffect } from "react";
 
-const DISCOUNT = 0.10;
-
 function priceBS(usd: number, tasaBcv: number) {
   return (usd * tasaBcv).toFixed(2);
-}
-
-function discountedPrice(usd: number) {
-  return (usd * (1 - DISCOUNT)).toFixed(2);
 }
 
 function ProductCard({ product, tasaBcv }: { product: any, tasaBcv: number }) {
   const [imgError, setImgError] = useState(false);
   const priceUSD = parseFloat(product.precio);
-  const memberPrice = discountedPrice(priceUSD);
-  const memberBS = priceBS(parseFloat(memberPrice), tasaBcv);
+  
+  const hasMemberPrice = product.precio_miembro !== null && product.precio_miembro !== undefined && parseFloat(product.precio_miembro) < priceUSD;
+  const memberPrice = hasMemberPrice ? parseFloat(product.precio_miembro).toFixed(2) : null;
+  const memberBS = hasMemberPrice ? priceBS(parseFloat(memberPrice as string), tasaBcv) : null;
+  
+  const discountPercent = hasMemberPrice ? Math.round((1 - (parseFloat(product.precio_miembro) / priceUSD)) * 100) : 0;
 
   return (
     <article
@@ -67,22 +65,24 @@ function ProductCard({ product, tasaBcv }: { product: any, tasaBcv: number }) {
           </div>
 
           {/* Member price */}
-          <div className="flex items-center gap-2 bg-[#0B1749]/5 border border-[#C9A843]/30 rounded-xl px-3 py-2">
-            <span className="text-[10px] font-bold tracking-widest uppercase text-[#C9A843]">
-              Precio Miembro
-            </span>
-            <div className="flex items-baseline gap-1.5 ml-auto">
-              <span className="text-base font-bold text-[#0B1749]">
-                ${memberPrice}
+          {hasMemberPrice && (
+            <div className="flex items-center gap-2 bg-[#0B1749]/5 border border-[#C9A843]/30 rounded-xl px-3 py-2">
+              <span className="text-[10px] font-bold tracking-widest uppercase text-[#C9A843]">
+                Precio Miembro
               </span>
-              <span className="text-xs text-[#8A8880]">
-                Bs {memberBS}
-              </span>
-              <span className="text-[10px] font-bold bg-[#C9A843] text-[#0B1749] rounded-md px-1.5 py-0.5">
-                −10%
-              </span>
+              <div className="flex items-baseline gap-1.5 ml-auto">
+                <span className="text-base font-bold text-[#0B1749]">
+                  ${memberPrice}
+                </span>
+                <span className="text-xs text-[#8A8880]">
+                  Bs {memberBS}
+                </span>
+                <span className="text-[10px] font-bold bg-[#C9A843] text-[#0B1749] rounded-md px-1.5 py-0.5">
+                  −{discountPercent}%
+                </span>
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
     </article>
@@ -90,7 +90,7 @@ function ProductCard({ product, tasaBcv }: { product: any, tasaBcv: number }) {
 }
 
 function AnnouncementBanner() {
-  const text = '🌟 SALE — Miembros Solventes: 10% de descuento · Muestra tu membresía activa al pedir · ';
+  const text = '🌟 SALE — Precios Especiales para Miembros Solventes · Muestra tu membresía activa al pedir · ';
   const repeated = text.repeat(8);
 
   return (
@@ -195,7 +195,7 @@ export function MenuPublico() {
           </h1>
           <div className="inline-flex items-center mt-4 bg-[#C9A843]/15 border border-[#C9A843]/30 rounded-2xl px-4 py-2">
             <span className="text-[#E8D99A] text-xs font-medium">
-              Miembros solventes · <strong>10% de descuento</strong> en toda la carta
+              Miembros solventes · <strong>Precios especiales</strong> en la carta
             </span>
           </div>
         </div>
