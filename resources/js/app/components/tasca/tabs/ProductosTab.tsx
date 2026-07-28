@@ -161,7 +161,7 @@ export default function ProductosTab() {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isSubmitting) return;
     setIsSubmitting(true);
@@ -187,7 +187,19 @@ export default function ProductosTab() {
     }
 
     if (imageFile) {
-      fd.append('imagen', imageFile);
+      try {
+        const compressedFile = await imageCompression(imageFile, {
+          maxSizeMB: 1,
+          maxWidthOrHeight: 800,
+          useWebWorker: true,
+          fileType: 'image/webp',
+          initialQuality: 0.8
+        });
+        fd.append('imagen', compressedFile);
+      } catch (error) {
+        console.error("Error comprimiendo imagen en frontend:", error);
+        fd.append('imagen', imageFile); // fallback al original
+      }
     }
 
     if (editingId) {
@@ -205,8 +217,18 @@ export default function ProductosTab() {
     })
       .then(async res => {
         if (!res.ok) {
-          const err = await res.json();
-          throw new Error(err.error || err.message || "Error al guardar el producto");
+          let errorMessage = "Error al guardar el producto";
+          try {
+            const err = await res.json();
+            errorMessage = err.error || err.message || errorMessage;
+          } catch (e) {
+            if (res.status === 413) {
+              errorMessage = "La imagen es demasiado pesada para el servidor. Por favor, recórtala o sube una más pequeña.";
+            } else {
+              errorMessage = "Error en el servidor (" + res.status + "). Es probable que la imagen sea muy pesada y haya agotado la memoria.";
+            }
+          }
+          throw new Error(errorMessage);
         }
         setIsSubmitting(false);
         setShowModal(false);

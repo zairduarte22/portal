@@ -23,6 +23,8 @@ import { CarnetPublico } from "./components/public/CarnetPublico";
 import { MenuPublico } from "./components/public/MenuPublico";
 import { WhatsappPolling } from "./components/WhatsappPolling";
 import { WhatsappLogsPanel } from "./components/WhatsappLogsPanel";
+import { Toaster } from "./components/ui/sonner";
+
 // Placeholder for Public Portal
 function PublicPortal() {
   return (
@@ -215,6 +217,7 @@ export default function App() {
 
   return (
     <BrowserRouter>
+      <Toaster position="top-right" richColors />
       <WhatsappPolling />
       <Routes>
         <Route path="/c/:id" element={<CarnetPublico />} />

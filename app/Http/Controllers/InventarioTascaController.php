@@ -865,6 +865,7 @@ class InventarioTascaController extends Controller
     }
     private function processAndSaveImage($file)
     {
+        @ini_set('memory_limit', '256M'); // Aumentar memoria para imágenes grandes
         $extension = strtolower($file->getClientOriginalExtension());
         
         if (!in_array($extension, ['jpg', 'jpeg', 'png', 'webp'])) {
@@ -883,6 +884,31 @@ class InventarioTascaController extends Controller
             return $file->store('productos_tasca', 'public');
         }
 
+        $src = null;
+        if ($extension == 'jpg' || $extension == 'jpeg') {
+            $src = @imagecreatefromjpeg($file->getPathname());
+            if ($src && function_exists('exif_read_data')) {
+                $exif = @exif_read_data($file->getPathname());
+                if (!empty($exif['Orientation'])) {
+                    switch ($exif['Orientation']) {
+                        case 3:
+                            $src = imagerotate($src, 180, 0);
+                            break;
+                        case 6:
+                            $src = imagerotate($src, -90, 0);
+                            $tmp = $width; $width = $height; $height = $tmp;
+                            break;
+                        case 8:
+                            $src = imagerotate($src, 90, 0);
+                            $tmp = $width; $width = $height; $height = $tmp;
+                            break;
+                    }
+                }
+            }
+        }
+        elseif ($extension == 'png') $src = @imagecreatefrompng($file->getPathname());
+        elseif ($extension == 'webp') $src = @imagecreatefromwebp($file->getPathname());
+
         $max = 800;
         $newWidth = $width;
         $newHeight = $height;
@@ -897,11 +923,6 @@ class InventarioTascaController extends Controller
                 $newWidth = $max * $ratio;
             }
         }
-        
-        $src = null;
-        if ($extension == 'jpg' || $extension == 'jpeg') $src = @imagecreatefromjpeg($file->getPathname());
-        elseif ($extension == 'png') $src = @imagecreatefrompng($file->getPathname());
-        elseif ($extension == 'webp') $src = @imagecreatefromwebp($file->getPathname());
         
         if ($src) {
             $dst = imagecreatetruecolor($newWidth, $newHeight);

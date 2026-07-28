@@ -230,6 +230,9 @@ Route::get('/fix-storage', function () {
 });
 
 Route::get('/optimizar-imagenes-tasca', [\App\Http\Controllers\OptimizeImagesController::class, 'optimize']);
+Route::get('/reparar-imagenes-tasca', [\App\Http\Controllers\OptimizeImagesController::class, 'fixRotation']);
+Route::get('/rotar-imagen/{id}', [\App\Http\Controllers\OptimizeImagesController::class, 'rotateImage']);
+Route::get('/rotar-todas-imagenes-tasca', [\App\Http\Controllers\OptimizeImagesController::class, 'rotateAll']);
 
 Route::get('/{any}', function () {
     return view('app');

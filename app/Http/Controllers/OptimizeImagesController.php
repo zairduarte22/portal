@@ -9,16 +9,25 @@ use Illuminate\Support\Facades\Log;
 
 class OptimizeImagesController extends Controller
 {
-    public function optimize()
+    public function optimize(Request $request)
     {
-        $insumos = InsumoTasca::whereNotNull('imagen')->get();
-        $results = [
-            'total' => $insumos->count(),
-            'optimized' => 0,
-            'errors' => 0,
-            'skipped' => 0,
-            'details' => []
-        ];
+        $limit = 5;
+        $offset = (int) $request->get('offset', 0);
+
+        $totalImages = InsumoTasca::whereNotNull('imagen')->count();
+        $insumos = InsumoTasca::whereNotNull('imagen')
+            ->orderBy('id')
+            ->offset($offset)
+            ->limit($limit)
+            ->get();
+        
+        if ($insumos->isEmpty()) {
+            return response("<html><body style='font-family:sans-serif; text-align:center; padding:50px;'>
+                <h1 style='color:green;'>¡Optimización Completada!</h1>
+                <p>Se procesaron <b>{$totalImages}</b> imágenes en total.</p>
+                <p>Ya puedes cerrar esta ventana.</p>
+            </body></html>");
+        }
 
         $max = 800;
 
@@ -27,8 +36,6 @@ class OptimizeImagesController extends Controller
             
             // Check if file exists in public storage
             if (!Storage::disk('public')->exists($currentPath)) {
-                $results['skipped']++;
-                $results['details'][] = "Insumo ID {$insumo->id}: Archivo no encontrado ({$currentPath})";
                 continue;
             }
 
@@ -37,16 +44,12 @@ class OptimizeImagesController extends Controller
 
             // Only process jpg, jpeg, png, webp
             if (!in_array($extension, ['jpg', 'jpeg', 'png', 'webp'])) {
-                $results['skipped']++;
-                $results['details'][] = "Insumo ID {$insumo->id}: Extensión no soportada ({$extension})";
                 continue;
             }
 
             list($width, $height) = @getimagesize($absolutePath);
             
             if (!$width || !$height) {
-                $results['errors']++;
-                $results['details'][] = "Insumo ID {$insumo->id}: No se pudo obtener el tamaño de la imagen";
                 continue;
             }
 
@@ -103,33 +106,173 @@ class OptimizeImagesController extends Controller
                             if ($currentPath !== $newFilename && Storage::disk('public')->exists($currentPath)) {
                                 Storage::disk('public')->delete($currentPath);
                             }
-
-                            $results['optimized']++;
-                            $results['details'][] = "Insumo ID {$insumo->id}: Optimizado y convertido a WEBP (" . round(filesize($newAbsolutePath) / 1024, 2) . " KB)";
-                        } else {
-                            $results['errors']++;
-                            $results['details'][] = "Insumo ID {$insumo->id}: Error al guardar el archivo WEBP";
                         }
 
                         imagedestroy($src);
                         imagedestroy($dst);
-                    } else {
-                        $results['errors']++;
-                        $results['details'][] = "Insumo ID {$insumo->id}: Error al leer la imagen original";
                     }
                 } catch (\Exception $e) {
-                    $results['errors']++;
-                    $results['details'][] = "Insumo ID {$insumo->id}: Exception - " . $e->getMessage();
+                    // Log silently
                 }
-            } else {
-                $results['skipped']++;
-                $results['details'][] = "Insumo ID {$insumo->id}: Ya está optimizado (WEBP, tamaño adecuado)";
             }
         }
 
-        return response()->json([
-            'message' => 'Proceso de optimización finalizado',
-            'results' => $results
-        ]);
+        $nextOffset = $offset + $limit;
+        $progress = min($nextOffset, $totalImages);
+        $percent = round(($progress / $totalImages) * 100);
+        $url = url('/optimizar-imagenes-tasca?offset=' . $nextOffset);
+
+        return response("<html>
+        <head>
+            <meta http-equiv='refresh' content='1;url={$url}'>
+            <style>
+                body { font-family:sans-serif; text-align:center; padding:50px; }
+                .progress-bar { width: 80%; max-width: 500px; margin: 20px auto; background-color: #f3f3f3; border-radius: 10px; overflow: hidden; }
+                .progress { height: 25px; background-color: #4caf50; width: {$percent}%; transition: width 0.5s; }
+            </style>
+        </head>
+        <body>
+            <h2>Optimizando Imágenes...</h2>
+            <p>Procesando lote: <b>{$progress}</b> de <b>{$totalImages}</b> ({$percent}%)</p>
+            <div class='progress-bar'><div class='progress'></div></div>
+            <p style='color:#666; font-size:14px;'>Por favor, no cierres esta ventana. Se recargará automáticamente en 1 segundo...</p>
+        </body>
+        </html>");
+    }
+
+    public function fixRotation()
+    {
+        $insumos = InsumoTasca::whereNotNull('imagen')->get();
+        
+        $html = "<html><head><meta name='viewport' content='width=device-width, initial-scale=1'></head><body style='font-family:sans-serif; text-align:center; background:#f4f4f4;'>
+            <h2 style='padding:20px;'>Reparador de Imágenes</h2>
+            <p>Haz clic en 'Rotar' para girar la imagen 90 grados. Si necesitas girarla más, dale varias veces.</p>
+            <div style='display:flex; flex-wrap:wrap; justify-content:center; gap:20px; padding:20px;'>";
+        
+        foreach($insumos as $insumo) {
+            $url = asset('storage/' . $insumo->imagen);
+            $rotUrl = url("/rotar-imagen/{$insumo->id}");
+            
+            $html .= "<div style='background:white; border-radius:8px; box-shadow:0 2px 5px rgba(0,0,0,0.1); padding:15px; width:220px;'>
+                        <div style='height:200px; display:flex; align-items:center; justify-content:center; margin-bottom:10px;'>
+                            <img src='{$url}?v=".time()."' style='max-width:100%; max-height:100%; object-fit:contain;' />
+                        </div>
+                        <strong style='display:block; margin-bottom:10px; font-size:14px;'>{$insumo->nombre}</strong>
+                        <button onclick=\"rotar(this, '{$rotUrl}')\" style='padding:8px 15px; background:#000; color:white; border:none; border-radius:5px; cursor:pointer; width:100%;'>↻ Rotar 90°</button>
+                      </div>";
+        }
+        
+        $html .= "</div>
+        <script>
+            function rotar(btn, url) {
+                btn.innerHTML = 'Rotando...';
+                btn.disabled = true;
+                fetch(url).then(res => location.reload());
+            }
+        </script>
+        </body></html>";
+        return response($html);
+    }
+
+    public function rotateImage($id)
+    {
+        $insumo = InsumoTasca::findOrFail($id);
+        if (!$insumo->imagen) return response()->json(['error' => 'No image'], 404);
+        
+        $path = storage_path('app/public/' . $insumo->imagen);
+        if (!file_exists($path)) return response()->json(['error' => 'No file'], 404);
+        
+        $ext = strtolower(pathinfo($path, PATHINFO_EXTENSION));
+        $src = null;
+        if ($ext == 'webp') $src = @imagecreatefromwebp($path);
+        elseif ($ext == 'jpg' || $ext == 'jpeg') $src = @imagecreatefromjpeg($path);
+        elseif ($ext == 'png') $src = @imagecreatefrompng($path);
+        
+        if ($src) {
+            // Rotar 270 grados (counter-clockwise) equivale a 90 grados a la derecha
+            $dst = imagerotate($src, 270, 0); 
+            
+            // Si tiene transparencia
+            imagealphablending($dst, false);
+            imagesavealpha($dst, true);
+            
+            if ($ext == 'webp') imagewebp($dst, $path, 80);
+            elseif ($ext == 'jpg' || $ext == 'jpeg') imagejpeg($dst, $path, 80);
+            elseif ($ext == 'png') imagepng($dst, $path, 8);
+            
+            imagedestroy($src);
+            imagedestroy($dst);
+            return response()->json(['success' => true]);
+        }
+        return response()->json(['error' => 'Could not read image'], 500);
+    }
+
+    public function rotateAll(Request $request)
+    {
+        $limit = 10;
+        $offset = (int) $request->get('offset', 0);
+
+        $totalImages = InsumoTasca::whereNotNull('imagen')->count();
+        $insumos = InsumoTasca::whereNotNull('imagen')
+            ->orderBy('id')
+            ->offset($offset)
+            ->limit($limit)
+            ->get();
+        
+        if ($insumos->isEmpty()) {
+            return response("<html><body style='font-family:sans-serif; text-align:center; padding:50px;'>
+                <h1 style='color:green;'>¡Rotación Completada!</h1>
+                <p>Se rotaron <b>{$totalImages}</b> imágenes exitosamente a la derecha.</p>
+            </body></html>");
+        }
+
+        foreach ($insumos as $insumo) {
+            $path = storage_path('app/public/' . $insumo->imagen);
+            if (!file_exists($path)) continue;
+            
+            $ext = strtolower(pathinfo($path, PATHINFO_EXTENSION));
+            $src = null;
+            if ($ext == 'webp') $src = @imagecreatefromwebp($path);
+            elseif ($ext == 'jpg' || $ext == 'jpeg') $src = @imagecreatefromjpeg($path);
+            elseif ($ext == 'png') $src = @imagecreatefrompng($path);
+            
+            if ($src) {
+                // Rotar 270 grados (counter-clockwise) equivale a 90 grados a la derecha
+                $dst = imagerotate($src, 270, 0); 
+                
+                // Si tiene transparencia
+                imagealphablending($dst, false);
+                imagesavealpha($dst, true);
+                
+                if ($ext == 'webp') imagewebp($dst, $path, 80);
+                elseif ($ext == 'jpg' || $ext == 'jpeg') imagejpeg($dst, $path, 80);
+                elseif ($ext == 'png') imagepng($dst, $path, 8);
+                
+                imagedestroy($src);
+                imagedestroy($dst);
+            }
+        }
+
+        $nextOffset = $offset + $limit;
+        $progress = min($nextOffset, $totalImages);
+        $percent = round(($progress / $totalImages) * 100);
+        $url = url('/rotar-todas-imagenes-tasca?offset=' . $nextOffset);
+
+        return response("<html>
+        <head>
+            <meta http-equiv='refresh' content='1;url={$url}'>
+            <style>
+                body { font-family:sans-serif; text-align:center; padding:50px; }
+                .progress-bar { width: 80%; max-width: 500px; margin: 20px auto; background-color: #f3f3f3; border-radius: 10px; overflow: hidden; }
+                .progress { height: 25px; background-color: #4caf50; width: {$percent}%; transition: width 0.5s; }
+            </style>
+        </head>
+        <body>
+            <h2>Rotando Imágenes 90° a la derecha...</h2>
+            <p>Procesando lote: <b>{$progress}</b> de <b>{$totalImages}</b> ({$percent}%)</p>
+            <div class='progress-bar'><div class='progress'></div></div>
+            <p style='color:#666; font-size:14px;'>Por favor, no cierres esta ventana. Se recargará automáticamente en 1 segundo...</p>
+        </body>
+        </html>");
     }
 }
