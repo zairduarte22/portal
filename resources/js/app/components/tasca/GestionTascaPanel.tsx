@@ -27,40 +27,40 @@ export function GestionTascaPanel() {
 
   return (
     <div className="space-y-5">
-      <div className="flex items-center justify-between relative">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between relative gap-4">
         <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2" style={{ color: "var(--foreground)" }}>
-            <Package size={28} className="text-green-600" />
-            Gestión de Inventario y Productos (Tasca)
+          <h1 className="text-xl md:text-2xl font-bold flex items-center gap-2" style={{ color: "var(--foreground)" }}>
+            <Package size={28} className="text-green-600 shrink-0" />
+            Gestión de Inventario (Tasca)
           </h1>
-          <p className="text-sm mt-1" style={{ color: "var(--muted-foreground)" }}>
-            Administra tu catálogo de productos, presentaciones de venta, compras y gastos.
+          <p className="text-xs sm:text-sm mt-1" style={{ color: "var(--muted-foreground)" }}>
+            Administra tu catálogo de productos, compras y gastos.
           </p>
         </div>
         
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto justify-end">
           <button 
             onClick={() => window.open('/api/tasca/insumos/reporte?formato=pdf', '_blank')}
-            className="flex items-center gap-2 px-3 py-2 text-sm font-bold bg-white border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors shadow-sm"
+            className="flex items-center justify-center gap-2 p-2.5 sm:px-4 sm:py-2 text-sm font-bold bg-white border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors shadow-sm"
             title="Descargar Reporte en PDF"
           >
             <FileText size={18} className="text-red-500" />
-            PDF
+            <span className="hidden sm:inline">PDF</span>
           </button>
           
           <button 
             onClick={() => window.open('/api/tasca/insumos/reporte?formato=excel', '_blank')}
-            className="flex items-center gap-2 px-3 py-2 text-sm font-bold bg-white border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors shadow-sm"
+            className="flex items-center justify-center gap-2 p-2.5 sm:px-4 sm:py-2 text-sm font-bold bg-white border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors shadow-sm"
             title="Descargar Reporte en Excel (CSV)"
           >
             <Download size={18} className="text-green-600" />
-            Excel
+            <span className="hidden sm:inline">Excel</span>
           </button>
 
-          <div className="relative ml-2">
+          <div className="relative ml-1 sm:ml-2">
             <button 
               onClick={() => setShowNotifications(!showNotifications)}
-              className="p-2 bg-white border border-gray-200 rounded-full hover:bg-gray-50 transition-colors relative shadow-sm"
+              className="p-2.5 sm:p-2 bg-white border border-gray-200 rounded-full hover:bg-gray-50 transition-colors relative shadow-sm"
             >
               <Bell size={20} className="text-gray-600" />
               {expiringLotes.length > 0 && (
@@ -129,10 +129,10 @@ export function GestionTascaPanel() {
         </div>
       </div>
 
-      <div className="flex space-x-1 p-1 bg-gray-100 rounded-xl w-fit">
+      <div className="flex space-x-2 p-1 bg-gray-100 rounded-xl w-full overflow-x-auto hide-scrollbar touch-pan-x">
         <button
           onClick={() => setActiveTab('productos')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all whitespace-nowrap ${
             activeTab === 'productos' ? 'bg-white shadow-sm text-green-700' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-200'
           }`}
         >
@@ -140,7 +140,7 @@ export function GestionTascaPanel() {
         </button>
         <button
           onClick={() => setActiveTab('lotes')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all whitespace-nowrap ${
             activeTab === 'lotes' ? 'bg-white shadow-sm text-green-700' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-200'
           }`}
         >
@@ -148,7 +148,7 @@ export function GestionTascaPanel() {
         </button>
         <button
           onClick={() => setActiveTab('gastos')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all whitespace-nowrap ${
             activeTab === 'gastos' ? 'bg-white shadow-sm text-red-700' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-200'
           }`}
         >

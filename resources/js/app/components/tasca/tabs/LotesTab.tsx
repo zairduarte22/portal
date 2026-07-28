@@ -315,14 +315,14 @@ export default function LotesTab() {
       
       {/* Listado de Compras (Historial) */}
       <div className="p-6 rounded-2xl shadow-sm" style={{ backgroundColor: "var(--card)", border: "1px solid var(--border)" }}>
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-bold flex items-center gap-2" style={{ color: "var(--foreground)" }}>
-            <Layers size={24} className="text-blue-600" />
+        <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 mb-6">
+          <h2 className="text-lg sm:text-xl font-bold flex items-center gap-2" style={{ color: "var(--foreground)" }}>
+            <Layers size={24} className="text-blue-600 shrink-0" />
             Historial de Compras de Inventario
           </h2>
           <button 
             onClick={openNewCompra}
-            className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-white shadow-md transition-transform hover:scale-105"
+            className="flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl text-white shadow-md transition-transform hover:scale-105 w-full sm:w-auto"
             style={{ background: "linear-gradient(135deg, #3b82f6, #2563eb)" }}
           >
             <PlusCircle size={20} /> Registrar Compra

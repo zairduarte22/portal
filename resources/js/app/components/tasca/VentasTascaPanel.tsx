@@ -414,22 +414,22 @@ export function VentasTascaPanel() {
         </div>
       </div>
 
-      <div className="flex border-b" style={{ borderColor: "var(--border)" }}>
+      <div className="flex overflow-x-auto border-b hide-scrollbar" style={{ borderColor: "var(--border)" }}>
         <button 
           onClick={() => setActiveTab('historial')} 
-          className={`pb-3 px-6 text-sm font-bold ${activeTab === 'historial' ? 'border-b-2 border-green-600 text-green-600' : 'text-gray-500 hover:text-gray-700'}`}
+          className={`pb-3 px-6 text-sm font-bold whitespace-nowrap ${activeTab === 'historial' ? 'border-b-2 border-green-600 text-green-600' : 'text-gray-500 hover:text-gray-700'}`}
         >
           Historial de Ventas
         </button>
         <button 
           onClick={() => setActiveTab('abonos')} 
-          className={`pb-3 px-6 text-sm font-bold ${activeTab === 'abonos' ? 'border-b-2 border-green-600 text-green-600' : 'text-gray-500 hover:text-gray-700'}`}
+          className={`pb-3 px-6 text-sm font-bold whitespace-nowrap ${activeTab === 'abonos' ? 'border-b-2 border-green-600 text-green-600' : 'text-gray-500 hover:text-gray-700'}`}
         >
           Abonos a Crédito
         </button>
         <button 
           onClick={() => setActiveTab('inventario')} 
-          className={`pb-3 px-6 text-sm font-bold ${activeTab === 'inventario' ? 'border-b-2 border-green-600 text-green-600' : 'text-gray-500 hover:text-gray-700'}`}
+          className={`pb-3 px-6 text-sm font-bold whitespace-nowrap ${activeTab === 'inventario' ? 'border-b-2 border-green-600 text-green-600' : 'text-gray-500 hover:text-gray-700'}`}
         >
           Inventario Rápido
         </button>

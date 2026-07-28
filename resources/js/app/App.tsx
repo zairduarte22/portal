@@ -205,6 +205,7 @@ export default function App() {
   if (!user) {
     return (
       <BrowserRouter>
+        <Toaster position="top-right" richColors />
         <Routes>
           <Route path="/c/:id" element={<CarnetPublico />} />
           <Route path="/menu" element={<MenuPublico />} />

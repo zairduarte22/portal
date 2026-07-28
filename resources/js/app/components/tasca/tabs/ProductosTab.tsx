@@ -18,6 +18,7 @@ export default function ProductosTab() {
   const [showModal, setShowModal] = useState(false);
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [ultimoCosto, setUltimoCosto] = useState<number | null>(null);
   const [movimientosInsumo, setMovimientosInsumo] = useState<{id: number, nombre: string} | null>(null);
   
   // Modal state
@@ -81,6 +82,7 @@ export default function ProductosTab() {
     setExistingImage(null);
     setComponentes([]);
     setPresentaciones([{ nombre: "Unidad Completa", precio: 0, precio_miembro: "", medida_descuento: 1, codigo_barras: "" }]);
+    setUltimoCosto(null);
     setShowModal(true);
   };
 
@@ -96,6 +98,12 @@ export default function ProductosTab() {
     });
     setImageFile(null);
     setExistingImage(producto.imagen ? `/storage/${producto.imagen}` : null);
+    if (producto.lotes && producto.lotes.length > 0) {
+      const sortedLotes = [...producto.lotes].sort((a, b) => new Date(b.created_at || b.fecha_compra).getTime() - new Date(a.created_at || a.fecha_compra).getTime());
+      setUltimoCosto(parseFloat(sortedLotes[0].costo_unitario));
+    } else {
+      setUltimoCosto(null);
+    }
     
     if (producto.productos && producto.productos.length > 0) {
       setPresentaciones(producto.productos.map((p: any) => ({
@@ -271,13 +279,13 @@ export default function ProductosTab() {
         />
       ) : (
         <>
-          <div className="flex justify-between mb-6">
-        <div className="relative w-1/2">
+      <div className="flex flex-col sm:flex-row justify-between gap-4 mb-6">
+        <div className="relative w-full sm:w-1/2">
           <Search className="absolute left-3 top-3 text-gray-400" size={18} />
           <input
             type="text"
             placeholder="Buscar productos (inventario)..."
-            className="w-full pl-10 pr-4 py-2 rounded-xl border focus:outline-none focus:ring-2 focus:ring-green-500"
+            className="w-full pl-10 pr-4 py-2.5 rounded-xl border focus:outline-none focus:ring-2 focus:ring-green-500 shadow-sm"
             style={{ backgroundColor: "var(--background)", color: "var(--foreground)", borderColor: "var(--border)" }}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -285,31 +293,31 @@ export default function ProductosTab() {
         </div>
         <button 
           onClick={openNew}
-          className="flex items-center gap-2 px-4 py-2 rounded-xl text-white shadow-md transition-transform hover:scale-105"
+          className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-white shadow-md transition-transform hover:scale-105 w-full sm:w-auto"
           style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)" }}
         >
-          <Plus size={18} /> Nuevo Producto
+          <Plus size={20} /> Nuevo Producto
         </button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mt-4">
         {filtered.map(p => (
           <div key={p.id} className="bg-white rounded-2xl border shadow-sm overflow-hidden flex flex-col">
-            <div className="w-full h-32 bg-gray-100 flex items-center justify-center border-b relative">
+            <div className="w-full h-40 bg-gray-100 flex items-center justify-center border-b relative">
               {p.imagen_url || p.imagen ? (
                 <img src={p.imagen_url || `/storage/${p.imagen}`} alt={p.nombre} className="w-full h-full object-cover" />
               ) : (
-                <Package size={32} className="text-gray-300" />
+                <Package size={40} className="text-gray-300" />
               )}
-              <div className="absolute top-2 right-2 flex gap-1">
-                <button onClick={() => setMovimientosInsumo({id: p.id, nombre: p.nombre})} className="p-1.5 bg-white/90 text-purple-600 rounded-lg hover:bg-purple-100 shadow-sm transition-colors" title="Historial de Movimientos y Ajustes">
-                  <History size={14} />
+              <div className="absolute top-2 right-2 flex gap-2">
+                <button onClick={() => setMovimientosInsumo({id: p.id, nombre: p.nombre})} className="p-2 bg-white/95 backdrop-blur-sm text-purple-600 rounded-xl hover:bg-purple-100 shadow-sm transition-colors" title="Historial de Movimientos y Ajustes">
+                  <History size={16} />
                 </button>
-                <button onClick={() => openEdit(p)} className="p-1.5 bg-white/90 text-blue-600 rounded-lg hover:bg-blue-100 shadow-sm transition-colors" title="Editar Producto y Presentaciones">
-                  <Edit2 size={14} />
+                <button onClick={() => openEdit(p)} className="p-2 bg-white/95 backdrop-blur-sm text-blue-600 rounded-xl hover:bg-blue-100 shadow-sm transition-colors" title="Editar Producto y Presentaciones">
+                  <Edit2 size={16} />
                 </button>
-                <button onClick={() => handleDelete(p.id)} className="p-1.5 bg-white/90 text-red-600 rounded-lg hover:bg-red-100 shadow-sm transition-colors" title="Eliminar Producto">
-                  <Trash2 size={14} />
+                <button onClick={() => handleDelete(p.id)} className="p-2 bg-white/95 backdrop-blur-sm text-red-600 rounded-xl hover:bg-red-100 shadow-sm transition-colors" title="Eliminar Producto">
+                  <Trash2 size={16} />
                 </button>
               </div>
             </div>
@@ -318,10 +326,10 @@ export default function ProductosTab() {
               <h3 className="font-bold text-gray-800 text-lg leading-tight mb-1">{p.nombre}</h3>
               <p className="text-sm text-gray-500 mb-3">{p.categoria || "Sin categoría"}</p>
               
-              <div className="grid grid-cols-3 gap-2 mb-3 bg-gray-50 rounded-lg p-2 border border-gray-100 text-center">
-                <div>
-                  <p className="text-[10px] text-gray-400 uppercase font-bold">Actual</p>
-                  <span className={`inline-block px-1.5 py-0.5 mt-1 rounded text-xs font-bold ${
+              <div className="grid grid-cols-3 gap-2 mb-4 bg-gray-50 rounded-xl p-3 border border-gray-100 text-center shadow-inner">
+                <div className="flex flex-col justify-center">
+                  <p className="text-xs text-gray-500 uppercase font-bold tracking-wider">Actual</p>
+                  <span className={`inline-block px-2 py-1 mt-1.5 rounded-md text-sm font-bold ${
                     p.stock_total <= (p.stock_seguridad || 0) && p.stock_total > 0
                       ? 'bg-yellow-100 text-yellow-700'
                       : p.stock_total === 0 
@@ -333,13 +341,13 @@ export default function ProductosTab() {
                     {parseFloat(p.stock_total).toFixed(1)}
                   </span>
                 </div>
-                <div>
-                  <p className="text-[10px] text-gray-400 uppercase font-bold">Min</p>
-                  <p className="text-xs font-semibold text-gray-600 mt-1">{p.stock_seguridad !== undefined ? parseFloat(p.stock_seguridad).toFixed(1) : '-'}</p>
+                <div className="flex flex-col justify-center">
+                  <p className="text-xs text-gray-500 uppercase font-bold tracking-wider">Min</p>
+                  <p className="text-sm font-semibold text-gray-700 mt-1.5">{p.stock_seguridad !== undefined ? parseFloat(p.stock_seguridad).toFixed(1) : '-'}</p>
                 </div>
-                <div>
-                  <p className="text-[10px] text-gray-400 uppercase font-bold">Max</p>
-                  <p className="text-xs font-semibold text-gray-600 mt-1">{p.stock_maximo !== undefined ? parseFloat(p.stock_maximo).toFixed(1) : '-'}</p>
+                <div className="flex flex-col justify-center">
+                  <p className="text-xs text-gray-500 uppercase font-bold tracking-wider">Max</p>
+                  <p className="text-sm font-semibold text-gray-700 mt-1.5">{p.stock_maximo !== undefined ? parseFloat(p.stock_maximo).toFixed(1) : '-'}</p>
                 </div>
               </div>
 
@@ -353,24 +361,24 @@ export default function ProductosTab() {
                 </button>
                 
                 {expandedId === p.id && (
-                  <div className="mt-2 space-y-2 border-t pt-2">
+                  <div className="mt-3 space-y-2 border-t pt-3">
                     {p.productos && p.productos.length > 0 ? (
                       p.productos.map((pres: any) => (
-                        <div key={pres.id} className="bg-gray-50 p-2 rounded border border-gray-100 flex justify-between items-center">
+                        <div key={pres.id} className="bg-gray-50 p-2.5 rounded-lg border border-gray-100 flex justify-between items-center shadow-sm">
                           <div className="overflow-hidden">
-                            <p className="font-semibold text-gray-700 text-xs truncate" title={pres.nombre}>{pres.nombre}</p>
-                            <p className="text-[10px] text-gray-500">Desc: {parseFloat(pres.medida_descuento)}</p>
+                            <p className="font-semibold text-gray-700 text-sm truncate" title={pres.nombre}>{pres.nombre}</p>
+                            <p className="text-xs text-gray-500 mt-0.5">Desc: {parseFloat(pres.medida_descuento)}</p>
                           </div>
-                          <div className="text-right pl-2 shrink-0">
-                            <p className="font-bold text-green-600 text-xs">${parseFloat(pres.precio).toFixed(2)}</p>
+                          <div className="text-right pl-3 shrink-0">
+                            <p className="font-bold text-green-700 text-sm">${parseFloat(pres.precio).toFixed(2)}</p>
                             {pres.precio_miembro !== null && pres.precio_miembro !== undefined && (
-                              <p className="font-bold text-blue-600 text-[10px]">Miembro: ${parseFloat(pres.precio_miembro).toFixed(2)}</p>
+                              <p className="font-bold text-blue-600 text-xs mt-0.5">Miembro: ${parseFloat(pres.precio_miembro).toFixed(2)}</p>
                             )}
                           </div>
                         </div>
                       ))
                     ) : (
-                      <p className="text-xs text-gray-400 italic text-center py-2">No hay presentaciones.</p>
+                      <p className="text-sm text-gray-400 italic text-center py-2">No hay presentaciones.</p>
                     )}
                   </div>
                 )}
@@ -398,17 +406,17 @@ export default function ProductosTab() {
             <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto pr-2 space-y-6">
               
               <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
-                <h3 className="font-bold text-gray-700 mb-3 flex items-center gap-2"><Package size={16}/> 1. Información del Producto Físico</h3>
+                <h3 className="font-bold text-gray-700 mb-3 flex items-center gap-2.5"><Package size={16}/> 1. Información del Producto Físico</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium mb-1 text-gray-700">Nombre (Insumo)</label>
-                    <input required type="text" className="w-full p-2 rounded-lg border focus:ring-2 focus:ring-green-500"
+                    <input required type="text" className="w-full p-2.5 rounded-lg border focus:ring-2 focus:ring-green-500"
                       value={formData.nombre} onChange={e => setFormData({...formData, nombre: e.target.value})} 
                       placeholder="Ej: Ron Cacique 0.70L" />
                   </div>
                   <div>
                     <label className="block text-sm font-medium mb-1 text-gray-700">Tipo de Producto</label>
-                    <select className="w-full p-2 rounded-lg border focus:ring-2 focus:ring-green-500 bg-green-50 font-semibold"
+                    <select className="w-full p-2.5 rounded-lg border focus:ring-2 focus:ring-green-500 bg-green-50 font-semibold"
                       value={formData.tipo} onChange={e => setFormData({...formData, tipo: e.target.value})} >
                       <option value="fisico">Físico (Inventariable)</option>
                       <option value="servicio">Servicio (Sin Stock)</option>
@@ -417,7 +425,7 @@ export default function ProductosTab() {
                   </div>
                   <div>
                     <label className="block text-sm font-medium mb-1 text-gray-700">Categoría</label>
-                    <select className="w-full p-2 rounded-lg border focus:ring-2 focus:ring-green-500"
+                    <select className="w-full p-2.5 rounded-lg border focus:ring-2 focus:ring-green-500"
                       value={formData.categoria} onChange={e => setFormData({...formData, categoria: e.target.value})} >
                       <option value="Licores">Licores</option>
                       <option value="Cervezas">Cervezas</option>
@@ -437,7 +445,7 @@ export default function ProductosTab() {
                       {imageFile && (
                         <img src={URL.createObjectURL(imageFile)} alt="Preview" className="w-16 h-16 object-cover rounded-lg border" />
                       )}
-                      <input type="file" accept="image/*" className="w-full p-2 rounded-lg border focus:ring-2 focus:ring-green-500 text-sm"
+                      <input type="file" accept="image/*" className="w-full p-2.5 rounded-lg border focus:ring-2 focus:ring-green-500 text-sm"
                         onChange={e => e.target.files && setImageFile(e.target.files[0])} />
                     </div>
                   </div>
@@ -451,13 +459,13 @@ export default function ProductosTab() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium mb-1 text-gray-700">Unidades Físicas (Stock)</label>
-                      <input type="number" step="0.01" min="0" className="w-full p-2 rounded-lg border focus:ring-2 focus:ring-blue-500"
+                      <input type="number" step="0.01" min="0" className="w-full p-2.5 rounded-lg border focus:ring-2 focus:ring-blue-500"
                         value={formData.inventario_inicial} onChange={e => setFormData({...formData, inventario_inicial: e.target.value})} 
                         placeholder="Ej: 12" />
                     </div>
                     <div>
                       <label className="block text-sm font-medium mb-1 text-gray-700">Costo Unitario (USD)</label>
-                      <input type="number" step="0.01" min="0" className="w-full p-2 rounded-lg border focus:ring-2 focus:ring-blue-500"
+                      <input type="number" step="0.01" min="0" className="w-full p-2.5 rounded-lg border focus:ring-2 focus:ring-blue-500"
                         value={formData.costo_inicial} onChange={e => setFormData({...formData, costo_inicial: e.target.value})} 
                         placeholder="Ej: 15.50 (Costo por unidad)" />
                     </div>
@@ -468,17 +476,17 @@ export default function ProductosTab() {
               {formData.tipo === 'compuesto' && (
                 <div className="bg-orange-50/30 p-4 rounded-xl border border-orange-100">
                   <div className="flex justify-between items-center mb-3">
-                    <h3 className="font-bold text-gray-700 flex items-center gap-2"><Package size={16} className="text-orange-600"/> Componentes del Combo</h3>
+                    <h3 className="font-bold text-gray-700 flex items-center gap-2.5"><Package size={16} className="text-orange-600"/> Componentes del Combo</h3>
                     <button type="button" onClick={() => setComponentes([...componentes, {id: 0, cantidad: 1, nombre: ""}])} className="text-xs font-bold text-orange-600 hover:text-orange-800 flex items-center gap-1">
                       <Plus size={14} /> Añadir Producto
                     </button>
                   </div>
                   <div className="space-y-2">
                     {componentes.map((c, idx) => (
-                      <div key={idx} className="flex gap-2 items-end">
+                      <div key={idx} className="flex gap-2.5 items-end">
                         <div className="flex-1">
                           <label className="block text-xs font-medium text-gray-500">Producto Físico</label>
-                          <select className="w-full p-2 rounded border focus:ring-1 focus:ring-orange-500 text-sm"
+                          <select className="w-full p-2.5 rounded border focus:ring-1 focus:ring-orange-500 text-sm"
                             value={c.id} onChange={e => {
                               const pId = parseInt(e.target.value);
                               const selected = productos.flatMap(p => p.productos).find(pr => pr.id === pId);
@@ -494,14 +502,14 @@ export default function ProductosTab() {
                         </div>
                         <div className="w-24">
                           <label className="block text-xs font-medium text-gray-500">Cantidad</label>
-                          <input type="number" step="0.01" min="0.01" className="w-full p-2 rounded border focus:ring-1 focus:ring-orange-500 text-sm"
+                          <input type="number" step="0.01" min="0.01" className="w-full p-2.5 rounded border focus:ring-1 focus:ring-orange-500 text-sm"
                             value={c.cantidad} onChange={e => {
                               const updated = [...componentes];
                               updated[idx].cantidad = parseFloat(e.target.value) || 1;
                               setComponentes(updated);
                             }} />
                         </div>
-                        <button type="button" onClick={() => setComponentes(componentes.filter((_, i) => i !== idx))} className="text-red-500 p-2 hover:bg-red-50 rounded">
+                        <button type="button" onClick={() => setComponentes(componentes.filter((_, i) => i !== idx))} className="text-red-500 p-2.5 hover:bg-red-50 rounded">
                           <Trash2 size={16} />
                         </button>
                       </div>
@@ -513,7 +521,7 @@ export default function ProductosTab() {
 
               <div className="bg-purple-50/30 p-4 rounded-xl border border-purple-100">
                 <div className="flex justify-between items-center mb-3">
-                  <h3 className="font-bold text-gray-700 flex items-center gap-2"><Beaker size={16} className="text-purple-600"/> {formData.tipo === 'fisico' ? "3. Presentaciones de Venta" : "Precio de Venta"}</h3>
+                  <h3 className="font-bold text-gray-700 flex items-center gap-2.5"><Beaker size={16} className="text-purple-600"/> {formData.tipo === 'fisico' ? "3. Presentaciones de Venta" : "Precio de Venta"}</h3>
                   {formData.tipo === 'fisico' && (
                     <button type="button" onClick={addPresentacion} className="text-xs font-bold text-purple-600 hover:text-purple-800 flex items-center gap-1">
                       <Plus size={14} /> Añadir Presentación
@@ -521,12 +529,19 @@ export default function ProductosTab() {
                   )}
                 </div>
                 
+                {editingId && ultimoCosto !== null && (
+                  <div className="bg-blue-50/70 p-2.5 rounded-lg border border-blue-200 mb-4 flex items-center justify-between shadow-sm">
+                    <span className="text-sm text-blue-800 font-medium">Último costo de compra registrado:</span>
+                    <span className="text-base font-bold text-blue-900">${ultimoCosto.toFixed(2)}</span>
+                  </div>
+                )}
+                
                 <div className="space-y-3">
                   {presentaciones.map((pres, idx) => (
-                    <div key={idx} className="grid grid-cols-1 md:grid-cols-12 gap-3 md:gap-2 items-center bg-white p-3 md:p-2 rounded-lg border shadow-sm relative">
+                    <div key={idx} className="grid grid-cols-1 md:grid-cols-12 gap-3 md:gap-2.5 items-center bg-white p-3 md:p-2.5 rounded-lg border shadow-sm relative">
                       <div className={formData.tipo === 'fisico' ? "md:col-span-3" : "md:col-span-4"}>
                         <label className="block text-xs font-medium text-gray-500">Nombre Presentación</label>
-                        <input required type="text" className="w-full p-2 md:p-1.5 text-sm rounded border focus:ring-1 focus:ring-purple-500"
+                        <input required type="text" className="w-full p-2.5 md:p-1.5 text-sm rounded border focus:ring-1 focus:ring-purple-500"
                           value={pres.nombre} onChange={e => updatePresentacion(idx, "nombre", e.target.value)} 
                           placeholder="Ej: Trago, Botella, Six-Pack" />
                       </div>
@@ -534,32 +549,41 @@ export default function ProductosTab() {
                         {formData.tipo === 'fisico' && (
                           <div className="md:col-span-2">
                             <label className="block text-xs font-medium text-gray-500">U. Descuento</label>
-                            <input required type="number" step="0.01" min="0.01" className="w-full p-2 md:p-1.5 text-sm rounded border focus:ring-1 focus:ring-purple-500"
+                            <input required type="number" step="0.01" min="0.01" className="w-full p-2.5 md:p-1.5 text-sm rounded border focus:ring-1 focus:ring-purple-500"
                               value={pres.medida_descuento} onChange={e => updatePresentacion(idx, "medida_descuento", e.target.value)} 
                               title="Cuántas unidades físicas resta del inventario al vender esta presentación" />
                           </div>
                         )}
                         <div className="md:col-span-2">
                           <label className="block text-xs font-medium text-gray-500">Precio ($)</label>
-                          <input required type="number" step="0.01" min="0" className="w-full p-2 md:p-1.5 text-sm rounded border focus:ring-1 focus:ring-purple-500"
+                          <input required type="number" step="0.01" min="0" className="w-full p-2.5 md:p-1.5 text-sm rounded border focus:ring-1 focus:ring-purple-500"
                             value={pres.precio} onChange={e => updatePresentacion(idx, "precio", e.target.value)} />
                         </div>
                         <div className="md:col-span-2">
-                          <label className="block text-xs font-bold text-blue-600">P. Miembro ($)</label>
-                          <input type="number" step="0.01" min="0" className="w-full p-2 md:p-1.5 text-sm rounded border-blue-300 focus:ring-1 focus:ring-blue-500 bg-blue-50"
+                          <label className="flex justify-between text-xs font-bold text-blue-600">
+                            <span>P. Miembro ($)</span>
+                            <button type="button" onClick={() => {
+                                const calc = parseFloat(pres.precio.toString()) * 0.9;
+                                if (!isNaN(calc)) updatePresentacion(idx, "precio_miembro", calc.toFixed(2));
+                              }} 
+                              className="text-[9px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded hover:bg-blue-200 transition-colors shadow-sm" title="Calcular 10% descuento">
+                              ✨ -10%
+                            </button>
+                          </label>
+                          <input type="number" step="0.01" min="0" className="w-full mt-1 p-2.5 md:p-1.5 text-sm rounded border-blue-300 focus:ring-1 focus:ring-blue-500 bg-blue-50"
                             value={pres.precio_miembro !== undefined ? pres.precio_miembro : ""} onChange={e => updatePresentacion(idx, "precio_miembro", e.target.value)}
                             placeholder="Regular" />
                         </div>
                       </div>
                       <div className={formData.tipo === 'fisico' ? "md:col-span-2" : "md:col-span-3"}>
                         <label className="block text-xs font-medium text-gray-500">Código Barras</label>
-                        <input type="text" className="w-full p-2 md:p-1.5 text-sm rounded border focus:ring-1 focus:ring-purple-500"
+                        <input type="text" className="w-full p-2.5 md:p-1.5 text-sm rounded border focus:ring-1 focus:ring-purple-500"
                           value={pres.codigo_barras || ""} onChange={e => updatePresentacion(idx, "codigo_barras", e.target.value)} 
                           placeholder="Escanea o escribe" />
                       </div>
-                      <div className="md:col-span-1 flex justify-end md:justify-center items-end md:pb-1 absolute top-2 right-2 md:relative md:top-0 md:right-0">
+                      <div className="md:col-span-1 flex justify-end md:justify-center items-end md:pb-1 absolute top-2.5 right-2 md:relative md:top-0 md:right-0">
                         {formData.tipo === 'fisico' && (
-                          <button type="button" onClick={() => removePresentacion(idx)} className="text-red-500 hover:text-red-700 p-2 bg-red-50 rounded-full md:bg-transparent md:p-1">
+                          <button type="button" onClick={() => removePresentacion(idx)} className="text-red-500 hover:text-red-700 p-2.5 bg-red-50 rounded-full md:bg-transparent md:p-1">
                             <Trash2 size={16} />
                           </button>
                         )}
@@ -573,7 +597,7 @@ export default function ProductosTab() {
                 <button type="button" onClick={() => setShowModal(false)} disabled={isSubmitting} className="px-4 py-2 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 disabled:opacity-50">
                   Cancelar
                 </button>
-                <button type="submit" disabled={isSubmitting} className="px-6 py-2 rounded-lg text-white font-bold bg-green-600 hover:bg-green-700 shadow-md flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all">
+                <button type="submit" disabled={isSubmitting} className="px-6 py-2 rounded-lg text-white font-bold bg-green-600 hover:bg-green-700 shadow-md flex items-center gap-2.5 disabled:opacity-50 disabled:cursor-not-allowed transition-all">
                   {isSubmitting ? (
                     <>
                       <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>

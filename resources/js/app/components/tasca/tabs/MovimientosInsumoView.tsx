@@ -175,8 +175,8 @@ export function MovimientosInsumoView({ insumoId, insumoNombre, onClose, onAdjus
                 <ArrowDownRight size={20} /> Entradas de Mercancía
               </h3>
               
-              <div className="bg-white rounded border shadow-sm overflow-hidden">
-                <table className="w-full text-sm text-left">
+              <div className="bg-white rounded border shadow-sm overflow-x-auto">
+                <table className="w-full text-sm text-left min-w-[500px]">
                   <thead className="bg-gray-50 text-gray-700 uppercase">
                     <tr>
                       <th className="px-4 py-3">Fecha</th>
@@ -250,8 +250,8 @@ export function MovimientosInsumoView({ insumoId, insumoNombre, onClose, onAdjus
                 <ArrowUpRight size={20} /> Salidas Detalladas
               </h3>
 
-              <div className="bg-white rounded border shadow-sm overflow-hidden">
-                <table className="w-full text-sm text-left">
+              <div className="bg-white rounded border shadow-sm overflow-x-auto">
+                <table className="w-full text-sm text-left min-w-[500px]">
                   <thead className="bg-gray-50 text-gray-700 uppercase">
                     <tr>
                       <th className="px-4 py-3">Fecha</th>

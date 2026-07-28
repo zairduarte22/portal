@@ -268,7 +268,7 @@ export function VentaPos() {
            p.id.toString().includes(search);
   });
   return (
-    <div className="space-y-6 h-[85vh] flex flex-col">
+    <div className="space-y-4 lg:space-y-6 h-auto lg:h-[85vh] flex flex-col pb-20 lg:pb-0">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <button onClick={() => navigate(-1)} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
@@ -302,9 +302,9 @@ export function VentaPos() {
         </span>
       </div>
 
-      <div className="flex gap-6 h-full overflow-hidden">
+      <div className="flex flex-col lg:flex-row gap-4 lg:gap-6 flex-1 lg:h-full lg:overflow-hidden">
         {/* Productos (Lado Izquierdo) */}
-        <div className="flex-1 flex flex-col bg-card border rounded-2xl shadow-sm overflow-hidden" style={{ backgroundColor: "var(--card)", borderColor: "var(--border)" }}>
+        <div className="flex-1 flex flex-col bg-card border rounded-2xl shadow-sm overflow-hidden min-h-[500px] lg:min-h-0" style={{ backgroundColor: "var(--card)", borderColor: "var(--border)" }}>
           <div className="p-4 border-b">
             <div className="relative">
               <Search className="absolute left-3 top-3 text-gray-400" size={18} />
@@ -332,7 +332,7 @@ export function VentaPos() {
             </div>
           </div>
           <div className="flex-1 overflow-y-auto p-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 lg:gap-4">
               {filteredProd.map(p => {
                 const existingDetail = venta.detalles?.find((d: any) => Number(d.id_producto) === Number(p.id));
                 const qtyInCart = existingDetail ? Number(existingDetail.cantidad) : 0;
@@ -366,7 +366,7 @@ export function VentaPos() {
         </div>
 
         {/* Detalle de la Orden y Totales (Lado Derecho) */}
-        <div className="w-[400px] flex flex-col bg-card border rounded-2xl shadow-sm overflow-hidden" style={{ backgroundColor: "var(--card)", borderColor: "var(--border)" }}>
+        <div className="w-full lg:w-[400px] xl:w-[450px] shrink-0 flex flex-col bg-card border rounded-2xl shadow-sm overflow-hidden min-h-[400px] lg:min-h-0" style={{ backgroundColor: "var(--card)", borderColor: "var(--border)" }}>
           <div className="p-4 border-b font-bold flex items-center gap-2">
             <ShoppingCart size={20} /> Detalle de la Orden
           </div>
@@ -537,10 +537,10 @@ export function VentaPos() {
       {/* Modal for Payments */}
       {showPaymentModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-          <div className="w-full max-w-2xl bg-white p-6 rounded-3xl shadow-2xl flex flex-col max-h-[90vh]">
-            <h2 className="text-2xl font-black text-center mb-6 text-gray-800">Procesar Pagos</h2>
+          <div className="w-full max-w-2xl bg-white p-4 sm:p-6 rounded-3xl shadow-2xl flex flex-col max-h-[90vh]">
+            <h2 className="text-xl sm:text-2xl font-black text-center mb-4 sm:mb-6 text-gray-800">Procesar Pagos</h2>
             
-            <div className="grid grid-cols-2 gap-4 mb-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-4 sm:mb-6">
               <div className="p-4 bg-gray-50 rounded-xl border text-center">
                  <p className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-1">Total de la Factura</p>
                  <p className="text-3xl font-black text-gray-800">${total.toFixed(2)}</p>
@@ -585,9 +585,9 @@ export function VentaPos() {
               )}
 
               {saldoPendiente > 0.01 ? (
-                <div className="bg-gray-50 p-5 rounded-2xl border">
+                <div className="bg-gray-50 p-4 sm:p-5 rounded-2xl border">
                     <h3 className="font-bold text-sm mb-3 text-gray-700 uppercase tracking-wider">Añadir Nuevo Pago</h3>
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                       <div>
                         <label className="block text-xs font-bold text-gray-500 mb-1">Método de Pago</label>
                         <select value={metodoPago} onChange={e => setMetodoPago(e.target.value)} className="w-full p-2.5 border rounded-xl bg-white text-sm font-medium focus:ring-2 focus:ring-blue-500">
