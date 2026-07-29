@@ -1352,6 +1352,7 @@ class TascaController extends Controller
                 'nombre' => $p->nombre_completo,
                 'categoria' => $p->insumo ? $p->insumo->categoria : 'General',
                 'precio' => $p->precio,
+                'precio_miembro' => $p->precio_miembro,
                 'imagen' => $p->insumo ? $p->insumo->imagen : null
             ];
         })->values();
