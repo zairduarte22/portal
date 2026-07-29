@@ -99,7 +99,7 @@ export default function LotesTab() {
   const [pagoInput, setPagoInput] = useState({
     monto_usd: "",
     monto_bs: "",
-    metodo_pago: "Efectivo Divisas",
+    metodo_pago: "",
     referencia_pago: ""
   });
 
@@ -109,7 +109,7 @@ export default function LotesTab() {
     referencia_factura: "",
     proveedor_id: "",
     tipo_compra: "Contado",
-    metodo_pago: "Efectivo Divisas",
+    metodo_pago: "",
     referencia_pago: "",
     monto_bs: "",
   });
@@ -164,7 +164,7 @@ export default function LotesTab() {
       return;
     }
     setPagosLista([]);
-    setPagoInput({ monto_usd: "", monto_bs: "", metodo_pago: "Efectivo Divisas", referencia_pago: "" });
+    setPagoInput({ monto_usd: "", monto_bs: "", metodo_pago: "", referencia_pago: "" });
     setShowPagoModal(true);
   };
 
@@ -272,7 +272,7 @@ export default function LotesTab() {
       referencia_factura: "",
       proveedor_id: "",
       tipo_compra: "Contado",
-      metodo_pago: "Efectivo Divisas",
+      metodo_pago: "",
       referencia_pago: "",
       monto_bs: "",
     });
@@ -303,7 +303,7 @@ export default function LotesTab() {
       monto_bs: pagoInput.monto_bs ? parseFloat(pagoInput.monto_bs) : null
     }]);
 
-    setPagoInput({ monto_usd: "", monto_bs: "", metodo_pago: "Efectivo Divisas", referencia_pago: "" });
+    setPagoInput({ monto_usd: "", monto_bs: "", metodo_pago: "", referencia_pago: "" });
   };
 
   const removePago = (index: number) => {
@@ -390,7 +390,7 @@ export default function LotesTab() {
 
       {/* Modal de Nueva Compra */}
       {showNewCompraModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm lg:backdrop-blur-none">
           <div className="w-full max-w-6xl p-6 rounded-2xl shadow-xl max-h-[90vh] flex flex-col" style={{ backgroundColor: "var(--card)", border: "1px solid var(--border)", color: "var(--foreground)" }}>
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-bold flex items-center gap-2 text-blue-500">
@@ -573,7 +573,7 @@ export default function LotesTab() {
 
       {/* Modal de Detalles de Compra */}
       {showDetalleModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm lg:backdrop-blur-none">
           <div className="w-full max-w-4xl p-6 rounded-2xl shadow-xl max-h-[90vh] overflow-y-auto" style={{ backgroundColor: "var(--card)", border: "1px solid var(--border)", color: "var(--foreground)" }}>
             <div className="flex justify-between items-start mb-6 border-b pb-4" style={{ borderColor: "var(--border)" }}>
               <div>
@@ -627,7 +627,7 @@ export default function LotesTab() {
 
       {/* Modal de Abono a Compra a Crédito */}
       {showAbonoModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm lg:backdrop-blur-none">
           <div className="w-full max-w-md p-6 rounded-2xl shadow-xl" style={{ backgroundColor: "var(--card)", border: "1px solid var(--border)" }}>
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-bold flex items-center gap-2">Registrar Pago a Proveedor</h2>
@@ -666,6 +666,7 @@ export default function LotesTab() {
                       value={pagoInput.metodo_pago}
                       onChange={e => setPagoInput({...pagoInput, metodo_pago: e.target.value})}
                     >
+                      <option value="" disabled>Seleccione un método</option>
                       <option value="Efectivo Divisas">Efectivo Divisas</option>
                       <option value="Pago Movil/Transferencia">Pago Móvil / Transferencia</option>
                       <option value="Zelle">Zelle</option>
@@ -703,7 +704,8 @@ export default function LotesTab() {
                 <button 
                   type="button" 
                   onClick={() => addPago(true)} 
-                  className="w-full py-2 mt-2 bg-blue-100 text-blue-700 font-bold rounded-lg hover:bg-blue-200 transition-colors text-sm"
+                  disabled={!pagoInput.metodo_pago}
+                  className={`w-full py-2 mt-2 font-bold rounded-lg transition-colors text-sm ${!pagoInput.metodo_pago ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-blue-100 text-blue-700 hover:bg-blue-200'}`}
                 >
                   Añadir Pago a la Lista
                 </button>
@@ -755,7 +757,7 @@ export default function LotesTab() {
 
       {/* Modal Confirmar Pago/Credito de Nueva Compra */}
       {showPagoModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm lg:backdrop-blur-none">
           <div className="w-full max-w-md p-6 rounded-2xl shadow-xl" style={{ backgroundColor: "var(--card)", border: "1px solid var(--border)" }}>
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-bold flex items-center gap-2">Finalizar Compra</h2>
@@ -805,6 +807,7 @@ export default function LotesTab() {
                           value={pagoInput.metodo_pago}
                           onChange={e => setPagoInput({...pagoInput, metodo_pago: e.target.value})}
                         >
+                          <option value="" disabled>Seleccione un método</option>
                           <option value="Efectivo Divisas">Efectivo Divisas</option>
                           <option value="Pago Movil/Transferencia">Pago Móvil / Transferencia</option>
                           <option value="Zelle">Zelle</option>
@@ -842,7 +845,8 @@ export default function LotesTab() {
                     <button 
                       type="button" 
                       onClick={() => addPago(false)} 
-                      className="w-full py-2 mt-2 bg-blue-100 text-blue-700 font-bold rounded-lg hover:bg-blue-200 transition-colors text-sm"
+                      disabled={!pagoInput.metodo_pago}
+                      className={`w-full py-2 mt-2 font-bold rounded-lg transition-colors text-sm ${!pagoInput.metodo_pago ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-blue-100 text-blue-700 hover:bg-blue-200'}`}
                     >
                       Añadir Pago a la Lista
                     </button>

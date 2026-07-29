@@ -11,7 +11,7 @@ export function VentaPos() {
   
   // Payment states
   const [pagos, setPagos] = useState<any[]>([]);
-  const [metodoPago, setMetodoPago] = useState("Efectivo Divisas");
+  const [metodoPago, setMetodoPago] = useState("");
   const [montoUsd, setMontoUsd] = useState("");
   const [referencia, setReferencia] = useState("");
   const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -243,7 +243,7 @@ export function VentaPos() {
       setShowPaymentModal(false);
       setShowAuthModal(false);
       alert("Venta procesada correctamente");
-      navigate("/gestion/ventas-tasca");
+      navigate("/gestion/ugavibar/ventas");
     } catch (err: any) {
       alert(err.message);
     } finally {
@@ -254,7 +254,7 @@ export function VentaPos() {
   const handleAnular = () => {
     if (confirm("¿Seguro que deseas anular esta venta?")) {
       fetch(`/api/tasca/ventas/${id}/anular`, { method: "POST" })
-        .then(() => navigate("/gestion/ventas-tasca"));
+        .then(() => navigate("/gestion/ugavibar/ventas"));
     }
   };
 
@@ -269,45 +269,18 @@ export function VentaPos() {
   });
   return (
     <div className="space-y-4 lg:space-y-6 h-auto lg:h-[85vh] flex flex-col pb-20 lg:pb-0">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <button onClick={() => navigate(-1)} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
-            <ArrowLeft size={24} />
-          </button>
-          <div>
-            <h1 className="text-2xl font-bold flex items-center gap-2">Venta #{venta.id}</h1>
-            <p className="text-sm text-gray-500 font-medium mt-1 flex items-center gap-2">
-              {venta.miembro ? (venta.persona ? `${venta.persona.nombre} (${venta.miembro.razon_social})` : `${venta.miembro.razon_social} (Miembro)`) : venta.cliente_foraneo ? `${venta.cliente_foraneo.nombre} (Foráneo)` : `Desconocido`}
-              {venta.miembro && (
-                 isSolvente 
-                   ? <span className="px-2 py-0.5 bg-green-100 text-green-700 rounded-md font-bold text-xs">SOLVENTE</span>
-                   : <span className="px-2 py-0.5 bg-red-100 text-red-700 rounded-md font-bold text-xs">INSOLVENTE</span>
-              )}
-            </p>
-            {venta.autorizador && (
-              <p className="text-xs text-orange-600 font-bold mt-2 flex items-center gap-1">
-                <Check size={14} /> Autorizado por: {venta.autorizador.nombre}
-              </p>
-            )}
-          </div>
-        </div>
-        <span className={`px-4 py-2 rounded-full font-bold text-sm ${
-          venta.estado === 'Pagada' ? 'bg-green-100 text-green-700' :
-          venta.estado === 'Credito' ? 'bg-blue-100 text-blue-700' :
-          venta.estado === 'Parcial' ? 'bg-orange-100 text-orange-700' :
-          venta.estado === 'Anulada' ? 'bg-red-100 text-red-700' :
-          'bg-yellow-100 text-yellow-700'
-        }`}>
-          {venta.estado}
-        </span>
-      </div>
+
 
       <div className="flex flex-col lg:flex-row gap-4 lg:gap-6 flex-1 lg:h-full lg:overflow-hidden">
         {/* Productos (Lado Izquierdo) */}
-        <div className="flex-1 flex flex-col bg-card border rounded-2xl shadow-sm overflow-hidden min-h-[500px] lg:min-h-0" style={{ backgroundColor: "var(--card)", borderColor: "var(--border)" }}>
+        <div className="flex-1 flex flex-col bg-card border rounded-2xl shadow-sm overflow-hidden min-h-[500px] lg:min-h-0 relative" style={{ backgroundColor: "var(--card)", borderColor: "var(--border)" }}>
           <div className="p-4 border-b">
-            <div className="relative">
-              <Search className="absolute left-3 top-3 text-gray-400" size={18} />
+            <div className="flex items-center gap-3">
+              <button onClick={() => navigate(-1)} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition-colors flex items-center justify-center border bg-white dark:bg-gray-900 shadow-sm text-gray-600 dark:text-gray-300 flex-shrink-0" title="Volver atrás">
+                <ArrowLeft size={20} /> 
+              </button>
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-3 text-gray-400" size={18} />
               <input
                 type="text" placeholder="Buscar producto o escanear código..." autoFocus
                 className="w-full pl-10 pr-4 py-2 rounded-xl border bg-background"
@@ -329,6 +302,7 @@ export function VentaPos() {
                   }
                 }}
               />
+              </div>
             </div>
           </div>
           <div className="flex-1 overflow-y-auto p-4">
@@ -363,6 +337,16 @@ export function VentaPos() {
               })}
             </div>
           </div>
+
+          {/* Floating Badge */}
+          <div className="absolute bottom-4 left-4 z-30 px-4 py-2 rounded-2xl shadow-[0_8px_32px_rgba(16,185,129,0.35)] backdrop-blur-xl border border-green-400/30 flex flex-col items-start gap-0.5 pointer-events-none" style={{ background: "linear-gradient(135deg, rgba(34,197,94,0.15), rgba(16,185,129,0.3))" }}>
+            <p className="text-sm font-bold text-gray-900 dark:text-white max-w-[250px] truncate text-left tracking-wide">
+              <span className="text-green-700 dark:text-green-400 font-black mr-1">{venta.id}</span> <span className="text-green-600/50 mx-1">●</span> {venta.miembro ? (venta.persona ? venta.persona.nombre : venta.miembro.razon_social) : venta.cliente_foraneo ? venta.cliente_foraneo.nombre : `Desconocido`}
+            </p>
+            {venta.autorizador && (
+              <p className="text-[10px] text-gray-800 dark:text-gray-200 font-medium tracking-wider uppercase mt-1">Auth: {venta.autorizador.nombre}</p>
+            )}
+          </div>
         </div>
 
         {/* Detalle de la Orden y Totales (Lado Derecho) */}
@@ -372,26 +356,29 @@ export function VentaPos() {
           </div>
           <div className="flex-1 overflow-y-auto p-4 space-y-3">
             {venta.detalles?.map((d: any) => (
-              <div key={d.id} className="flex justify-between items-center border-b pb-2">
-                <div>
-                  <p className="font-semibold text-sm">{d.producto?.nombre_completo || d.producto?.nombre}</p>
-                  <div className="flex items-center gap-2 mt-1">
-                    <input 
-                      type="number" 
-                      className="w-16 p-1 border rounded text-xs text-center focus:ring-1 focus:ring-green-500" 
-                      style={{ backgroundColor: "var(--background)", borderColor: "var(--border)" }}
-                      value={d.cantidad} 
-                      min="1"
-                      disabled={isReadOnly}
-                      onChange={(e) => handleEditCantidad(d.id_producto, parseInt(e.target.value) || 1)}
-                    />
-                    <span className="text-xs text-gray-500">x ${parseFloat(d.precio_unitario).toFixed(2)}</span>
+              <div key={d.id} className="flex flex-col sm:flex-row justify-between sm:items-center border-b pb-3 gap-2">
+                <div className="flex-1">
+                  <p className="font-bold text-sm leading-tight break-words pr-2 text-gray-800 dark:text-gray-200 line-clamp-2">{d.producto?.nombre_completo || d.producto?.nombre}</p>
+                  <div className="flex items-center gap-2 mt-2">
+                    <div className="flex items-center border rounded-lg overflow-hidden" style={{ backgroundColor: "var(--background)", borderColor: "var(--border)" }}>
+                       <button type="button" disabled={isReadOnly} className="px-2 py-1 bg-black/5 hover:bg-black/10 dark:bg-white/5 dark:hover:bg-white/10 text-gray-700 dark:text-gray-300 font-bold transition-colors" onClick={() => handleEditCantidad(d.id_producto, Math.max(1, parseInt(d.cantidad) - 1))}>-</button>
+                       <input 
+                         type="number" 
+                         className="w-10 py-1 text-xs text-center font-bold focus:outline-none bg-transparent" 
+                         value={d.cantidad} 
+                         min="1"
+                         disabled={isReadOnly}
+                         onChange={(e) => handleEditCantidad(d.id_producto, parseInt(e.target.value) || 1)}
+                       />
+                       <button type="button" disabled={isReadOnly} className="px-2 py-1 bg-black/5 hover:bg-black/10 dark:bg-white/5 dark:hover:bg-white/10 text-gray-700 dark:text-gray-300 font-bold transition-colors" onClick={() => handleEditCantidad(d.id_producto, parseInt(d.cantidad) + 1)}>+</button>
+                    </div>
+                    <span className="text-xs font-semibold text-gray-500 whitespace-nowrap">x ${parseFloat(d.precio_unitario).toFixed(2)}</span>
                   </div>
                 </div>
-                <div className="flex items-center gap-3">
-                  <p className="font-bold text-sm">${parseFloat(d.subtotal).toFixed(2)}</p>
+                <div className="flex items-center justify-between sm:justify-end w-full sm:w-auto mt-1 sm:mt-0 pt-2 sm:pt-0 border-t sm:border-0" style={{ borderColor: "var(--border)" }}>
+                  <p className="font-black text-blue-600 text-base sm:mr-3">${parseFloat(d.subtotal).toFixed(2)}</p>
                   {!isReadOnly && (
-                    <button onClick={() => handleRemoveDetalle(d.id_producto)} className="text-red-500 hover:text-red-700">
+                    <button onClick={() => handleRemoveDetalle(d.id_producto)} className="p-1.5 text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 rounded-lg transition-colors ml-2 sm:ml-0 shadow-sm">
                       <Trash2 size={16} />
                     </button>
                   )}
@@ -496,7 +483,7 @@ export function VentaPos() {
 
       {/* Modal for Quantity Input */}
       {selectedProduct && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm lg:backdrop-blur-none">
           <div className="w-full max-w-sm p-6 rounded-2xl shadow-xl" style={{ backgroundColor: "var(--card)" }}>
             <h2 className="text-xl font-bold mb-2 text-center" style={{ color: "var(--foreground)" }}>{selectedProduct.nombre_completo || selectedProduct.nombre}</h2>
             <p className="text-sm text-center mb-6" style={{ color: "var(--muted-foreground)" }}>
@@ -536,7 +523,7 @@ export function VentaPos() {
 
       {/* Modal for Payments */}
       {showPaymentModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm lg:backdrop-blur-none">
           <div className="w-full max-w-2xl bg-white p-4 sm:p-6 rounded-3xl shadow-2xl flex flex-col max-h-[90vh]">
             <h2 className="text-xl sm:text-2xl font-black text-center mb-4 sm:mb-6 text-gray-800">Procesar Pagos</h2>
             
@@ -591,6 +578,7 @@ export function VentaPos() {
                       <div>
                         <label className="block text-xs font-bold text-gray-500 mb-1">Método de Pago</label>
                         <select value={metodoPago} onChange={e => setMetodoPago(e.target.value)} className="w-full p-2.5 border rounded-xl bg-white text-sm font-medium focus:ring-2 focus:ring-blue-500">
+                            <option value="" disabled>Seleccione un método</option>
                             <option value="Efectivo Divisas">Efectivo Divisas</option>
                             <option value="Pago Movil/Transferencia">Pago Móvil / Transferencia</option>
                             <option value="Zelle">Zelle</option>
@@ -617,7 +605,7 @@ export function VentaPos() {
                       {montoUsd && (metodoPago.includes('Transferencia') || metodoPago.includes('POS') || metodoPago.includes('Efectivo Bs')) && (
                           <p className="text-xs text-gray-500 font-bold mb-3">Equivalente: Bs. {(parseFloat(montoUsd) * parseFloat(tasa || "1")).toFixed(2)} (Tasa: {tasa})</p>
                       )}
-                      <button type="button" onClick={handleAddPago} className="w-full py-3 bg-blue-100 text-blue-700 font-black rounded-xl text-sm transition-colors hover:bg-blue-200">
+                      <button type="button" onClick={handleAddPago} disabled={!metodoPago} className={`w-full py-3 ${!metodoPago ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-blue-100 text-blue-700 hover:bg-blue-200'} font-black rounded-xl text-sm transition-colors`}>
                           Añadir Pago
                       </button>
                     </div>
@@ -646,7 +634,7 @@ export function VentaPos() {
 
       {/* Modal for Credit Authorization */}
       {showAuthModal && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm lg:backdrop-blur-none">
           <div className="w-full max-w-sm bg-white p-6 rounded-3xl shadow-xl flex flex-col">
             <h2 className="text-xl font-bold mb-2 text-center text-orange-600">Autorización de Crédito</h2>
             <p className="text-sm text-center mb-6 text-gray-500">

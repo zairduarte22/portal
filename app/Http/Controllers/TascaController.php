@@ -74,7 +74,79 @@ class TascaController extends Controller
     // ==========================================
     public function getClientes()
     {
-        return response()->json(ClienteTasca::all());
+        $metricasForaneos = DB::table('ventas_tasca')
+            ->whereNotNull('id_cliente_tasca')
+            ->whereIn('estado', ['Pagada', 'Parcial', 'Credito'])
+            ->select(
+                'id_cliente_tasca',
+                DB::raw('COUNT(id) as total_compras'),
+                DB::raw('SUM(total + cargo_servicio - descuento) as total_gastado')
+            )
+            ->groupBy('id_cliente_tasca')
+            ->get()
+            ->keyBy('id_cliente_tasca');
+
+        $metricasPersonas = DB::table('ventas_tasca')
+            ->whereNotNull('id_persona')
+            ->whereIn('estado', ['Pagada', 'Parcial', 'Credito'])
+            ->select(
+                'id_persona',
+                DB::raw('COUNT(id) as total_compras'),
+                DB::raw('SUM(total + cargo_servicio - descuento) as total_gastado')
+            )
+            ->groupBy('id_persona')
+            ->get()
+            ->keyBy('id_persona');
+
+        $favForaneos = DB::table('ventas_tasca')
+            ->join('ventas_tasca_detalles', 'ventas_tasca.id', '=', 'ventas_tasca_detalles.id_venta')
+            ->join('productos_tasca', 'ventas_tasca_detalles.id_producto', '=', 'productos_tasca.id')
+            ->whereNotNull('ventas_tasca.id_cliente_tasca')
+            ->whereIn('ventas_tasca.estado', ['Pagada', 'Parcial', 'Credito'])
+            ->select('ventas_tasca.id_cliente_tasca', 'productos_tasca.nombre', DB::raw('SUM(ventas_tasca_detalles.cantidad) as total_cantidad'))
+            ->groupBy('ventas_tasca.id_cliente_tasca', 'productos_tasca.nombre')
+            ->orderBy('total_cantidad', 'desc')
+            ->get()
+            ->groupBy('id_cliente_tasca');
+
+        $favPersonas = DB::table('ventas_tasca')
+            ->join('ventas_tasca_detalles', 'ventas_tasca.id', '=', 'ventas_tasca_detalles.id_venta')
+            ->join('productos_tasca', 'ventas_tasca_detalles.id_producto', '=', 'productos_tasca.id')
+            ->whereNotNull('ventas_tasca.id_persona')
+            ->whereIn('ventas_tasca.estado', ['Pagada', 'Parcial', 'Credito'])
+            ->select('ventas_tasca.id_persona', 'productos_tasca.nombre', DB::raw('SUM(ventas_tasca_detalles.cantidad) as total_cantidad'))
+            ->groupBy('ventas_tasca.id_persona', 'productos_tasca.nombre')
+            ->orderBy('total_cantidad', 'desc')
+            ->get()
+            ->groupBy('id_persona');
+
+        $foraneos = ClienteTasca::all()->map(function($cliente) use ($metricasForaneos, $favForaneos) {
+            $m = $metricasForaneos->get($cliente->id);
+            $f = $favForaneos->get($cliente->id);
+            $cliente->total_compras = $m ? $m->total_compras : 0;
+            $cliente->total_gastado = $m ? (float) $m->total_gastado : 0;
+            $cliente->producto_favorito = $f ? $f->first()->nombre : 'N/A';
+            return $cliente;
+        });
+
+        $personasIds = $metricasPersonas->keys();
+        $miembros = \App\Models\Persona::whereIn('id', $personasIds)->get()->map(function($persona) use ($metricasPersonas, $favPersonas) {
+            $m = $metricasPersonas->get($persona->id);
+            $f = $favPersonas->get($persona->id);
+            $persona->total_compras = $m ? $m->total_compras : 0;
+            $persona->total_gastado = $m ? (float) $m->total_gastado : 0;
+            $persona->producto_favorito = $f ? $f->first()->nombre : 'N/A';
+            // Adaptar para el frontend
+            $persona->razon_social = $persona->nombre . ' ' . $persona->apellido;
+            $persona->ci_rif = $persona->ci_numero;
+            $persona->celular = $persona->telefono;
+            return $persona;
+        });
+
+        return response()->json([
+            'foraneos' => $foraneos,
+            'miembros' => $miembros
+        ]);
     }
 
     public function storeCliente(Request $request)
@@ -418,7 +490,7 @@ class TascaController extends Controller
         $ventasHoy = VentaTasca::with('pagos')->whereBetween('fecha', [$startDate, $endDate])
             ->whereIn('estado', ['Pagada', 'Credito', 'Parcial'])
             ->get();
-        $totalVentasHoy = $ventasHoy->sum(function($v) { return $v->total - $v->descuento; });
+        $totalVentasHoy = $ventasHoy->sum(function($v) { return $v->total - $v->descuento + $v->cargo_servicio; });
 
         // 2. Desglose de métodos de pago (Pagos hechos en el periodo)
         $pagosHoy = DB::table('pago_venta_tasca')
@@ -1289,6 +1361,33 @@ class TascaController extends Controller
         return response()->json([
             'productos' => $disponibles,
             'tasa_bcv' => $tasaBcv
+        ]);
+    }
+
+    public function getMetricasInventario()
+    {
+        $totalProductos = \App\Models\InsumoTasca::count();
+        
+        $valorTotalCosto = \DB::table('lotes_tasca')
+            ->where('estado', 'Activo')
+            ->where('stock_actual', '>', 0)
+            ->sum(\DB::raw('stock_actual * costo_unitario'));
+            
+        $insumos = \App\Models\InsumoTasca::with(['productos', 'lotesActivos'])->get();
+        $valorTotalVenta = 0;
+        
+        foreach ($insumos as $insumo) {
+            $stock = $insumo->stock_total;
+            if ($stock > 0 && $insumo->productos->count() > 0) {
+                $maxPrecio = $insumo->productos->max('precio');
+                $valorTotalVenta += ($stock * $maxPrecio);
+            }
+        }
+        
+        return response()->json([
+            'totalProductos' => $totalProductos,
+            'valorTotalCosto' => (float) $valorTotalCosto,
+            'valorTotalVenta' => (float) $valorTotalVenta
         ]);
     }
 }

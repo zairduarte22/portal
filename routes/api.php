@@ -157,7 +157,6 @@ Route::prefix('tasca')->group(function () {
     
     // Clientes
     Route::get('/clientes', [TascaController::class, 'getClientes']);
-    Route::post('/clientes', [TascaController::class, 'storeCliente']);
     
     // Ventas
     Route::get('/ventas', [TascaController::class, 'getVentas']);
@@ -175,6 +174,7 @@ Route::prefix('tasca')->group(function () {
 
     // Inventario Avanzado (Insumos y Lotes)
     Route::get('/notificaciones', [\App\Http\Controllers\InventarioTascaController::class, 'getNotificaciones']);
+    Route::get('/inventario/metricas', [TascaController::class, 'getMetricasInventario']);
     Route::get('/insumos', [\App\Http\Controllers\InventarioTascaController::class, 'getInsumos']);
     Route::get('/insumos/reporte', [\App\Http\Controllers\InventarioTascaController::class, 'reporteInventario']);
     Route::post('/insumos', [\App\Http\Controllers\InventarioTascaController::class, 'storeInsumo']);
@@ -205,6 +205,12 @@ Route::prefix('tasca')->group(function () {
     Route::delete('/gastos/{id}', [\App\Http\Controllers\TascaGastosController::class, 'destroyGasto']);
 
     Route::post('/compras/{id}/pagar', [\App\Http\Controllers\InventarioTascaController::class, 'pagarCompra']);
+
+    // Clientes de Tasca (Foráneos y Miembros)
+    // El GET lo maneja TascaController@getClientes para incluir métricas
+    Route::post('/clientes', [\App\Http\Controllers\ClienteTascaController::class, 'store']);
+    Route::put('/clientes/{id}', [\App\Http\Controllers\ClienteTascaController::class, 'update']);
+    Route::delete('/clientes/{id}', [\App\Http\Controllers\ClienteTascaController::class, 'destroy']);
 });
 
 });

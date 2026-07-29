@@ -33,7 +33,7 @@ export function DetalleFacturaModal({ venta, onClose }: { venta: any, onClose: (
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm lg:backdrop-blur-none">
       <div className="w-full max-w-2xl rounded-3xl shadow-2xl flex flex-col max-h-[90vh]" style={{ backgroundColor: "var(--card)" }}>
         <div className="flex justify-between items-center p-6 border-b" style={{ borderColor: "var(--border)" }}>
           <div>

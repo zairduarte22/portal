@@ -19,7 +19,7 @@ export function NuevaVentaModal({ onClose, onVentaCreated }: { onClose: () => vo
 
   useEffect(() => {
     fetch("/api/miembros").then(res => res.json()).then(setMiembros);
-    fetch("/api/tasca/clientes").then(res => res.json()).then(setClientesForaneos);
+    fetch("/api/tasca/clientes").then(res => res.json()).then(data => setClientesForaneos(data.foraneos || data));
     fetch("/api/personas").then(res => res.json()).then(setPersonas);
     fetch("/api/vinculaciones").then(res => res.json()).then(setVinculaciones);
     fetch("/api/carnets-emitidos").then(res => res.json()).then(setCarnetsEmitidos);
@@ -107,7 +107,7 @@ export function NuevaVentaModal({ onClose, onVentaCreated }: { onClose: () => vo
   });
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm lg:backdrop-blur-none">
       <div className="w-full max-w-lg p-6 rounded-2xl shadow-xl" style={{ backgroundColor: "var(--card)" }}>
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-xl font-bold flex items-center gap-2">

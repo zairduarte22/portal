@@ -11,10 +11,15 @@ import { CarnetsPanel } from "./components/carnets/CarnetsView";
 import { LibrosPanel } from "./components/LibrosPanel";
 import { ConciliacionPanel } from "./components/ConciliacionPanel";
 import { ObligacionesPanel } from "./components/ObligacionesPanel";
-import { VentasTascaPanel } from "./components/tasca/VentasTascaPanel";
-import { VentaPos } from "./components/tasca/VentaPos";
-import { GestionTascaPanel } from "./components/tasca/GestionTascaPanel";
 import { ReportesTascaPanel } from "./components/tasca/ReportesTascaPanel";
+import { UgaviBarVentas } from "./components/tasca/pages/UgaviBarVentas";
+import { VentaPos } from "./components/tasca/VentaPos";
+import { UgaviBarClientes } from "./components/tasca/pages/UgaviBarClientes";
+import { UgaviBarInventario } from "./components/tasca/pages/UgaviBarInventario";
+import { UgaviBarCreditos } from "./components/tasca/pages/UgaviBarCreditos";
+import { UgaviBarCatalogo } from "./components/tasca/pages/UgaviBarCatalogo";
+import { UgaviBarGastos } from "./components/tasca/pages/UgaviBarGastos";
+import { UgaviBarCompras } from "./components/tasca/pages/UgaviBarCompras";
 import { Miembro, Persona, Vinculacion, RelacionFamiliar } from "./components/mockData";
 import { Settings } from "lucide-react";
 import { Login } from "./components/Login";
@@ -202,6 +207,14 @@ export default function App() {
     });
   };
 
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: "var(--background)" }}>
+        <div className="w-12 h-12 border-4 border-green-500 border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
   if (!user) {
     return (
       <BrowserRouter>
@@ -264,10 +277,15 @@ export default function App() {
           <Route path="libros" element={<ProtectedRoute moduleId="LibrosPanel" user={user}><LibrosPanel /></ProtectedRoute>} />
           <Route path="obligaciones" element={<ProtectedRoute moduleId="ObligacionesPanel" user={user}><ObligacionesPanel /></ProtectedRoute>} />
           <Route path="conciliacion" element={<ProtectedRoute moduleId="ConciliacionPanel" user={user}><ConciliacionPanel /></ProtectedRoute>} />
-          <Route path="ventas-tasca" element={<ProtectedRoute moduleId="VentasTascaPanel" user={user}><VentasTascaPanel /></ProtectedRoute>} />
-          <Route path="ventas-tasca/:id" element={<ProtectedRoute moduleId="VentasTascaPanel" user={user}><VentaPos /></ProtectedRoute>} />
-          <Route path="tasca/gestion" element={<ProtectedRoute moduleId="GestionTascaPanel" user={user}><GestionTascaPanel /></ProtectedRoute>} />
-          <Route path="tasca/reportes" element={<ProtectedRoute moduleId="ReportesTascaPanel" user={user}><ReportesTascaPanel /></ProtectedRoute>} />
+          <Route path="ugavibar/ventas" element={<ProtectedRoute moduleId="UgaviBarVentas" user={user}><UgaviBarVentas /></ProtectedRoute>} />
+          <Route path="ugavibar/ventas/:id" element={<ProtectedRoute moduleId="UgaviBarVentas" user={user}><VentaPos /></ProtectedRoute>} />
+          <Route path="ugavibar/clientes" element={<ProtectedRoute moduleId="UgaviBarClientes" user={user}><UgaviBarClientes /></ProtectedRoute>} />
+          <Route path="ugavibar/creditos" element={<ProtectedRoute moduleId="UgaviBarCreditos" user={user}><UgaviBarCreditos /></ProtectedRoute>} />
+          <Route path="ugavibar/catalogo" element={<ProtectedRoute moduleId="UgaviBarCatalogo" user={user}><UgaviBarCatalogo /></ProtectedRoute>} />
+          <Route path="ugavibar/inventario" element={<ProtectedRoute moduleId="UgaviBarInventario" user={user}><UgaviBarInventario /></ProtectedRoute>} />
+          <Route path="ugavibar/gastos" element={<ProtectedRoute moduleId="UgaviBarGastos" user={user}><UgaviBarGastos /></ProtectedRoute>} />
+          <Route path="ugavibar/compras" element={<ProtectedRoute moduleId="UgaviBarCompras" user={user}><UgaviBarCompras /></ProtectedRoute>} />
+          <Route path="ugavibar/reportes" element={<ProtectedRoute moduleId="UgaviBarReportes" user={user}><ReportesTascaPanel /></ProtectedRoute>} />
           <Route path="configuraciones" element={<ProtectedRoute moduleId="ConfiguracionesPanel" user={user}><ConfiguracionesPanel currentUser={user} /></ProtectedRoute>} />
           <Route path="reportes" element={<ProtectedRoute moduleId="Reports" user={user}><Reports members={members} personas={personas} /></ProtectedRoute>} />
           <Route path="whatsapp-logs" element={<ProtectedRoute moduleId="MembersList" user={user}><WhatsappLogsPanel /></ProtectedRoute>} />

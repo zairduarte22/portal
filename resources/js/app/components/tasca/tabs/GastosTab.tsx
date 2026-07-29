@@ -15,7 +15,7 @@ export default function GastosTab() {
     descripcion: "",
     monto_usd: "",
     monto_bs: "",
-    metodo_pago: "Efectivo Divisas",
+    metodo_pago: "",
     referencia_pago: "",
     fecha: format(new Date(), 'yyyy-MM-dd'),
     proveedor_id: ""
@@ -53,7 +53,7 @@ export default function GastosTab() {
       descripcion: "",
       monto_usd: "",
       monto_bs: "",
-      metodo_pago: "Efectivo Divisas",
+      metodo_pago: "",
       referencia_pago: "",
       fecha: format(new Date(), 'yyyy-MM-dd'),
       proveedor_id: ""
@@ -178,7 +178,7 @@ export default function GastosTab() {
       </div>
 
       {showGastoModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm lg:backdrop-blur-none">
           <div className="w-full max-w-lg p-6 rounded-2xl shadow-xl" style={{ backgroundColor: "var(--card)", border: "1px solid var(--border)" }}>
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-bold flex items-center gap-2">
@@ -306,6 +306,7 @@ export default function GastosTab() {
                   value={form.metodo_pago}
                   onChange={e => setForm({...form, metodo_pago: e.target.value})}
                 >
+                  <option value="" disabled>Seleccione método</option>
                   <option value="Efectivo Divisas">Efectivo Divisas</option>
                   <option value="Pago Movil/Transferencia">Pago Móvil / Transferencia</option>
                   <option value="Zelle">Zelle</option>
@@ -331,7 +332,7 @@ export default function GastosTab() {
                 <button type="button" onClick={() => setShowGastoModal(false)} className="w-1/2 p-2 rounded-lg bg-gray-100 text-gray-700 font-bold hover:bg-gray-200">
                   Cancelar
                 </button>
-                <button type="submit" className="w-1/2 p-2 rounded-lg bg-red-600 text-white font-bold hover:bg-red-700 shadow-md">
+                <button type="submit" disabled={!form.metodo_pago} className={`w-1/2 p-2 rounded-lg font-bold shadow-md ${!form.metodo_pago ? 'bg-gray-200 text-gray-400 cursor-not-allowed shadow-none' : 'bg-red-600 text-white hover:bg-red-700'}`}>
                   Guardar Gasto
                 </button>
               </div>

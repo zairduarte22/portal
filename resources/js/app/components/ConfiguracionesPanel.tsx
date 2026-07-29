@@ -16,9 +16,14 @@ export function ConfiguracionesPanel({ currentUser }: { currentUser: any }) {
     { id: 'LibrosPanel', nombre: 'Libros', route: 'libros' },
     { id: 'ConciliacionPanel', nombre: 'Conciliación', route: 'conciliacion' },
     { id: 'ObligacionesPanel', nombre: 'Obligaciones', route: 'obligaciones' },
-    { id: 'VentasTascaPanel', nombre: 'Ventas de Tasca', route: 'ventas-tasca' },
-    { id: 'GestionTascaPanel', nombre: 'Inventario y Compras', route: 'tasca/gestion' },
-    { id: 'ReportesTascaPanel', nombre: 'Reportes de Tasca', route: 'tasca/reportes' },
+    { id: 'UgaviBarVentas', nombre: 'Ventas (POS)', route: 'ugavibar/ventas' },
+    { id: 'UgaviBarCreditos', nombre: 'Créditos UGAVI', route: 'ugavibar/creditos' },
+    { id: 'UgaviBarCatalogo', nombre: 'Catálogo UGAVI', route: 'ugavibar/catalogo' },
+    { id: 'UgaviBarInventario', nombre: 'Inventario UGAVI', route: 'ugavibar/inventario' },
+    { id: 'UgaviBarGastos', nombre: 'Gastos UGAVI', route: 'ugavibar/gastos' },
+    { id: 'UgaviBarCompras', nombre: 'Compras UGAVI', route: 'ugavibar/compras' },
+    { id: 'UgaviBarClientes', nombre: 'Clientes UGAVI', route: 'ugavibar/clientes' },
+    { id: 'UgaviBarReportes', nombre: 'Reportes UGAVI', route: 'ugavibar/reportes' },
     { id: 'ConfiguracionesPanel', nombre: 'Configuraciones', route: 'configuraciones' },
   ];
 

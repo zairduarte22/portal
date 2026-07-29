@@ -133,7 +133,7 @@ export function MembersList({
 
   return (
     <div className="space-y-5">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 style={{ fontFamily: "Nunito, sans-serif", color: "var(--foreground)", fontWeight: 800 }}>
             Miembros
@@ -142,34 +142,36 @@ export function MembersList({
             {filtered.length} de {members.length} registros
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
           {selectedIds.length > 0 && (
             <button
               onClick={handleSendWa}
               disabled={isSendingWa}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-2xl text-sm transition-all hover:opacity-90"
+              className="flex justify-center items-center gap-2 px-4 py-2.5 rounded-2xl text-sm transition-all hover:opacity-90 w-full sm:w-auto"
               style={{ background: "linear-gradient(135deg, #059669, #047857)", color: "#fff", fontWeight: 700, boxShadow: "0 4px 14px rgba(5,150,105,0.35)" }}
             >
               <MessageCircle size={16} />
               {isSendingWa ? "Encolando..." : `WhatsApp Cobranza (${selectedIds.length})`}
             </button>
           )}
-          <button
-            onClick={() => setReportModalOpen(true)}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-2xl text-sm transition-all hover:opacity-90 border"
-            style={{ borderColor: "var(--border)", color: "var(--foreground)", backgroundColor: "var(--card)", fontWeight: 700 }}
-          >
-            <Download size={16} />
-            Descargar Reporte
-          </button>
-          <button
-            onClick={() => setEditingMember(null)}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-2xl text-sm transition-all hover:opacity-90"
-            style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)", color: "#fff", fontWeight: 700, boxShadow: "0 4px 14px rgba(22,163,74,0.35)" }}
-          >
-            <Plus size={16} />
-            Nuevo Miembro
-          </button>
+          <div className="flex gap-2 w-full sm:w-auto">
+            <button
+              onClick={() => setReportModalOpen(true)}
+              className="flex-1 sm:flex-none flex justify-center items-center gap-2 px-4 py-2.5 rounded-2xl text-sm transition-all hover:opacity-90 border"
+              style={{ borderColor: "var(--border)", color: "var(--foreground)", backgroundColor: "var(--card)", fontWeight: 700 }}
+            >
+              <Download size={16} />
+              <span className="hidden sm:inline">Descargar</span>
+            </button>
+            <button
+              onClick={() => setEditingMember(null)}
+              className="flex-1 sm:flex-none flex justify-center items-center gap-2 px-4 py-2.5 rounded-2xl text-sm transition-all hover:opacity-90"
+              style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)", color: "#fff", fontWeight: 700, boxShadow: "0 4px 14px rgba(22,163,74,0.35)" }}
+            >
+              <Plus size={16} />
+              <span>Nuevo Miembro</span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -209,7 +211,7 @@ export function MembersList({
         </div>
       </div>
 
-      <div className="bg-card rounded-3xl border overflow-hidden" style={{ borderColor: "var(--border)", boxShadow: "0 4px 24px rgba(0,0,0,0.06)" }}>
+      <div className="bg-card rounded-3xl border overflow-hidden bg-transparent lg:bg-card border-none lg:border-solid lg:shadow-[0_4px_24px_rgba(0,0,0,0.06)]">
         
         {/* Desktop Table View */}
         <div className="hidden lg:block overflow-x-auto">
@@ -370,9 +372,9 @@ export function MembersList({
         </div>
 
         {/* Mobile Cards View */}
-        <div className="block lg:hidden flex-col divide-y" style={{ borderColor: "var(--border)" }}>
+        <div className="block lg:hidden flex flex-col gap-3 py-4 -mx-2 sm:-mx-0" style={{ backgroundColor: "var(--background)" }}>
           {filtered.length === 0 && (
-            <div className="px-4 py-16 text-center">
+            <div className="px-4 py-16 text-center bg-card rounded-3xl border" style={{ borderColor: "var(--border)" }}>
               <Search size={28} style={{ color: "var(--muted-foreground)", margin: "0 auto 8px", opacity: 0.4 }} />
               <p className="text-sm" style={{ color: "var(--muted-foreground)" }}>No se encontraron miembros</p>
             </div>
@@ -386,8 +388,19 @@ export function MembersList({
             const representante = repVinc ? personas.find(p => p.id === repVinc.id_persona) : undefined;
 
             return (
-              <div key={m.id} className="p-4 space-y-3 transition-colors hover:bg-[var(--muted)]" style={{ backgroundColor: selectedIds.includes(m.id) ? "rgba(34, 197, 94, 0.05)" : undefined }}>
-                <div className="flex justify-between items-start gap-2">
+              <div 
+                key={m.id} 
+                className="p-4 flex flex-col gap-3 rounded-2xl border transition-all relative overflow-hidden" 
+                style={{ 
+                  backgroundColor: selectedIds.includes(m.id) ? "rgba(34, 197, 94, 0.05)" : "var(--card)",
+                  borderColor: selectedIds.includes(m.id) ? "rgba(34,197,94,0.3)" : "var(--border)",
+                  boxShadow: "0 4px 16px rgba(0,0,0,0.04)"
+                }}
+              >
+                {/* Optional glass accent */}
+                <div className="absolute -right-10 -top-10 w-24 h-24 rounded-full bg-gradient-to-br from-green-400/10 to-transparent blur-2xl pointer-events-none" />
+
+                <div className="flex justify-between items-start gap-3 relative z-10">
                   <div className="flex items-start gap-3">
                     <input 
                       type="checkbox" 
@@ -398,72 +411,92 @@ export function MembersList({
                       className="rounded border-gray-300 text-green-600 focus:ring-green-500 cursor-pointer w-5 h-5 mt-0.5"
                     />
                     <div>
-                      <p className="text-sm" style={{ fontWeight: 800, color: "var(--foreground)", fontFamily: "Nunito, sans-serif" }}>
+                      <p className="text-[15px]" style={{ fontWeight: 800, color: "var(--foreground)", fontFamily: "Nunito, sans-serif", lineHeight: 1.2 }}>
                         {m.razon_social}
                       </p>
                       <div className="flex items-center gap-2 mt-1">
                         <span className="text-xs font-bold" style={{ color: "var(--muted-foreground)" }}>#{String(m.id).padStart(4, "0")}</span>
-                        <span className="text-xs" style={{ color: "var(--muted-foreground)" }}>{m.rif}</span>
+                        <span className="text-xs" style={{ color: "var(--muted-foreground)", opacity: 0.8 }}>{m.rif}</span>
                       </div>
                     </div>
                   </div>
-                  <span className="px-2.5 py-1 rounded-full text-[10px] whitespace-nowrap" style={{ backgroundColor: solv.bg, color: solv.color, fontWeight: 700 }}>
-                    {solv.label}
-                  </span>
                 </div>
 
-                <div className="flex items-center gap-1.5 bg-black/5 p-2 rounded-xl">
-                  {representante ? (
-                    <div className="flex items-center gap-1.5 flex-shrink-0" title="Representante Legal">
-                      <Shield size={14} className="flex-shrink-0" style={{ color: "var(--accent)", opacity: 0.8 }} />
+                <div className="flex flex-col gap-2 relative z-10">
+                  {/* Etiqueta Solvencia */}
+                  <div className="flex justify-between items-center bg-black/5 dark:bg-white/5 p-2.5 rounded-2xl">
+                    <span className="text-xs font-bold" style={{ color: "var(--muted-foreground)" }}>Estado</span>
+                    <span className="px-3 py-1 rounded-full text-xs" style={{ backgroundColor: solv.bg, color: solv.color, fontWeight: 800 }}>
+                      {solv.label}
+                    </span>
+                  </div>
+
+                  {/* Representante */}
+                  {representante && (
+                    <div className="flex items-center gap-2 p-2.5 rounded-2xl bg-black/5 dark:bg-white/5">
+                      <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "linear-gradient(135deg, rgba(34,197,94,0.1), rgba(22,163,74,0.05))" }}>
+                        <Shield size={12} style={{ color: "#22c55e" }} />
+                      </div>
                       <span className="text-xs truncate" style={{ color: "var(--foreground)", fontWeight: 700 }}>{representante.nombre}</span>
                     </div>
-                  ) : (
-                    <span className="text-xs italic" style={{ color: "var(--muted-foreground)", opacity: 0.6 }}>Representante no asignado</span>
                   )}
+                  
+                  {/* Saldo y Explotacion */}
+                  <div className="grid grid-cols-2 gap-2 mt-1">
+                    <div className="flex flex-col gap-1 p-2.5 rounded-2xl bg-black/5 dark:bg-white/5">
+                      <span className="text-[10px] uppercase font-bold" style={{ color: "var(--muted-foreground)" }}>Hacienda</span>
+                      <span className="text-xs font-bold truncate" style={{ color: "var(--foreground)" }}>{m.hacienda || "N/A"}</span>
+                    </div>
+                    <div className="flex flex-col gap-1 p-2.5 rounded-2xl bg-black/5 dark:bg-white/5">
+                      <span className="text-[10px] uppercase font-bold" style={{ color: "var(--muted-foreground)" }}>Saldo Pend.</span>
+                      <span className="text-xs font-bold" style={{ color: m.saldo_pendiente > 0 ? "#dc2626" : "var(--foreground)" }}>
+                        {m.saldo_pendiente > 0 ? `Bs. ${m.saldo_pendiente.toLocaleString("es-VE")}` : "--"}
+                      </span>
+                    </div>
+                  </div>
                 </div>
 
-                <div className="flex justify-between items-center pt-3 border-t" style={{ borderColor: "var(--border)" }}>
-                  <div className="flex gap-2">
-                    <span className="px-2 py-0.5 rounded-md text-[10px]" style={{ backgroundColor: tipo.bg, color: tipo.color, fontWeight: 700 }}>
+                <div className="flex justify-between items-center pt-3 mt-1 border-t relative z-10" style={{ borderColor: "var(--border)" }}>
+                  <div className="flex gap-2 items-center">
+                    <span className="px-2.5 py-1 rounded-lg text-[10px]" style={{ backgroundColor: tipo.bg, color: tipo.color, fontWeight: 800 }}>
                       {m.tipo}
                     </span>
-                    <div className="flex items-center gap-1 text-[11px]" style={{ color: "var(--muted-foreground)" }}>
-                      <Users size={11} />
-                      <span style={{ fontWeight: 600 }}>{nPersonas} pers.</span>
+                    <div className="flex items-center gap-1.5 text-xs px-2" style={{ color: "var(--muted-foreground)" }}>
+                      <Users size={12} />
+                      <span style={{ fontWeight: 700 }}>{nPersonas}</span>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-1.5">
+                  <div className="flex items-center gap-2">
                     <button
                       onClick={() => setViewingMember(m)}
-                      className="w-8 h-8 rounded-xl flex items-center justify-center transition-all hover:opacity-80"
-                      style={{ backgroundColor: "var(--muted)", color: "var(--muted-foreground)" }}
+                      className="w-9 h-9 rounded-xl flex items-center justify-center transition-all hover:scale-105"
+                      style={{ backgroundColor: "var(--muted)", color: "var(--foreground)" }}
                       title="Ver detalle"
                     >
-                      <Eye size={14} />
+                      <Eye size={15} />
                     </button>
                     <button
                       onClick={() => setEditingMember(m)}
-                      className="w-8 h-8 rounded-xl flex items-center justify-center transition-all hover:opacity-80"
+                      className="w-9 h-9 rounded-xl flex items-center justify-center transition-all hover:scale-105"
                       style={{ backgroundColor: "#dcfce7", color: "#15803d" }}
                       title="Editar"
                     >
-                      <Pencil size={13} />
+                      <Pencil size={14} />
                     </button>
                     {deleteConfirm === m.id ? (
                       <div className="flex items-center gap-1">
-                        <button onClick={() => { onDelete(m.id); setDeleteConfirm(null); }} className="px-2 py-1 rounded-lg text-xs" style={{ backgroundColor: "#fee2e2", color: "#991b1b", fontWeight: 700 }}>Sí</button>
-                        <button onClick={() => setDeleteConfirm(null)} className="px-2 py-1 rounded-lg text-xs" style={{ backgroundColor: "var(--muted)", color: "var(--muted-foreground)", fontWeight: 700 }}>No</button>
+                        <button onClick={() => { onDelete(m.id); setDeleteConfirm(null); }} className="px-3 py-1.5 rounded-xl text-xs" style={{ backgroundColor: "#fee2e2", color: "#991b1b", fontWeight: 700 }}>Sí</button>
+                        <button onClick={() => setDeleteConfirm(null)} className="px-3 py-1.5 rounded-xl text-xs" style={{ backgroundColor: "var(--muted)", color: "var(--foreground)", fontWeight: 700 }}>No</button>
                       </div>
                     ) : (
                       <button
                         onClick={() => setDeleteConfirm(m.id)}
-                        className="w-8 h-8 rounded-xl flex items-center justify-center transition-all hover:opacity-80"
+                        className="w-9 h-9 rounded-xl flex items-center justify-center transition-all hover:scale-105"
                         style={{ backgroundColor: "#fee2e2", color: "#991b1b" }}
                         title="Eliminar"
                       >
-                        <Trash2 size={13} />
+                        <Trash2 size={14} />
                       </button>
                     )}
                   </div>
