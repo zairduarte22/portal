@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 
-import { downloadEntregaPDF } from "../utils/pdfEntrega";
 import { Download, Loader2, Calendar, FileText } from "lucide-react";
 
 export function HistorialEntregas() {
@@ -20,9 +19,8 @@ export function HistorialEntregas() {
       });
   }, []);
 
-  const handleDownload = async (id: number) => {
-    // Add visual loading if you want, or just wait for downloadEntregaPDF
-    await downloadEntregaPDF(id);
+  const handleDownload = (id: number) => {
+    window.open(`/gestion/entregas/${id}/reporte`, '_blank');
   };
 
   const fmt = (val: string | number) => Number(val || 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });

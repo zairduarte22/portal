@@ -135,43 +135,8 @@ export function PagosPanel() {
     }
   };
 
-  const handleExportGeneral = async () => {
-    try {
-      setIsExporting(true);
-      const res = await fetch(`/api/pagos/exportar/general/json?desde=${desde || ''}&hasta=${hasta || ''}`);
-      if (!res.ok) throw new Error("Error fetching reporte general");
-      const data = await res.json();
-
-      const container = document.createElement('div');
-      container.style.position = 'absolute';
-      container.style.left = '-9999px';
-      container.style.top = '0';
-      document.body.appendChild(container);
-      
-      const root = createRoot(container);
-      root.render(<ReporteGeneral data={data} periodo={`${desde || 'inicio'} al ${hasta || 'fin'}`} />);
-      
-      // Wait for rendering
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      const canvas = await html2canvas(container.firstChild as HTMLElement, { scale: 2 });
-      const imgData = canvas.toDataURL('image/jpeg', 0.95);
-      
-      const doc = new jsPDF('p', 'mm', 'a4');
-      const pdfWidth = doc.internal.pageSize.getWidth();
-      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-      
-      doc.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
-      doc.save(`Reporte_General_${desde || 'inicio'}_${hasta || 'fin'}.pdf`);
-      
-      root.unmount();
-      document.body.removeChild(container);
-    } catch (error) {
-      console.error(error);
-      alert('Error al generar el reporte PDF. Asegúrate de tener conexión al servidor.');
-    } finally {
-      setIsExporting(false);
-    }
+  const handleExportGeneral = () => {
+    window.open(`/gestion/pagos/reporte?desde=${desde || ''}&hasta=${hasta || ''}`, '_blank');
   };
 
   const handlePrint = (pago: any) => {

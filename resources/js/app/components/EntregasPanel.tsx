@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
-import { ArrowLeft, Loader2, Calculator, Save, AlertCircle, ArrowRightLeft, DollarSign, History, Plus } from "lucide-react";
+import { ArrowLeft, Loader2, Calculator, Save, AlertCircle, ArrowRightLeft, DollarSign, History, Plus, Printer, Download, Calendar } from "lucide-react";
 import { getFirstDayOfMonth, getLastDayOfMonth } from "../utils/dateUtils";
-import { downloadEntregaPDF } from "../utils/pdfEntrega";
 import { HistorialEntregas } from "./HistorialEntregas";
 
 interface EntregasPanelProps {
@@ -227,9 +226,9 @@ export function EntregasPanel({ onBack, tasaDia = 1 }: EntregasPanelProps) {
       alert("Entrega registrada con éxito.");
       setResumen(null);
       
-      // Generar y descargar el PDF de la entrega
+      // Abrir el PDF de la entrega usando la ruta web nativa
       if (successData.id) {
-        await downloadEntregaPDF(successData.id);
+        window.open(`/gestion/entregas/${successData.id}/reporte`, '_blank');
       }
     } catch (e: any) {
       console.error(e);

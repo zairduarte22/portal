@@ -2,30 +2,30 @@ import { useState } from 'react'
 
 // ─── Design Tokens ────────────────────────────────────────────────────────────
 const C = {
-  navy:        '#0C2340',
-  royal:       '#1A52A8',
-  royalLight:  '#2563EB',
-  royalMuted:  '#EBF2FF',
-  emerald:     '#059669',
-  emeraldBg:   '#ECFDF5',
-  amber:       '#D97706',
-  amberBg:     '#FFFBEB',
-  rose:        '#DC2626',
-  roseMid:     '#EF4444',
-  roseBg:      '#FFF1F1',
-  roseBorder:  '#FECACA',
-  violet:      '#7C3AED',
-  violetBg:    '#F5F3FF',
-  violetBorder:'#DDD6FE',
-  slate:       '#64748B',
-  slateMuted:  '#94A3B8',
-  slateLight:  '#F1F5F9',
-  border:      '#E2E8F0',
-  borderMid:   '#CBD5E1',
-  white:       '#FFFFFF',
-  ink:         '#0F172A',
-  inkMid:      '#1E293B',
-  muted:       '#64748B',
+  navy: '#0C2340',
+  royal: '#1A52A8',
+  royalLight: '#2563EB',
+  royalMuted: '#EBF2FF',
+  emerald: '#059669',
+  emeraldBg: '#ECFDF5',
+  amber: '#D97706',
+  amberBg: '#FFFBEB',
+  rose: '#DC2626',
+  roseMid: '#EF4444',
+  roseBg: '#FFF1F1',
+  roseBorder: '#FECACA',
+  violet: '#7C3AED',
+  violetBg: '#F5F3FF',
+  violetBorder: '#DDD6FE',
+  slate: '#64748B',
+  slateMuted: '#94A3B8',
+  slateLight: '#F1F5F9',
+  border: '#E2E8F0',
+  borderMid: '#CBD5E1',
+  white: '#FFFFFF',
+  ink: '#0F172A',
+  inkMid: '#1E293B',
+  muted: '#64748B',
 }
 
 // ─── Logo / Brand Mark ───────────────────────────────────────────────────────
@@ -46,9 +46,9 @@ function BrandHeader({ center = false }: { center?: boolean }) {
         flexShrink: 0,
       }}>
         <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
-          <path d="M3 17L8 12L11 15L16 9L19 12" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-          <circle cx="11" cy="7" r="2.5" fill="white" fillOpacity="0.4"/>
-          <path d="M4 5h14M4 5v12" stroke="white" strokeWidth="1.4" strokeLinecap="round" opacity="0.5"/>
+          <path d="M3 17L8 12L11 15L16 9L19 12" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+          <circle cx="11" cy="7" r="2.5" fill="white" fillOpacity="0.4" />
+          <path d="M4 5h14M4 5v12" stroke="white" strokeWidth="1.4" strokeLinecap="round" opacity="0.5" />
         </svg>
       </div>
       {/* Text */}
@@ -83,16 +83,35 @@ export function ReporteGeneral({ data, periodo, titulo = '{titulo}' }: { data: a
   const fmt = (n: number) => 'Bs ' + Number(n).toLocaleString('es-VE', { minimumFractionDigits: 2 })
   const fmtUsd = (n: number) => '$ ' + Number(n).toLocaleString('es-VE', { minimumFractionDigits: 2 })
   const nTransacciones = (data?.pagoMovil?.length || 0) + (data?.otrosMetodos?.length || 0) + (data?.cruces?.length || 0)
-  
+
   const kpis = [
     { label: 'Total Recaudado', sub: 'Bolívares (Bs)', value: fmt(data?.totales?.grandTotalRecibidoBs || 0), color: C.royal, bg: C.royalMuted, icon: '💰' },
     { label: 'Total Recaudado', sub: 'Dólares (USD)', value: fmtUsd(data?.totales?.grandTotalRecibidoDivisas || 0), color: C.emerald, bg: C.emeraldBg, icon: '$' },
-    { label: 'Nº Transacciones', sub: 'En el período', value: nTransacciones.toString(), color: C.amber, bg: C.amberBg, icon: '#' },
-    { label: 'Tasa Promedio', sub: 'BCV (Estimado)', value: 'N/A', color: C.slate, bg: C.slateLight, icon: '~' },
   ]
-  const pagosBs: any[] = data?.pagoMovil || []
-  const pagosDiv: any[] = data?.otrosMetodos || []
-  const pagosCruces: any[] = data?.cruces || []
+  const pagosBs: any[] = (data?.pagoMovil || []).map((p: any) => ({
+    fecha: p.FECHA ? new Date(p.FECHA + 'T00:00:00').toLocaleDateString('es-VE', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '',
+    fact: p.FACT_UGAVI,
+    monto: p['Monto Original Bs'] || 0,
+    p60: p['UGAVI 60% Bs'] || 0,
+    p20: p['Club 20% Bs'] || 0
+  }))
+
+  const pagosDiv: any[] = (data?.otrosMetodos || []).map((p: any) => ({
+    fecha: p.FECHA ? new Date(p.FECHA + 'T00:00:00').toLocaleDateString('es-VE', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '',
+    fact: p.FACT_UGAVI,
+    usd: p['Monto $'] || 0,
+    monto: p.MONTO_BS || 0,
+    p60: p['60% Bs.'] || 0,
+    p20: p['20% Bs.'] || 0
+  }))
+
+  const pagosCruces: any[] = (data?.cruces || []).map((p: any) => ({
+    fecha: p.FECHA ? new Date(p.FECHA + 'T00:00:00').toLocaleDateString('es-VE', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '',
+    fact: p.FACT_UGAVI,
+    monto: p['Monto Original Bs'] || 0,
+    p60: p['UGAVI 60% Bs'] || 0,
+    p20: p['Club 20% Bs'] || 0
+  }))
 
 
   // FECHA | FACT | MONTO BS | 60% UGAVI | 20% (Club o Fondo)
@@ -123,25 +142,25 @@ export function ReporteGeneral({ data, periodo, titulo = '{titulo}' }: { data: a
   return (
     <div style={{
       width: 816,
-      minHeight: 1056,
+      minHeight: 1020,
       background: C.white,
       margin: '0 auto',
       fontFamily: "'Inter', sans-serif",
       color: C.ink,
-      position: 'relative',
+      display: 'flex',
+      flexDirection: 'column',
     }}>
       {/* Top accent bar */}
       <div style={{ height: 4, background: `linear-gradient(90deg, ${C.navy} 0%, ${C.royalLight} 60%, ${C.emerald} 100%)` }} />
 
       {/* Header */}
-      <div style={{ padding: '24px 36px 20px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', borderBottom: `1px solid ${C.border}` }}>
+      <div style={{ padding: '16px 36px 16px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', borderBottom: `1px solid ${C.border}` }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           <BrandHeader />
           <div>
             <div style={{ fontSize: 20, fontWeight: 800, color: C.navy, letterSpacing: '-0.02em', lineHeight: 1 }}>
               {titulo}
             </div>
-            <div style={{ fontSize: 11, color: C.muted, marginTop: 4 }}>{periodo}</div>
           </div>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8 }}>
@@ -154,18 +173,18 @@ export function ReporteGeneral({ data, periodo, titulo = '{titulo}' }: { data: a
             fontSize: 10,
             fontWeight: 600,
             color: C.royal,
-            letterSpacing: '0.02em',
+            letterSpacing: '0.02em'
           }}>
-            01/Jul/2026 — 31/Jul/2026
+            {periodo}
           </div>
           <div style={{ fontSize: 9, color: C.slateMuted }}>
-            Emitido: 04/Ago/2026 · Ref: RPG-2026-07
+            Emitido: {new Date().toLocaleDateString('es-VE', { day: '2-digit', month: 'short', year: 'numeric' })}
           </div>
         </div>
       </div>
 
       {/* KPI Cards */}
-      <div style={{ padding: '20px 36px', display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
+      <div style={{ padding: '12px 36px', display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12 }}>
         {kpis.map((k, i) => (
           <div key={i} style={{
             background: k.bg,
@@ -192,7 +211,7 @@ export function ReporteGeneral({ data, periodo, titulo = '{titulo}' }: { data: a
 
       {/* Shared table head renderer */}
       {/* Table Bs */}
-      <div style={{ padding: '0 36px 20px' }}>
+      <div style={{ padding: '0 36px 12px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
           <div style={{ width: 3, height: 16, background: C.royal, borderRadius: 2 }} />
           <div style={{ fontSize: 11, fontWeight: 700, color: C.navy, letterSpacing: '-0.01em' }}>Pagos en Bolívares (Bs)</div>
@@ -202,7 +221,7 @@ export function ReporteGeneral({ data, periodo, titulo = '{titulo}' }: { data: a
           <thead>
             <tr>
               <th style={{ ...thStyle, width: 82 }}>Fecha</th>
-              <th style={{ ...thStyle, width: 72 }}>Fact.</th>
+              <th style={{ ...thStyle, width: 140 }}>Fact.</th>
               <th style={{ ...thRight }}>Monto Bs</th>
               <th style={{ ...thRight, width: 110 }}>Monto 60%</th>
               <th style={{ ...thRight, width: 110 }}>Monto 20%</th>
@@ -220,16 +239,16 @@ export function ReporteGeneral({ data, periodo, titulo = '{titulo}' }: { data: a
             ))}
             <tr style={{ background: C.royalMuted }}>
               <td colSpan={2} style={{ padding: '8px 12px', fontSize: 9.5, fontWeight: 700, color: C.navy }}>Subtotal Bolívares</td>
-              <td style={{ padding: '8px 12px', fontSize: 11, fontWeight: 800, color: C.navy, textAlign: 'right' }}>{fmt(pagosBs.reduce((s,r)=>s+r.monto,0))}</td>
-              <td style={{ padding: '8px 12px', fontSize: 10, fontWeight: 700, color: C.navy, textAlign: 'right' }}>{fmt(pagosBs.reduce((s,r)=>s+r.p60,0))}</td>
-              <td style={{ padding: '8px 12px', fontSize: 10, fontWeight: 700, color: C.navy, textAlign: 'right' }}>{fmt(pagosBs.reduce((s,r)=>s+r.p20,0))}</td>
+              <td style={{ padding: '8px 12px', fontSize: 11, fontWeight: 800, color: C.navy, textAlign: 'right' }}>{fmt(pagosBs.reduce((s, r) => s + r.monto, 0))}</td>
+              <td style={{ padding: '8px 12px', fontSize: 10, fontWeight: 700, color: C.navy, textAlign: 'right' }}>{fmt(pagosBs.reduce((s, r) => s + r.p60, 0))}</td>
+              <td style={{ padding: '8px 12px', fontSize: 10, fontWeight: 700, color: C.navy, textAlign: 'right' }}>{fmt(pagosBs.reduce((s, r) => s + r.p20, 0))}</td>
             </tr>
           </tbody>
         </table>
       </div>
 
       {/* Table Divisas */}
-      <div style={{ padding: '0 36px 20px' }}>
+      <div style={{ padding: '0 36px 12px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
           <div style={{ width: 3, height: 16, background: C.emerald, borderRadius: 2 }} />
           <div style={{ fontSize: 11, fontWeight: 700, color: C.navy, letterSpacing: '-0.01em' }}>Pagos en Divisas</div>
@@ -239,7 +258,7 @@ export function ReporteGeneral({ data, periodo, titulo = '{titulo}' }: { data: a
           <thead>
             <tr>
               <th style={{ ...thStyle, width: 82 }}>Fecha</th>
-              <th style={{ ...thStyle, width: 68 }}>Fact.</th>
+              <th style={{ ...thStyle, width: 140 }}>Fact.</th>
               <th style={{ ...thRight, width: 90 }}>Monto USD</th>
               <th style={{ ...thRight }}>Monto Bs</th>
               <th style={{ ...thRight, width: 100 }}>Monto 60%</th>
@@ -259,17 +278,17 @@ export function ReporteGeneral({ data, periodo, titulo = '{titulo}' }: { data: a
             ))}
             <tr style={{ background: C.emeraldBg }}>
               <td colSpan={2} style={{ padding: '8px 12px', fontSize: 9.5, fontWeight: 700, color: '#065F46' }}>Subtotal Divisas</td>
-              <td style={{ padding: '8px 12px', fontSize: 11, fontWeight: 800, color: C.emerald, textAlign: 'right' }}>{fmtUsd(pagosDiv.reduce((s,r)=>s+r.usd,0))}</td>
-              <td style={{ padding: '8px 12px', fontSize: 10, fontWeight: 800, color: '#065F46', textAlign: 'right' }}>{fmt(pagosDiv.reduce((s,r)=>s+r.monto,0))}</td>
-              <td style={{ padding: '8px 12px', fontSize: 10, fontWeight: 700, color: '#065F46', textAlign: 'right' }}>{fmt(pagosDiv.reduce((s,r)=>s+r.p60,0))}</td>
-              <td style={{ padding: '8px 12px', fontSize: 10, fontWeight: 700, color: '#065F46', textAlign: 'right' }}>{fmt(pagosDiv.reduce((s,r)=>s+r.p20,0))}</td>
+              <td style={{ padding: '8px 12px', fontSize: 11, fontWeight: 800, color: C.emerald, textAlign: 'right' }}>{fmtUsd(pagosDiv.reduce((s, r) => s + r.usd, 0))}</td>
+              <td style={{ padding: '8px 12px', fontSize: 10, fontWeight: 800, color: '#065F46', textAlign: 'right' }}>{fmt(pagosDiv.reduce((s, r) => s + r.monto, 0))}</td>
+              <td style={{ padding: '8px 12px', fontSize: 10, fontWeight: 700, color: '#065F46', textAlign: 'right' }}>{fmt(pagosDiv.reduce((s, r) => s + r.p60, 0))}</td>
+              <td style={{ padding: '8px 12px', fontSize: 10, fontWeight: 700, color: '#065F46', textAlign: 'right' }}>{fmt(pagosDiv.reduce((s, r) => s + r.p20, 0))}</td>
             </tr>
           </tbody>
         </table>
       </div>
 
       {/* Table Cruces de Cuentas */}
-      <div style={{ padding: '0 36px 20px' }}>
+      <div style={{ padding: '0 36px 12px' }}>
         {/* Alert banner */}
         <div style={{
           background: C.violetBg,
@@ -287,13 +306,13 @@ export function ReporteGeneral({ data, periodo, titulo = '{titulo}' }: { data: a
             flexShrink: 0,
           }}>
             <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
-              <path d="M5.5 2v3.5M5.5 8h.01" stroke="white" strokeWidth="1.5" strokeLinecap="round"/>
+              <path d="M5.5 2v3.5M5.5 8h.01" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
             </svg>
           </div>
           <div>
             <span style={{ fontSize: 9.5, fontWeight: 700, color: C.violet }}>Pagos por Cruce de Cuentas — Dinero Contabilizado / No Bancario</span>
             <span style={{ fontSize: 8.5, color: '#6D28D9', marginLeft: 8 }}>
-              Estos montos fueron compensados internamente. No representan depósito físico en banco.
+              No representan depósito físico en banco.
             </span>
           </div>
         </div>
@@ -308,7 +327,7 @@ export function ReporteGeneral({ data, periodo, titulo = '{titulo}' }: { data: a
           <thead>
             <tr style={{ background: '#EDE9FE' }}>
               <th style={{ padding: '8px 12px', fontSize: 9, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#5B21B6', textAlign: 'left', width: 82 }}>Fecha</th>
-              <th style={{ padding: '8px 12px', fontSize: 9, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#5B21B6', textAlign: 'left', width: 72 }}>Fact.</th>
+              <th style={{ padding: '8px 12px', fontSize: 9, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#5B21B6', textAlign: 'left', width: 140 }}>Fact.</th>
               <th style={{ padding: '8px 12px', fontSize: 9, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#5B21B6', textAlign: 'right' }}>Monto Bs</th>
               <th style={{ padding: '8px 12px', fontSize: 9, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#5B21B6', textAlign: 'right', width: 110 }}>Monto 60%</th>
               <th style={{ padding: '8px 12px', fontSize: 9, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#5B21B6', textAlign: 'right', width: 110 }}>Monto 20%</th>
@@ -320,7 +339,6 @@ export function ReporteGeneral({ data, periodo, titulo = '{titulo}' }: { data: a
                 <td style={{ padding: '7px 12px', fontSize: 9, color: C.muted, borderBottom: `1px solid ${C.violetBorder}` }}>{r.fecha}</td>
                 <td style={{ padding: '7px 12px', borderBottom: `1px solid ${C.violetBorder}` }}>
                   <div style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
-                    <span style={{ fontSize: 7.5, fontWeight: 700, background: C.violet, color: 'white', padding: '1px 5px', borderRadius: 3, letterSpacing: '0.05em' }}>NB</span>
                     <span style={{ fontSize: 9, fontWeight: 600, color: C.inkMid }}>{r.fact}</span>
                   </div>
                 </td>
@@ -330,10 +348,10 @@ export function ReporteGeneral({ data, periodo, titulo = '{titulo}' }: { data: a
               </tr>
             ))}
             <tr style={{ background: '#EDE9FE' }}>
-              <td colSpan={2} style={{ padding: '8px 12px', fontSize: 9.5, fontWeight: 700, color: '#5B21B6' }}>Subtotal Cruces (no bancario)</td>
-              <td style={{ padding: '8px 12px', fontSize: 11, fontWeight: 800, color: '#5B21B6', textAlign: 'right' }}>{fmt(pagosCruces.reduce((s,r)=>s+r.monto,0))}</td>
-              <td style={{ padding: '8px 12px', fontSize: 10, fontWeight: 700, color: '#5B21B6', textAlign: 'right' }}>{fmt(pagosCruces.reduce((s,r)=>s+r.p60,0))}</td>
-              <td style={{ padding: '8px 12px', fontSize: 10, fontWeight: 700, color: '#5B21B6', textAlign: 'right' }}>{fmt(pagosCruces.reduce((s,r)=>s+r.p20,0))}</td>
+              <td colSpan={2} style={{ padding: '8px 12px', fontSize: 9.5, fontWeight: 700, color: '#5B21B6' }}>Subtotal Cruces</td>
+              <td style={{ padding: '8px 12px', fontSize: 11, fontWeight: 800, color: '#5B21B6', textAlign: 'right' }}>{fmt(pagosCruces.reduce((s, r) => s + r.monto, 0))}</td>
+              <td style={{ padding: '8px 12px', fontSize: 10, fontWeight: 700, color: '#5B21B6', textAlign: 'right' }}>{fmt(pagosCruces.reduce((s, r) => s + r.p60, 0))}</td>
+              <td style={{ padding: '8px 12px', fontSize: 10, fontWeight: 700, color: '#5B21B6', textAlign: 'right' }}>{fmt(pagosCruces.reduce((s, r) => s + r.p20, 0))}</td>
             </tr>
           </tbody>
         </table>
@@ -350,10 +368,10 @@ export function ReporteGeneral({ data, periodo, titulo = '{titulo}' }: { data: a
           gap: 6,
         }}>
           <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-            <circle cx="5" cy="5" r="4" stroke="#7C3AED" strokeWidth="1"/>
-            <path d="M5 3v2.5l1.5 1" stroke="#7C3AED" strokeWidth="1" strokeLinecap="round"/>
+            <circle cx="5" cy="5" r="4" stroke="#7C3AED" strokeWidth="1" />
+            <path d="M5 3v2.5l1.5 1" stroke="#7C3AED" strokeWidth="1" strokeLinecap="round" />
           </svg>
-          Este subtotal <strong style={{ margin: '0 3px' }}>sí se incluye</strong> en el Total Bruto Recaudado, pero <strong style={{ margin: '0 3px' }}>no genera flujo bancario</strong>. Revisar con tesorería antes de conciliar.
+          Este subtotal sí se incluye en el Total Bruto Recaudado, pero no genera flujo bancario. Este monto será descontado en la liquidación bancaria.
         </div>
       </div>
 
@@ -388,6 +406,7 @@ export function ReporteGeneral({ data, periodo, titulo = '{titulo}' }: { data: a
 
       {/* Footer */}
       <div style={{
+        marginTop: 'auto',
         borderTop: `1px solid ${C.border}`,
         padding: '12px 36px',
         display: 'flex',
@@ -398,14 +417,14 @@ export function ReporteGeneral({ data, periodo, titulo = '{titulo}' }: { data: a
         <div style={{ fontSize: 8.5, color: C.slateMuted }}>
           SIGAMA · Reporte Generado Automáticamente · Documento de carácter informativo interno
         </div>
-        <div style={{ fontSize: 8.5, color: C.slateMuted }}>Página 1 de 1 · RPG-2026-07</div>
+        <div style={{ fontSize: 8.5, color: C.slateMuted }}>Página 1 de 1 · {new Date().toLocaleDateString('es-VE', { day: '2-digit', month: 'short', year: 'numeric' })}</div>
       </div>
     </div>
   )
 }
 
 // ─── Report 2: Comprobante de Liquidación ─────────────────────────────────────
-export function ComprobanteEntrega({ data, rango, periodo }: { data: any, rango?: string, periodo?: string }) {
+export function ComprobanteEntrega({ data, rango, periodo, config }: { data: any, rango?: string, periodo?: string, config?: any }) {
   const entrega = data?.entrega || data || {}
   const deducciones = data?.deducciones || []
 
@@ -418,14 +437,14 @@ export function ComprobanteEntrega({ data, rango, periodo }: { data: any, rango?
   const ugaviBaseUsd = parseFloat(entrega?.ugavi_base_usd) || 0
   const deduccionUgaviBs = deducciones.filter((d: any) => d.afecta === 'UGAVI').reduce((acc: number, d: any) => acc + d.bs, 0)
   const deduccionUgaviUsd = deducciones.filter((d: any) => d.afecta === 'UGAVI').reduce((acc: number, d: any) => acc + d.usd, 0)
-  
+
   const clubBs = parseFloat(entrega?.monto_pagado_club_bs) || 0
   const clubUsd = parseFloat(entrega?.monto_pagado_club_usd) || 0
   const clubBaseBs = parseFloat(entrega?.club_base_bs) || 0
   const clubBaseUsd = parseFloat(entrega?.club_base_usd) || 0
   const deduccionClubBs = deducciones.filter((d: any) => d.afecta === 'Club').reduce((acc: number, d: any) => acc + d.bs, 0)
   const deduccionClubUsd = deducciones.filter((d: any) => d.afecta === 'Club').reduce((acc: number, d: any) => acc + d.usd, 0)
-  
+
   const fondoBaseBs = parseFloat(entrega?.fondo_base_bs) || 0
   const fondoBaseUsd = parseFloat(entrega?.fondo_base_usd) || 0
 
@@ -481,19 +500,20 @@ export function ComprobanteEntrega({ data, rango, periodo }: { data: any, rango?
   return (
     <div style={{
       width: 816,
-      minHeight: 1056,
+      minHeight: 1020,
       background: C.white,
       margin: '0 auto',
       fontFamily: "'Inter', sans-serif",
       color: C.ink,
-      position: 'relative',
+      display: 'flex',
+      flexDirection: 'column',
     }}>
       {/* Top accent */}
       <div style={{ height: 4, background: `linear-gradient(90deg, ${C.navy} 0%, ${C.royalLight} 60%, ${C.emerald} 100%)` }} />
 
       {/* Header */}
       <div style={{
-        padding: '28px 36px 24px',
+        padding: '16px 36px 16px',
         borderBottom: `1px solid ${C.border}`,
         display: 'flex',
         alignItems: 'flex-start',
@@ -512,23 +532,12 @@ export function ComprobanteEntrega({ data, rango, periodo }: { data: any, rango?
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 10 }}>
           <CompanyInfo />
-          <div style={{
-            background: '#FFF8F0',
-            border: `1px solid ${C.amber}30`,
-            borderRadius: 8,
-            padding: '8px 14px',
-            textAlign: 'right',
-          }}>
-            <div style={{ fontSize: 8.5, fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: C.amber, marginBottom: 3 }}>
-              Estado
-            </div>
-            <div style={{ fontSize: 11, fontWeight: 700, color: '#92400E' }}>● Pendiente de Firma</div>
-          </div>
+
         </div>
       </div>
 
       {/* Meta block */}
-      <div style={{ padding: '20px 36px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+      <div style={{ padding: '12px 36px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
         {/* Left col */}
         <div style={{ border: `1px solid ${C.border}`, borderRadius: 10, overflow: 'hidden' }}>
           <div style={{ background: C.slateLight, padding: '8px 14px', borderBottom: `1px solid ${C.border}` }}>
@@ -541,17 +550,9 @@ export function ComprobanteEntrega({ data, rango, periodo }: { data: any, rango?
               <span style={labelStyle}>Fecha de Emisión</span>
               <span style={valueStyle}>{entrega?.fecha ? new Date(entrega.fecha + 'T00:00:00').toLocaleDateString('es-VE', { day: '2-digit', month: 'long', year: 'numeric' }) : 'N/A'}</span>
             </div>
-            <div style={lineStyle}>
+            <div style={{ ...lineStyle, borderBottom: 'none' }}>
               <span style={labelStyle}>Período que Abarca</span>
               <span style={valueStyle}>{entrega?.rango_desde ? new Date(entrega.rango_desde + 'T00:00:00').toLocaleDateString('es-VE', { day: '2-digit', month: 'short', year: 'numeric' }) : ''} – {entrega?.rango_hasta ? new Date(entrega.rango_hasta + 'T00:00:00').toLocaleDateString('es-VE', { day: '2-digit', month: 'short', year: 'numeric' }) : ''}</span>
-            </div>
-            <div style={lineStyle}>
-              <span style={labelStyle}>Referencia Reporte</span>
-              <span style={valueStyle}>RPG-{entrega?.fecha?.substring(0, 7) || ''}</span>
-            </div>
-            <div style={{ ...lineStyle, borderBottom: 'none' }}>
-              <span style={labelStyle}>Elaborado por</span>
-              <span style={valueStyle}>Adm. Sistema SIGAMA</span>
             </div>
           </div>
         </div>
@@ -567,73 +568,59 @@ export function ComprobanteEntrega({ data, rango, periodo }: { data: any, rango?
               <span style={labelStyle}>Total Recaudado (Bs)</span>
               <span style={{ ...valueStyle, color: C.royal, fontSize: 12, fontWeight: 800 }}>{fmt(parseFloat(entrega?.total_bs) || 0)}</span>
             </div>
-            <div style={lineStyle}>
+            <div style={{ ...lineStyle, borderBottom: 'none' }}>
               <span style={labelStyle}>Total Recaudado (USD)</span>
               <span style={{ ...valueStyle, color: C.emerald, fontSize: 12, fontWeight: 800 }}>{fmtUsd(parseFloat(entrega?.total_usd) || 0)}</span>
-            </div>
-            <div style={lineStyle}>
-              <span style={labelStyle}>Tasa BCV Referencial</span>
-              <span style={valueStyle}>Bs {parseFloat(entrega?.tasa_cambio || 0).toLocaleString('es-VE', { minimumFractionDigits: 2 })} / USD</span>
-            </div>
-            <div style={{ ...lineStyle, borderBottom: 'none' }}>
-              <span style={labelStyle}>Nº Transacciones</span>
-              <span style={valueStyle}>{data?.pagos_count || 'N/A'}</span>
             </div>
           </div>
         </div>
       </div>
 
       {/* Transfer blocks */}
-      <div style={{ padding: '0 36px 20px' }}>
+      <div style={{ padding: '0 36px 12px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
           <div style={{ width: 3, height: 16, background: C.navy, borderRadius: 2 }} />
           <div style={{ fontSize: 11, fontWeight: 700, color: C.navy }}>Desglose de Transferencias por Beneficiario</div>
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
           {transferencias.map((t, i) => (
             <div key={i} style={{
               border: `1px solid ${t.color}25`,
               borderRadius: 10,
               overflow: 'hidden',
-              display: 'grid',
-              gridTemplateColumns: '1fr auto',
+              display: 'flex',
+              flexDirection: 'column',
+              background: t.bg,
             }}>
-              {/* Left: info */}
-              <div style={{ padding: '14px 18px', borderRight: `1px solid ${t.color}20` }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-                  <div style={{ width: 24, height: 24, borderRadius: 6, background: t.color, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <span style={{ fontSize: 10, fontWeight: 800, color: 'white' }}>{t.porcentaje.replace('%','')}</span>
-                  </div>
-                  <div>
-                    <div style={{ fontSize: 11, fontWeight: 700, color: C.navy }}>{t.ente}</div>
-                    <div style={{ fontSize: 8.5, color: C.muted }}>{t.descripcion} · {t.porcentaje} del total</div>
-                  </div>
+              {/* Top: info */}
+              <div style={{ padding: '10px 14px', borderBottom: `1px solid ${t.color}20`, background: C.white, display: 'flex', alignItems: 'center', gap: 8 }}>
+                <div style={{ width: 20, height: 20, borderRadius: 4, background: t.color, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <span style={{ fontSize: 8.5, fontWeight: 800, color: 'white' }}>{t.porcentaje.replace('%', '')}</span>
                 </div>
-                <div style={{ height: 1, background: C.border, margin: '8px 0' }} />
-                <div style={{ fontSize: 8.5, color: C.slateMuted, lineHeight: 1.7 }}>
-                  <div><span style={{ fontWeight: 600, color: C.muted }}>Banco:</span> {t.banco}</div>
-                  <div><span style={{ fontWeight: 600, color: C.muted }}>Cuenta:</span> {t.cuenta}</div>
-                  <div><span style={{ fontWeight: 600, color: C.muted }}>Titular:</span> {t.titular}</div>
+                <div>
+                  <div style={{ fontSize: 10.5, fontWeight: 700, color: C.navy, lineHeight: 1 }}>{t.ente}</div>
+                  <div style={{ fontSize: 8, color: C.muted, marginTop: 2 }}>{t.porcentaje} del total recaudado</div>
                 </div>
               </div>
-              {/* Right: amounts */}
-              <div style={{ background: t.bg, padding: '14px 20px', display: 'flex', flexDirection: 'column', justifyContent: 'center', minWidth: 260 }}>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr auto auto', gap: '4px 16px', fontSize: 10, alignItems: 'center' }}>
-                    <div style={{ color: C.muted }}>Ingreso Bruto:</div>
-                    <div style={{ textAlign: 'right', fontWeight: 600, color: C.ink }}>{t.brutoBs}</div>
-                    <div style={{ textAlign: 'right', fontWeight: 600, color: C.inkMid }}>{t.brutoUsd}</div>
-                    
-                    <div style={{ color: C.rose, fontStyle: 'italic' }}>Deducciones (CxC):</div>
-                    <div style={{ textAlign: 'right', fontWeight: 600, color: C.rose }}>{t.deduccionBs}</div>
-                    <div style={{ textAlign: 'right', fontWeight: 600, color: C.roseMid }}>{t.deduccionUsd}</div>
-                    
-                    <div style={{ gridColumn: '1 / -1', height: 1, background: `${t.color}30`, margin: '4px 0' }} />
-                    
-                    <div style={{ fontSize: 9.5, fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase', color: t.color, marginTop: 2 }}>Neto a Transferir</div>
-                    <div style={{ textAlign: 'right', fontSize: 16, fontWeight: 800, color: C.navy, letterSpacing: '-0.02em' }}>{t.netoBs}</div>
-                    <div style={{ textAlign: 'right', fontSize: 11, fontWeight: 700, color: C.emerald }}>{t.netoUsd}</div>
-                  </div>
+
+              {/* Bottom: amounts */}
+              <div style={{ padding: '10px 14px', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr auto auto', gap: '3px 10px', fontSize: 9.5, alignItems: 'center' }}>
+                  <div style={{ color: C.muted }}>Bruto:</div>
+                  <div style={{ textAlign: 'right', fontWeight: 600, color: C.ink }}>{t.brutoBs}</div>
+                  <div style={{ textAlign: 'right', fontWeight: 600, color: C.inkMid }}>{t.brutoUsd}</div>
+
+                  <div style={{ color: C.rose, fontStyle: 'italic' }}>Deduc.:</div>
+                  <div style={{ textAlign: 'right', fontWeight: 600, color: C.rose }}>{t.deduccionBs}</div>
+                  <div style={{ textAlign: 'right', fontWeight: 600, color: C.roseMid }}>{t.deduccionUsd}</div>
+
+                  <div style={{ gridColumn: '1 / -1', height: 1, background: `${t.color}30`, margin: '3px 0' }} />
+
+                  <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.02em', textTransform: 'uppercase', color: t.color }}>Neto Transferido</div>
+                  <div style={{ textAlign: 'right', fontSize: 13, fontWeight: 800, color: C.navy, letterSpacing: '-0.02em' }}>{t.netoBs}</div>
+                  <div style={{ textAlign: 'right', fontSize: 10, fontWeight: 700, color: C.emerald }}>{t.netoUsd}</div>
+                </div>
               </div>
             </div>
           ))}
@@ -641,7 +628,7 @@ export function ComprobanteEntrega({ data, rango, periodo }: { data: any, rango?
       </div>
 
       {/* Deducciones / Cuentas por Cobrar */}
-      <div style={{ padding: '0 36px 16px' }}>
+      <div style={{ padding: '0 36px 12px' }}>
         {/* Header band */}
         <div style={{
           background: C.roseBg,
@@ -660,7 +647,7 @@ export function ComprobanteEntrega({ data, rango, periodo }: { data: any, rango?
               display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
             }}>
               <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
-                <path d="M3 8L8 3M3 3l5 5" stroke="white" strokeWidth="1.6" strokeLinecap="round"/>
+                <path d="M3 8L8 3M3 3l5 5" stroke="white" strokeWidth="1.6" strokeLinecap="round" />
               </svg>
             </div>
             <div>
@@ -732,67 +719,80 @@ export function ComprobanteEntrega({ data, rango, periodo }: { data: any, rango?
 
 
       {/* Grand total row */}
-      <div style={{ margin: '0 36px 24px', background: C.navy, borderRadius: 10, padding: '14px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div style={{ margin: '0 36px 16px', background: C.navy, borderRadius: 10, padding: '14px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
-          <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.6)', marginBottom: 2 }}>Total Neto a Liquidar</div>
+          <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.6)', marginBottom: 2 }}>Total Neto Liquidado</div>
           <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)' }}>Bruto {fmt(ugaviBaseBs + clubBaseBs)} menos deducciones {fmt(totalDeduccionesBs)}</div>
         </div>
         <div style={{ textAlign: 'right' }}>
           <div style={{ fontSize: 22, fontWeight: 800, color: C.white, letterSpacing: '-0.02em' }}>{fmt(ugaviBs + clubBs)}</div>
           <div style={{ fontSize: 13, fontWeight: 600, color: `${C.emerald}`, marginTop: 2 }}>{fmtUsd(ugaviUsd + clubUsd)}</div>
           {totalDeduccionesBs > 0 && (
-          <div style={{ fontSize: 8.5, color: `${C.roseMid}`, marginTop: 3 }}>
-            − {fmt(totalDeduccionesBs)} deducidos (ver detalle arriba)
-          </div>
+            <div style={{ fontSize: 8.5, color: `${C.roseMid}`, marginTop: 3 }}>
+              − {fmt(totalDeduccionesBs)} deducidos (ver detalle arriba)
+            </div>
           )}
         </div>
       </div>
 
       {/* Signatures */}
-      <div style={{ margin: '0 36px 28px' }}>
+      <div style={{ margin: '0 36px 16px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
           <div style={{ width: 3, height: 16, background: C.navy, borderRadius: 2 }} />
           <div style={{ fontSize: 11, fontWeight: 700, color: C.navy }}>Firmas y Conformidad</div>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
-          {['Elaborado por', 'Revisado por', 'Aprobado por'].map((label, i) => (
-            <div key={i} style={{ textAlign: 'center' }}>
-              <div style={{ height: 48, borderBottom: `1.5px solid ${C.borderMid}`, marginBottom: 8, display: 'flex', alignItems: 'flex-end', justifyContent: 'center', paddingBottom: 4 }}>
-                {i === 0 && (
-                  <div style={{ fontSize: 8.5, color: C.slateMuted, fontStyle: 'italic' }}>Sistema SIGAMA</div>
-                )}
-              </div>
-              <div style={{ fontSize: 9, fontWeight: 700, color: C.inkMid }}>{label}</div>
-              <div style={{ fontSize: 8.5, color: C.slateMuted, marginTop: 2 }}>
-                {i === 0 ? 'Administrador · SIGAMA' : i === 1 ? 'Gerencia Administrativa · UGAVI' : 'Directiva del Club'}
-              </div>
-              <div style={{ fontSize: 8, color: C.slateMuted, marginTop: 2 }}>Fecha: ___/___/______</div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 40, padding: '0 40px' }}>
+
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ height: 36, borderBottom: `1.5px solid ${C.borderMid}`, marginBottom: 8, display: 'flex', alignItems: 'flex-end', justifyContent: 'center', paddingBottom: 4 }}>
+              {/* Espacio para la firma manual */}
             </div>
-          ))}
+            <div style={{ fontSize: 9, fontWeight: 800, color: C.inkMid }}>
+              {config?.firma_secretario_nombre || '________________________'}
+            </div>
+            <div style={{ fontSize: 8.5, color: C.slateMuted, marginTop: 2 }}>
+              C.I. {config?.firma_secretario_cedula || '_________________'}
+            </div>
+            <div style={{ fontSize: 8, color: C.slateMuted, marginTop: 2 }}>Secretario(a) Fondo de UGAVI para Desarrollo Agropecuario</div>
+          </div>
+
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ height: 36, borderBottom: `1.5px solid ${C.borderMid}`, marginBottom: 8, display: 'flex', alignItems: 'flex-end', justifyContent: 'center', paddingBottom: 4 }}>
+              {/* Espacio para la firma manual */}
+            </div>
+            <div style={{ fontSize: 9, fontWeight: 800, color: C.inkMid }}>
+              {config?.firma_admin_nombre || '________________________'}
+            </div>
+            <div style={{ fontSize: 8.5, color: C.slateMuted, marginTop: 2 }}>
+              C.I. {config?.firma_admin_cedula || '_________________'}
+            </div>
+            <div style={{ fontSize: 8, color: C.slateMuted, marginTop: 2 }}>Administrador(a) de UGAVI</div>
+          </div>
+
         </div>
       </div>
 
       {/* Legal note */}
-      <div style={{ margin: '0 36px 0', padding: '12px 14px', background: '#FFFBEB', border: `1px solid ${C.amber}25`, borderRadius: 8 }}>
+      <div style={{ margin: '0 36px 0', padding: '8px 14px', background: '#FFFBEB', border: `1px solid ${C.amber}25`, borderRadius: 8 }}>
         <div style={{ fontSize: 8.5, color: '#92400E', lineHeight: 1.6 }}>
-          <span style={{ fontWeight: 700 }}>Nota Legal:</span> Este comprobante certifica la liquidación y distribución de fondos recaudados durante el período indicado conforme a los estatutos vigentes de UGAVI y el acuerdo de distribución aprobado en asamblea. Documento válido con firma y sello de los responsables. · Ref. #ENT-0045 · SIGAMA v2.0
+          <span style={{ fontWeight: 700 }}>Nota Legal:</span> Este comprobante certifica la liquidación y distribución de fondos recaudados durante el período indicado. Documento válido con firma de los responsables. · SIGAMA
         </div>
       </div>
 
       {/* Footer */}
       <div style={{
+        marginTop: 'auto',
         borderTop: `1px solid ${C.border}`,
         padding: '12px 36px',
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
         background: C.slateLight,
-        marginTop: 20,
       }}>
         <div style={{ fontSize: 8.5, color: C.slateMuted }}>
           SIGAMA · Comprobante de Liquidación · Documento oficial sujeto a verificación
         </div>
-        <div style={{ fontSize: 8.5, color: C.slateMuted }}>#ENT-0045 · 04/Ago/2026</div>
+        <div style={{ fontSize: 8.5, color: C.slateMuted }}>#ENT-{entrega?.id?.toString().padStart(4, '0') || '0000'} · {new Date().toLocaleDateString('es-VE', { day: '2-digit', month: 'short', year: 'numeric' })}</div>
       </div>
     </div>
   )
@@ -830,7 +830,7 @@ export default function DummyApp() {
       }}>
         <div>
           <div style={{ fontSize: 18, fontWeight: 800, color: C.navy, letterSpacing: '-0.02em' }}>SIGAMA · Reportes PDF</div>
-          <div style={{ fontSize: 11, color: C.muted, marginTop: 2 }}>Vista previa de documentos · Resolución A4 (794 × 1123 px)</div>
+          <div style={{ fontSize: 11, color: C.muted, marginTop: 2 }}>Vista previa de documentos · Resolución Carta (816 × 1056 px)</div>
         </div>
         <div style={{ display: 'flex', gap: 4, background: 'rgba(255,255,255,0.6)', padding: 4, borderRadius: 10, border: `1px solid ${C.border}` }}>
           <button style={tabStyle(active === 'reporte')} onClick={() => setActive('reporte')}>

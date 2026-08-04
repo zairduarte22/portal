@@ -499,12 +499,14 @@ class ExportController extends Controller
 
         $facturas_completo = [];
         foreach ($pagos as $p) {
+            $es_anulada = strcasecmp(trim($p->estado ?? ''), 'Anulada') === 0;
+            
             $facturas_completo[] = [
                 'FECHA' => $p->fecha,
-                'FACT_UGAVI' => $p->factura_ugavi,
+                'FACT_UGAVI' => $es_anulada ? $p->factura_ugavi . ' (ANULADA)' : $p->factura_ugavi,
                 'METODO_PAGO' => $p->metodo_pago,
-                'MONTO_BS' => floatval($p->monto_bs),
-                'MONTO_DIVISAS' => floatval($p->monto)
+                'MONTO_BS' => $es_anulada ? 0 : floatval($p->monto_bs),
+                'MONTO_DIVISAS' => $es_anulada ? 0 : floatval($p->monto)
             ];
         }
 
@@ -553,12 +555,14 @@ class ExportController extends Controller
 
         $facturas_completo = [];
         foreach ($pagos as $p) {
+            $es_anulada = strcasecmp(trim($p->estado ?? ''), 'Anulada') === 0;
+            
             $facturas_completo[] = [
                 'FECHA' => $p->fecha,
-                'FACT_UGAVI' => $p->factura_ugavi,
+                'FACT_UGAVI' => $es_anulada ? $p->factura_ugavi . ' (ANULADA)' : $p->factura_ugavi,
                 'METODO_PAGO' => $p->metodo_pago,
-                'MONTO_BS' => floatval($p->monto_bs),
-                'MONTO_DIVISAS' => floatval($p->monto)
+                'MONTO_BS' => $es_anulada ? 0 : floatval($p->monto_bs),
+                'MONTO_DIVISAS' => $es_anulada ? 0 : floatval($p->monto)
             ];
         }
 

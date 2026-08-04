@@ -11,6 +11,7 @@ import { CarnetsPanel } from "./components/carnets/CarnetsView";
 import { LibrosPanel } from "./components/LibrosPanel";
 import { ConciliacionPanel } from "./components/ConciliacionPanel";
 import { ObligacionesPanel } from "./components/ObligacionesPanel";
+import { ReporteGeneralView } from "./components/reports/ReporteGeneralView";
 import { ReporteEntregaView } from "./components/reports/ReporteEntregaView";
 import { ReportesTascaPanel } from "./components/tasca/ReportesTascaPanel";
 import { UgaviBarVentas } from "./components/tasca/pages/UgaviBarVentas";
@@ -278,6 +279,7 @@ export default function App() {
           <Route path="libros" element={<ProtectedRoute moduleId="LibrosPanel" user={user}><LibrosPanel /></ProtectedRoute>} />
           <Route path="obligaciones" element={<ProtectedRoute moduleId="ObligacionesPanel" user={user}><ObligacionesPanel /></ProtectedRoute>} />
           <Route path="conciliacion" element={<ProtectedRoute moduleId="ConciliacionPanel" user={user}><ConciliacionPanel /></ProtectedRoute>} />
+          <Route path="pagos/reporte" element={<ProtectedRoute moduleId="PagosPanel" user={user}><ReporteGeneralView /></ProtectedRoute>} />
           <Route path="entregas/:id/reporte" element={<ProtectedRoute moduleId="PagosPanel" user={user}><ReporteEntregaView /></ProtectedRoute>} />
           <Route path="ugavibar/ventas" element={<ProtectedRoute moduleId="UgaviBarVentas" user={user}><UgaviBarVentas /></ProtectedRoute>} />
           <Route path="ugavibar/ventas/:id" element={<ProtectedRoute moduleId="UgaviBarVentas" user={user}><VentaPos /></ProtectedRoute>} />

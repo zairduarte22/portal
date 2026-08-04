@@ -1,17 +1,33 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { ComprobanteEntrega } from "./ReportesModernos";
+import { useSearchParams } from "react-router-dom";
+import { ReporteGeneral } from "./ReportesModernos";
 import { Printer, ArrowLeft } from "lucide-react";
 
-export function ReporteEntregaView() {
-  const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
+export function ReporteGeneralView() {
+  const [searchParams] = useSearchParams();
+  const desde = searchParams.get('desde') || '';
+  const hasta = searchParams.get('hasta') || '';
+  
+  const formatDate = (dateString: string) => {
+    if (!dateString) return '';
+    try {
+      const [y, m, d] = dateString.split('-');
+      if (!y || !m || !d) return dateString;
+      const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+      return `${d}/${months[parseInt(m)-1]}/${y}`;
+    } catch (e) {
+      return dateString;
+    }
+  };
+
+  const periodoStr = `${formatDate(desde) || 'INICIO'} — ${formatDate(hasta) || 'FIN'}`;
+  
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    fetch(`/api/entregas/${id}`)
+    fetch(`/api/pagos/exportar/general/json?desde=${desde}&hasta=${hasta}`)
       .then((res) => {
         if (!res.ok) throw new Error("No se pudo cargar el reporte");
         return res.json();
@@ -24,7 +40,7 @@ export function ReporteEntregaView() {
         setError(err.message);
         setLoading(false);
       });
-  }, [id]);
+  }, [desde, hasta]);
 
   if (loading) {
     return (
@@ -44,7 +60,6 @@ export function ReporteEntregaView() {
 
   return (
     <div className="min-h-screen bg-gray-100 print:bg-white flex flex-col items-center pb-10">
-      {/* Barra superior visible solo en pantalla */}
       <div className="w-full bg-white shadow-sm p-4 flex justify-between items-center mb-8 print:hidden" style={{ maxWidth: 816 }}>
         <button 
           onClick={() => window.close()} 
@@ -63,28 +78,18 @@ export function ReporteEntregaView() {
       <style>{`
         @media print {
           @page { margin: 0; size: letter !important; }
-          body * {
-            visibility: hidden;
-          }
-          #printable-report, #printable-report * {
-            visibility: visible;
-          }
+          body * { visibility: hidden; }
+          #printable-report, #printable-report * { visibility: visible; }
           #printable-report {
-            position: absolute;
-            left: 0;
-            top: 0;
-            width: 100%;
-            margin: 0;
-            padding: 0;
+            position: absolute; left: 0; top: 0; width: 100%; margin: 0; padding: 0;
           }
           body { -webkit-print-color-adjust: exact; print-color-adjust: exact; background-color: white !important; }
           .print\\:hidden { display: none !important; }
         }
       `}</style>
 
-      {/* Contenedor del Comprobante (Tamaño carta 794px ancho) */}
-      <div id="printable-report" className="shadow-lg print:shadow-none bg-white">
-        <ComprobanteEntrega data={data} rango={data.rangoUgavi} periodo={data.rangoFondo} config={data.configuraciones} />
+      <div id="printable-report" className="shadow-lg print:shadow-none bg-white" style={{ width: 816, minHeight: 1056 }}>
+        <ReporteGeneral data={data} periodo={periodoStr} titulo="Reporte General de Pagos" />
       </div>
     </div>
   );

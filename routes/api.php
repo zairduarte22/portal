@@ -19,6 +19,7 @@ use App\Http\Controllers\FinanzasController;
 use App\Http\Controllers\CarnetEmitidoController;
 use App\Http\Controllers\TascaController;
 use App\Http\Controllers\CobranzaController;
+use App\Http\Controllers\ExportController;
 
 Route::post('/login', [AuthController::class, 'login']);
 Route::get('/carnets/public/{id}', [CarnetEmitidoController::class, 'showPublic']);
