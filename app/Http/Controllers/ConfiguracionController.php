@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
+use App\Models\Configuracion;
 
 class ConfiguracionController extends Controller
 {
@@ -76,5 +77,25 @@ class ConfiguracionController extends Controller
 
         $user->delete();
         return response()->json(['message' => 'Eliminado']);
+    }
+
+    public function getGeneralConfigs()
+    {
+        $configuraciones = Configuracion::all()->pluck('valor', 'clave')->toArray();
+        return response()->json($configuraciones);
+    }
+
+    public function updateGeneralConfigs(Request $request)
+    {
+        $configs = $request->all();
+        
+        foreach ($configs as $clave => $valor) {
+            Configuracion::updateOrCreate(
+                ['clave' => $clave],
+                ['valor' => $valor]
+            );
+        }
+
+        return response()->json(['message' => 'Configuraciones actualizadas']);
     }
 }

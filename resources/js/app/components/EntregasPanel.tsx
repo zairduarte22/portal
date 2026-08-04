@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
-import { ArrowLeft, Loader2, Calculator, Save, AlertCircle, ArrowRightLeft, DollarSign } from "lucide-react";
+import { ArrowLeft, Loader2, Calculator, Save, AlertCircle, ArrowRightLeft, DollarSign, History, Plus } from "lucide-react";
 import { getFirstDayOfMonth, getLastDayOfMonth } from "../utils/dateUtils";
+import { downloadEntregaPDF } from "../utils/pdfEntrega";
+import { HistorialEntregas } from "./HistorialEntregas";
 
 interface EntregasPanelProps {
   onBack?: () => void;
@@ -12,6 +14,7 @@ export function EntregasPanel({ onBack, tasaDia = 1 }: EntregasPanelProps) {
   const [hasta, setHasta] = useState(getLastDayOfMonth());
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [viewMode, setViewMode] = useState<"new" | "history">("new");
   
   const [resumen, setResumen] = useState<any>(null);
 
@@ -224,9 +227,9 @@ export function EntregasPanel({ onBack, tasaDia = 1 }: EntregasPanelProps) {
       alert("Entrega registrada con éxito.");
       setResumen(null);
       
-      // Abrir el PDF de la entrega
+      // Generar y descargar el PDF de la entrega
       if (successData.id) {
-        window.open(`/api/entregas/${successData.id}/pdf`, '_blank');
+        await downloadEntregaPDF(successData.id);
       }
     } catch (e: any) {
       console.error(e);
@@ -256,9 +259,27 @@ export function EntregasPanel({ onBack, tasaDia = 1 }: EntregasPanelProps) {
             </p>
           </div>
         </div>
+        <div className="flex bg-gray-100 p-1 rounded-xl">
+          <button 
+            onClick={() => setViewMode("new")}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all ${viewMode === "new" ? "bg-white shadow-sm text-blue-600" : "text-gray-500 hover:text-gray-700"}`}
+          >
+            <Plus size={16} /> Nueva
+          </button>
+          <button 
+            onClick={() => setViewMode("history")}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all ${viewMode === "history" ? "bg-white shadow-sm text-blue-600" : "text-gray-500 hover:text-gray-700"}`}
+          >
+            <History size={16} /> Historial
+          </button>
+        </div>
       </div>
 
-      <div className="bg-card rounded-2xl p-6 border shadow-sm" style={{ borderColor: "var(--border)" }}>
+      {viewMode === "history" ? (
+        <HistorialEntregas />
+      ) : (
+        <>
+          <div className="bg-card rounded-2xl p-6 border shadow-sm" style={{ borderColor: "var(--border)" }}>
         <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
           <Calculator size={18} className="text-blue-500" />
           Configuración del Cálculo
@@ -547,10 +568,12 @@ export function EntregasPanel({ onBack, tasaDia = 1 }: EntregasPanelProps) {
                 Registrar Entrega
               </button>
             </div>
+            </div>
           </div>
-        </div>
         );
       })()}
+      </>
+      )}
     </div>
   );
 }

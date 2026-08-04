@@ -6,6 +6,9 @@ import axios from "axios";
 import { PagoModal } from "./PagoModal";
 import { getFirstDayOfMonth, getLastDayOfMonth } from "../utils/dateUtils";
 import { printInvoiceHTML } from "../utils/printUtils";
+import { createRoot } from "react-dom/client";
+import html2canvas from "html2canvas";
+import { ReporteGeneral } from "./reports/ReportesModernos";
 import { EntregasPanel } from "./EntregasPanel";
 
 export function PagosPanel() {
@@ -29,7 +32,11 @@ export function PagosPanel() {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const res = await fetch('/api/pagos/init');
+      const url = new URL(window.location.origin + '/api/pagos/init');
+      if (desde) url.searchParams.append('desde', desde);
+      if (hasta) url.searchParams.append('hasta', hasta);
+      
+      const res = await fetch(url.toString());
       if (!res.ok) throw new Error('Error al cargar datos');
       const data = await res.json();
       setMiembros(data.miembros || []);
@@ -48,7 +55,7 @@ export function PagosPanel() {
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [desde, hasta]);
 
   // Helper to find member name for a payment
   const getMemberNameForPago = (pago: any) => {
@@ -131,29 +138,37 @@ export function PagosPanel() {
   const handleExportGeneral = async () => {
     try {
       setIsExporting(true);
-      const form = new FormData();
-      if (desde) form.append('desde', desde);
-      if (hasta) form.append('hasta', hasta);
+      const res = await fetch(`/api/pagos/exportar/general/json?desde=${desde || ''}&hasta=${hasta || ''}`);
+      if (!res.ok) throw new Error("Error fetching reporte general");
+      const data = await res.json();
 
-      const res = await fetch('/api/pagos/reporte-general', {
-        method: 'POST',
-        body: form
-      });
+      const container = document.createElement('div');
+      container.style.position = 'absolute';
+      container.style.left = '-9999px';
+      container.style.top = '0';
+      document.body.appendChild(container);
       
-      if (!res.ok) throw new Error('Error al generar el reporte');
+      const root = createRoot(container);
+      root.render(<ReporteGeneral data={data} periodo={`${desde || 'inicio'} al ${hasta || 'fin'}`} />);
       
-      const blob = await res.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `Reporte_General_Pagos_${desde || 'inicio'}_${hasta || 'fin'}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      window.URL.revokeObjectURL(url);
+      // Wait for rendering
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      const canvas = await html2canvas(container.firstChild as HTMLElement, { scale: 2 });
+      const imgData = canvas.toDataURL('image/jpeg', 0.95);
+      
+      const doc = new jsPDF('p', 'mm', 'a4');
+      const pdfWidth = doc.internal.pageSize.getWidth();
+      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+      
+      doc.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
+      doc.save(`Reporte_General_${desde || 'inicio'}_${hasta || 'fin'}.pdf`);
+      
+      root.unmount();
+      document.body.removeChild(container);
     } catch (error) {
       console.error(error);
-      alert('Error al descargar el reporte');
+      alert('Error al generar el reporte PDF. Asegúrate de tener conexión al servidor.');
     } finally {
       setIsExporting(false);
     }
@@ -378,7 +393,7 @@ export function PagosPanel() {
     doc.save(`Recibo_Pago_${pago.referencia || pago.id}.pdf`);
   };
 
-  if (loading) {
+  if (loading && pagos.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-64 text-green-600">
         <Loader2 className="animate-spin w-8 h-8 mb-4" />
@@ -398,13 +413,14 @@ export function PagosPanel() {
   }
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
+    <div className="space-y-6 w-full mx-auto">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2" style={{ color: "var(--foreground)" }}>
             <Wallet size={24} style={{ color: "#22c55e" }} />
             Historial de Pagos
+            {loading && pagos.length > 0 && <Loader2 className="animate-spin w-5 h-5 ml-2 text-blue-500" />}
           </h1>
           <p className="text-sm mt-1" style={{ color: "var(--muted-foreground)" }}>
             Gestiona y registra los pagos de cuotas de los miembros.
@@ -514,8 +530,8 @@ export function PagosPanel() {
                       {new Date(pago.fecha + 'T12:00:00Z').toLocaleDateString("es-VE")}
                     </span>
                   </td>
-                  <td className="px-4 py-4">
-                    <span className="text-xs font-bold truncate max-w-[150px] inline-block" style={{ color: "var(--foreground)" }}>
+                  <td className="px-6 py-4">
+                    <span className="text-xs font-bold inline-block" style={{ color: "var(--foreground)" }}>
                       {pago.miembroName}
                     </span>
                   </td>

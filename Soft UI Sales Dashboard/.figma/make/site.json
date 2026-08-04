@@ -1,0 +1,10 @@
+{
+  "description": "This responsive dashboard provides businesses with key sales and financial metrics, enabling data-driven decisions to optimize performance and profitability.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}

@@ -115,20 +115,46 @@ export default function GastosTab() {
   return (
     <div className="flex flex-col gap-6">
       
+      {/* Header con Título y Botón */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <h2 className="text-2xl sm:text-3xl font-black font-sans text-gray-900 tracking-tight flex items-center gap-2">
+          <DollarSign size={28} className="text-red-600" />
+          Gastos de la Tasca
+        </h2>
+        <button 
+          onClick={openNewGasto}
+          className="flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl text-white shadow-md transition-transform hover:scale-105 w-full sm:w-auto"
+          style={{ background: "linear-gradient(135deg, #ef4444, #dc2626)" }}
+        >
+          <PlusCircle size={20} /> Registrar Gasto
+        </button>
+      </div>
+
       <div className="p-6 rounded-2xl shadow-sm" style={{ backgroundColor: "var(--card)", border: "1px solid var(--border)" }}>
-        <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 mb-6">
-          <h2 className="text-lg sm:text-xl font-bold flex items-center gap-2" style={{ color: "var(--foreground)" }}>
-            <DollarSign size={24} className="text-red-600 shrink-0" />
-            Gastos de la Tasca
-          </h2>
-          <button 
-            onClick={openNewGasto}
-            className="flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl text-white shadow-md transition-transform hover:scale-105 w-full sm:w-auto"
-            style={{ background: "linear-gradient(135deg, #ef4444, #dc2626)" }}
-          >
-            <PlusCircle size={20} /> Registrar Gasto
-          </button>
-        </div>
+
+        {/* METRICS ROW */}
+        {!loading && gastos.length > 0 && (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <div className="p-4 rounded-2xl bg-black/5 dark:bg-white/5 border border-black/5 flex flex-col">
+              <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--muted-foreground)" }}>Total Gastos</span>
+              <span className="text-2xl font-black mt-1" style={{ color: "var(--foreground)" }}>
+                ${gastos.reduce((acc, g) => acc + parseFloat(g.monto_usd), 0).toFixed(2)}
+              </span>
+            </div>
+            <div className="p-4 rounded-2xl bg-green-50 dark:bg-green-900/10 border border-green-100 flex flex-col">
+              <span className="text-xs font-bold uppercase tracking-wider text-green-600">Gastos Pagados</span>
+              <span className="text-2xl font-black mt-1 text-green-700">
+                ${gastos.filter(g => g.metodo_pago !== 'Por Pagar').reduce((acc, g) => acc + parseFloat(g.monto_usd), 0).toFixed(2)}
+              </span>
+            </div>
+            <div className="p-4 rounded-2xl bg-orange-50 dark:bg-orange-900/10 border border-orange-100 flex flex-col">
+              <span className="text-xs font-bold uppercase tracking-wider text-orange-600">Gastos Por Pagar</span>
+              <span className="text-2xl font-black mt-1 text-orange-700">
+                ${gastos.filter(g => g.metodo_pago === 'Por Pagar').reduce((acc, g) => acc + parseFloat(g.monto_usd), 0).toFixed(2)}
+              </span>
+            </div>
+          </div>
+        )}
 
         {loading ? (
           <div className="text-center py-12 text-gray-500">Cargando...</div>
@@ -154,9 +180,16 @@ export default function GastosTab() {
                   <tr key={g.id} style={{ borderBottom: "1px solid var(--border)", color: "var(--foreground)" }} className="hover:bg-black/5 dark:hover:bg-white/5">
                     <td className="py-3 text-sm">{format(new Date(g.fecha), 'dd/MM/yyyy')}</td>
                     <td className="py-3 font-semibold">
-                      <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded-lg text-xs">
-                        {g.categoria}
-                      </span>
+                      <div className="flex flex-col items-start gap-1">
+                        <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded-lg text-xs">
+                          {g.categoria}
+                        </span>
+                        {g.metodo_pago === 'Por Pagar' && (
+                          <span className="px-2 py-0.5 bg-orange-100 text-orange-700 font-bold rounded text-[10px] uppercase">
+                            Por Pagar
+                          </span>
+                        )}
+                      </div>
                     </td>
                     <td className="py-3 text-sm">{g.descripcion}</td>
                     <td className="py-3 text-sm">{g.proveedor?.nombre || '-'}</td>
@@ -312,6 +345,7 @@ export default function GastosTab() {
                   <option value="Zelle">Zelle</option>
                   <option value="Punto de Venta/POS">Punto de Venta / POS</option>
                   <option value="Efectivo Bs.">Efectivo Bs.</option>
+                  <option value="Por Pagar" className="font-bold text-orange-600">Por Pagar (Deuda)</option>
                 </select>
               </div>
 

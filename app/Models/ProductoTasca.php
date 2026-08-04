@@ -38,33 +38,30 @@ class ProductoTasca extends Model
         }
 
         if ($this->id_insumo) {
-            $insumo = $this->relationLoaded('insumo') ? $this->insumo : null;
+            $insumo = $this->relationLoaded('insumo') ? $this->insumo : \App\Models\InsumoTasca::find($this->id_insumo);
             if ($insumo) {
                 $lote = null;
-                if ($insumo->relationLoaded('lotesActivos')) {
+                if ($insumo->relationLoaded('lotesActivos') && $insumo->lotesActivos->count() > 0) {
                     $lote = $insumo->lotesActivos->first();
                 } elseif ($insumo->relationLoaded('lotes')) {
                     $lote = $insumo->lotes->where('estado', 'Activo')->where('stock_actual', '>', 0)->sortBy('fecha_compra')->first();
+                    if (!$lote) {
+                        $lote = $insumo->lotes->sortByDesc('fecha_compra')->first();
+                    }
                 } else {
                     $lote = $insumo->lotesActivos()->first();
+                    if (!$lote) {
+                        $lote = $insumo->lotes()->orderBy('fecha_compra', 'desc')->first();
+                    }
                 }
                 
                 if ($lote) {
                     $medida = $this->medida_descuento > 0 ? $this->medida_descuento : 1;
                     return round($lote->costo_unitario * $medida, 2);
                 }
-            } else if (!$this->relationLoaded('insumo')) {
-                // Si la relación no está cargada, fall back al DB (esto ocurre si es un solo producto)
-                if ($this->insumo && $this->insumo->lotesActivos) {
-                    $lote = $this->insumo->lotesActivos->first();
-                    if ($lote) {
-                        $medida = $this->medida_descuento > 0 ? $this->medida_descuento : 1;
-                        return round($lote->costo_unitario * $medida, 2);
-                    }
-                }
             }
         }
-        return $this->precio; // Fallback to normal price if no cost found
+        return 0; // If there is no lot ever recorded, cost is 0, NOT the sale price
     }
 
     public function getNombreCompletoAttribute()

@@ -34,6 +34,11 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('/{id}', [ConfiguracionController::class, 'updateUsuario']);
         Route::delete('/{id}', [ConfiguracionController::class, 'destroyUsuario']);
     });
+    
+    Route::prefix('configuraciones')->group(function () {
+        Route::get('/general', [ConfiguracionController::class, 'getGeneralConfigs']);
+        Route::post('/general', [ConfiguracionController::class, 'updateGeneralConfigs']);
+    });
 
     Route::prefix('miembros')->group(function () {
         Route::get('/', [MiembroController::class, 'index']);
@@ -86,7 +91,8 @@ Route::get('/pagos/init', [PagoController::class, 'init']);
 Route::post('/pagos', [PagoController::class, 'store']);
 Route::put('/pagos/{id}', [PagoController::class, 'update']);
 Route::put('/pagos/{id}/imprimir', [PagoController::class, 'marcarImpreso']);
-Route::post('/pagos/reporte-general', [\App\Http\Controllers\ExportController::class, 'reporteGeneralPagos']);
+Route::get('/pagos/exportar/general', [ExportController::class, 'reporteGeneralPagos']);
+Route::get('/pagos/exportar/general/json', [ExportController::class, 'reporteGeneralPagosJson']);
 Route::put('/pagos/{id}/anular', [PagoController::class, 'anular']);
 Route::delete('/pagos/{id}', [PagoController::class, 'destroy']);
 
@@ -95,6 +101,7 @@ Route::prefix('entregas')->group(function () {
     Route::get('/', [EntregaController::class, 'index']);
     Route::get('/resumen', [EntregaController::class, 'getResumen']);
     Route::post('/', [EntregaController::class, 'store']);
+    Route::get('/{id}', [EntregaController::class, 'show']);
     Route::get('/{id}/pdf', [EntregaController::class, 'downloadPdf']);
 });
 
@@ -214,3 +221,5 @@ Route::prefix('tasca')->group(function () {
 });
 
 });
+
+Route::get('/test-reporte', [App\Http\Controllers\TascaController::class, 'getReporteRendimiento']);

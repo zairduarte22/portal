@@ -12,15 +12,29 @@ use Illuminate\Support\Facades\DB;
 
 class PagoController extends Controller
 {
-    public function init()
+    public function init(Request $request)
     {
         $miembros = Miembro::all();
         $facturas = Factura::where('pendiente', '>', 0)->get();
         
-        $pagos = Pago::with('facturas.miembro')
-            ->orderBy('fecha', 'desc')
-            ->orderBy('factura_fondo', 'desc')
-            ->take(100)->get();
+        $query = Pago::with('facturas.miembro');
+        
+        if ($request->filled('desde')) {
+            $query->where('fecha', '>=', $request->desde);
+        }
+        
+        if ($request->filled('hasta')) {
+            $query->where('fecha', '<=', $request->hasta);
+        }
+        
+        $pagosQuery = $query->orderBy('fecha', 'desc')
+            ->orderBy('factura_fondo', 'desc');
+            
+        if (!$request->filled('desde') && !$request->filled('hasta')) {
+            $pagosQuery = $pagosQuery->take(100);
+        }
+        
+        $pagos = $pagosQuery->get();
         
         // Obtener la tasa de cambio más reciente disponible, en lugar de forzar que sea exactamente de hoy
         $tasaHoy = Tasa::orderBy('fecha', 'desc')->first();

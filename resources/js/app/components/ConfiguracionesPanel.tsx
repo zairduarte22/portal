@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Users, Plus, Edit2, Trash2, Key, LayoutGrid } from "lucide-react";
 
+import { Settings, Save, Loader2 } from "lucide-react";
 export function ConfiguracionesPanel({ currentUser }: { currentUser: any }) {
   const [usuarios, setUsuarios] = useState<any[]>([]);
   const [showModal, setShowModal] = useState(false);
@@ -35,6 +36,44 @@ export function ConfiguracionesPanel({ currentUser }: { currentUser: any }) {
     default_route: ""
   });
 
+  const [activeTab, setActiveTab] = useState<'usuarios' | 'parametros'>('usuarios');
+  const [generalConfigs, setGeneralConfigs] = useState({
+    firma_secretario_nombre: '',
+    firma_secretario_cedula: '',
+    firma_admin_nombre: '',
+    firma_admin_cedula: ''
+  });
+  const [savingConfigs, setSavingConfigs] = useState(false);
+
+  const loadGeneralConfigs = () => {
+    fetch('/api/configuraciones/general')
+      .then(res => res.json())
+      .then(data => {
+        if(data) {
+          setGeneralConfigs({
+            firma_secretario_nombre: data.firma_secretario_nombre || '',
+            firma_secretario_cedula: data.firma_secretario_cedula || '',
+            firma_admin_nombre: data.firma_admin_nombre || '',
+            firma_admin_cedula: data.firma_admin_cedula || ''
+          });
+        }
+      });
+  };
+
+  const handleSaveConfigs = () => {
+    setSavingConfigs(true);
+    fetch('/api/configuraciones/general', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify(generalConfigs)
+    })
+    .then(res => res.json())
+    .then(() => {
+      alert('Configuraciones guardadas exitosamente');
+    })
+    .finally(() => setSavingConfigs(false));
+  };
+
   const loadUsuarios = () => {
     fetch('/api/usuarios')
       .then(res => res.json())
@@ -44,6 +83,7 @@ export function ConfiguracionesPanel({ currentUser }: { currentUser: any }) {
 
   useEffect(() => {
     loadUsuarios();
+    loadGeneralConfigs();
   }, []);
 
   const openNew = () => {
@@ -113,6 +153,24 @@ export function ConfiguracionesPanel({ currentUser }: { currentUser: any }) {
           <h1 className="text-2xl font-black text-gray-800" style={{ fontFamily: "Nunito, sans-serif" }}>Configuraciones del Sistema</h1>
           <p className="text-gray-500 text-sm mt-1">Administración de usuarios y roles de acceso</p>
         </div>
+      {/* TABS */}
+      <div className="flex gap-4 border-b pb-2 mb-6">
+        <button 
+          onClick={() => setActiveTab('usuarios')}
+          className={`px-4 py-2 font-bold rounded-lg transition-colors ${activeTab === 'usuarios' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+        >
+          <div className="flex items-center gap-2"><Users size={18}/> Usuarios Activos</div>
+        </button>
+        <button 
+          onClick={() => setActiveTab('parametros')}
+          className={`px-4 py-2 font-bold rounded-lg transition-colors ${activeTab === 'parametros' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+        >
+          <div className="flex items-center gap-2"><Settings size={18}/> Parámetros Generales</div>
+        </button>
+      </div>
+
+      {activeTab === 'usuarios' && (
+        <>
         <button onClick={openNew} className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white font-bold rounded-xl hover:bg-green-700 transition-colors">
           <Plus size={18} />
           Nuevo Usuario
@@ -247,6 +305,90 @@ export function ConfiguracionesPanel({ currentUser }: { currentUser: any }) {
           </div>
         </div>
       )}
-    </div>
+    
+        </>
+      )}
+
+      {activeTab === 'parametros' && (
+        <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100 max-w-3xl">
+          <div className="flex items-center gap-3 mb-8 pb-4 border-b">
+            <div className="w-12 h-12 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center">
+              <Settings size={24} />
+            </div>
+            <div>
+              <h2 className="text-xl font-black text-gray-800">Firmantes de Reportes</h2>
+              <p className="text-gray-500 text-sm">Configura los nombres y cédulas que aparecerán en los comprobantes de entrega.</p>
+            </div>
+          </div>
+
+          <div className="space-y-8">
+            {/* Secretario */}
+            <div className="p-6 bg-gray-50 rounded-2xl border border-gray-200">
+              <h3 className="text-lg font-bold text-gray-700 mb-4 border-b pb-2">Secretario(a) del Fondo</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-1">Nombre Completo</label>
+                  <input 
+                    type="text" 
+                    value={generalConfigs.firma_secretario_nombre}
+                    onChange={e => setGeneralConfigs({...generalConfigs, firma_secretario_nombre: e.target.value})}
+                    className="w-full px-4 py-3 bg-white border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 font-medium"
+                    placeholder="Ej. Pedro Pérez"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-1">Cédula de Identidad</label>
+                  <input 
+                    type="text" 
+                    value={generalConfigs.firma_secretario_cedula}
+                    onChange={e => setGeneralConfigs({...generalConfigs, firma_secretario_cedula: e.target.value})}
+                    className="w-full px-4 py-3 bg-white border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 font-medium"
+                    placeholder="Ej. V-12345678"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Administrador */}
+            <div className="p-6 bg-gray-50 rounded-2xl border border-gray-200">
+              <h3 className="text-lg font-bold text-gray-700 mb-4 border-b pb-2">Administrador(a) de UGAVI</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-1">Nombre Completo</label>
+                  <input 
+                    type="text" 
+                    value={generalConfigs.firma_admin_nombre}
+                    onChange={e => setGeneralConfigs({...generalConfigs, firma_admin_nombre: e.target.value})}
+                    className="w-full px-4 py-3 bg-white border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 font-medium"
+                    placeholder="Ej. Ana Gómez"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-1">Cédula de Identidad</label>
+                  <input 
+                    type="text" 
+                    value={generalConfigs.firma_admin_cedula}
+                    onChange={e => setGeneralConfigs({...generalConfigs, firma_admin_cedula: e.target.value})}
+                    className="w-full px-4 py-3 bg-white border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 font-medium"
+                    placeholder="Ej. V-8765432"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-end pt-4">
+              <button 
+                onClick={handleSaveConfigs}
+                disabled={savingConfigs}
+                className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white font-black rounded-xl hover:bg-blue-700 transition-all disabled:opacity-50"
+              >
+                {savingConfigs ? <Loader2 size={20} className="animate-spin" /> : <Save size={20} />}
+                Guardar Parámetros
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+</div>
   );
 }

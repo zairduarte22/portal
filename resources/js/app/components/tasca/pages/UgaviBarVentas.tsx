@@ -408,7 +408,7 @@ export function UgaviBarVentas() {
           <div className="p-6 rounded-2xl border flex items-center gap-4 bg-white shadow-sm">
             <div className="p-4 bg-purple-100 text-purple-600 rounded-xl"><Activity size={24} /></div>
             <div className="flex-1">
-              <p className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-1">Desglose de Pagos</p>
+              <p className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-1">Desglose de Pagos (Ventas del Período)</p>
               <div className="text-xs space-y-1">
                 {Object.entries(estadisticas.desglose_pagos || {}).map(([metodo, monto]: any) => (
                   <div key={metodo} className="flex justify-between font-medium">
@@ -420,6 +420,21 @@ export function UgaviBarVentas() {
                   <span className="text-gray-400">Sin pagos registrados hoy.</span>
                 )}
               </div>
+
+              {/* ABONOS A DEUDAS ANTERIORES */}
+              {Object.keys(estadisticas.abonos_viejos || {}).length > 0 && (
+                <div className="mt-4 pt-4 border-t border-purple-200 border-dashed">
+                  <p className="text-xs text-purple-700 font-bold uppercase tracking-wider mb-1">Abonos a Deudas Anteriores</p>
+                  <div className="text-xs space-y-1 text-purple-800">
+                    {Object.entries(estadisticas.abonos_viejos || {}).map(([metodo, monto]: any) => (
+                      <div key={'abono-'+metodo} className="flex justify-between font-medium">
+                        <span>{metodo}</span>
+                        <span>${parseFloat(monto).toFixed(2)}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>

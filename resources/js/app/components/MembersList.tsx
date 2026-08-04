@@ -397,109 +397,91 @@ export function MembersList({
                   boxShadow: "0 4px 16px rgba(0,0,0,0.04)"
                 }}
               >
-                {/* Optional glass accent */}
                 <div className="absolute -right-10 -top-10 w-24 h-24 rounded-full bg-gradient-to-br from-green-400/10 to-transparent blur-2xl pointer-events-none" />
 
-                <div className="flex justify-between items-start gap-3 relative z-10">
-                  <div className="flex items-start gap-3">
-                    <input 
-                      type="checkbox" 
-                      checked={selectedIds.includes(m.id)}
-                      onChange={() => {
-                          setSelectedIds(prev => prev.includes(m.id) ? prev.filter(x => x !== m.id) : [...prev, m.id]);
-                      }}
-                      className="rounded border-gray-300 text-green-600 focus:ring-green-500 cursor-pointer w-5 h-5 mt-0.5"
-                    />
-                    <div>
-                      <p className="text-[15px]" style={{ fontWeight: 800, color: "var(--foreground)", fontFamily: "Nunito, sans-serif", lineHeight: 1.2 }}>
+                <div className="flex items-start gap-3 relative z-10 w-full">
+                  <input 
+                    type="checkbox" 
+                    checked={selectedIds.includes(m.id)}
+                    onChange={() => {
+                        setSelectedIds(prev => prev.includes(m.id) ? prev.filter(x => x !== m.id) : [...prev, m.id]);
+                    }}
+                    className="rounded border-gray-300 text-green-600 focus:ring-green-500 cursor-pointer w-5 h-5 mt-0.5 shrink-0"
+                  />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="text-[15px] font-black truncate leading-tight" style={{ color: "var(--foreground)", fontFamily: "Nunito, sans-serif" }}>
                         {m.razon_social}
                       </p>
-                      <div className="flex items-center gap-2 mt-1">
-                        <span className="text-xs font-bold" style={{ color: "var(--muted-foreground)" }}>#{String(m.id).padStart(4, "0")}</span>
-                        <span className="text-xs" style={{ color: "var(--muted-foreground)", opacity: 0.8 }}>{m.rif}</span>
-                      </div>
+                      <span className="px-2 py-0.5 rounded-full text-[9px] font-bold shrink-0 shadow-sm uppercase tracking-wider" style={{ backgroundColor: solv.bg, color: solv.color }}>
+                        {solv.label}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="text-[11px] font-bold bg-black/5 dark:bg-white/10 px-1.5 py-0.5 rounded" style={{ color: "var(--muted-foreground)" }}>#{String(m.id).padStart(4, "0")}</span>
+                      <span className="text-[11px]" style={{ color: "var(--muted-foreground)" }}>{m.rif}</span>
                     </div>
                   </div>
                 </div>
 
-                <div className="flex flex-col gap-2 relative z-10">
-                  {/* Etiqueta Solvencia */}
-                  <div className="flex justify-between items-center bg-black/5 dark:bg-white/5 p-2.5 rounded-2xl">
-                    <span className="text-xs font-bold" style={{ color: "var(--muted-foreground)" }}>Estado</span>
-                    <span className="px-3 py-1 rounded-full text-xs" style={{ backgroundColor: solv.bg, color: solv.color, fontWeight: 800 }}>
-                      {solv.label}
-                    </span>
-                  </div>
-
-                  {/* Representante */}
+                <div className="flex flex-col gap-2 relative z-10 mt-1">
                   {representante && (
-                    <div className="flex items-center gap-2 p-2.5 rounded-2xl bg-black/5 dark:bg-white/5">
-                      <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "linear-gradient(135deg, rgba(34,197,94,0.1), rgba(22,163,74,0.05))" }}>
+                    <div className="flex items-center gap-2 p-2 rounded-xl bg-black/5 dark:bg-white/5 border border-black/5">
+                      <div className="w-6 h-6 rounded-full flex items-center justify-center shrink-0 bg-white dark:bg-black/20 shadow-sm">
                         <Shield size={12} style={{ color: "#22c55e" }} />
                       </div>
-                      <span className="text-xs truncate" style={{ color: "var(--foreground)", fontWeight: 700 }}>{representante.nombre}</span>
+                      <span className="text-[13px] truncate" style={{ color: "var(--foreground)", fontWeight: 600 }}>{representante.nombre}</span>
                     </div>
                   )}
                   
-                  {/* Saldo y Explotacion */}
-                  <div className="grid grid-cols-2 gap-2 mt-1">
-                    <div className="flex flex-col gap-1 p-2.5 rounded-2xl bg-black/5 dark:bg-white/5">
-                      <span className="text-[10px] uppercase font-bold" style={{ color: "var(--muted-foreground)" }}>Hacienda</span>
-                      <span className="text-xs font-bold truncate" style={{ color: "var(--foreground)" }}>{m.hacienda || "N/A"}</span>
-                    </div>
-                    <div className="flex flex-col gap-1 p-2.5 rounded-2xl bg-black/5 dark:bg-white/5">
-                      <span className="text-[10px] uppercase font-bold" style={{ color: "var(--muted-foreground)" }}>Saldo Pend.</span>
-                      <span className="text-xs font-bold" style={{ color: m.saldo_pendiente > 0 ? "#dc2626" : "var(--foreground)" }}>
-                        {m.saldo_pendiente > 0 ? `Bs. ${m.saldo_pendiente.toLocaleString("es-VE")}` : "--"}
-                      </span>
-                    </div>
+                  <div className="flex items-center justify-between mt-1">
+                     <div className="flex items-center gap-2">
+                        <span className="px-2.5 py-1 rounded-lg text-[10px] font-bold shadow-sm" style={{ backgroundColor: tipo.bg, color: tipo.color }}>
+                          {m.tipo}
+                        </span>
+                        <div className="flex items-center gap-1.5 text-[11px] px-2 py-1 bg-black/5 dark:bg-white/5 rounded-lg font-semibold" style={{ color: "var(--muted-foreground)" }}>
+                          <Users size={12} />
+                          <span>{nPersonas}</span>
+                        </div>
+                     </div>
+                     <div className="text-right flex flex-col">
+                        <span className="text-[9px] uppercase font-bold tracking-wider" style={{ color: "var(--muted-foreground)" }}>Saldo Pendiente</span>
+                        <span className="text-[13px] font-black" style={{ color: m.saldo_pendiente > 0 ? "#dc2626" : "var(--foreground)" }}>
+                          {m.saldo_pendiente > 0 ? `Bs. ${m.saldo_pendiente.toLocaleString("es-VE")}` : "Al día"}
+                        </span>
+                     </div>
                   </div>
                 </div>
 
-                <div className="flex justify-between items-center pt-3 mt-1 border-t relative z-10" style={{ borderColor: "var(--border)" }}>
-                  <div className="flex gap-2 items-center">
-                    <span className="px-2.5 py-1 rounded-lg text-[10px]" style={{ backgroundColor: tipo.bg, color: tipo.color, fontWeight: 800 }}>
-                      {m.tipo}
-                    </span>
-                    <div className="flex items-center gap-1.5 text-xs px-2" style={{ color: "var(--muted-foreground)" }}>
-                      <Users size={12} />
-                      <span style={{ fontWeight: 700 }}>{nPersonas}</span>
+                <div className="flex justify-end items-center pt-3 mt-1 border-t relative z-10 gap-2" style={{ borderColor: "var(--border)" }}>
+                  <button
+                    onClick={() => setViewingMember(m)}
+                    className="flex-1 max-w-[120px] h-9 rounded-xl flex items-center justify-center gap-2 transition-all hover:opacity-80 font-bold text-xs"
+                    style={{ backgroundColor: "var(--muted)", color: "var(--foreground)" }}
+                  >
+                    <Eye size={14} /> Detalle
+                  </button>
+                  <button
+                    onClick={() => setEditingMember(m)}
+                    className="w-9 h-9 rounded-xl flex items-center justify-center transition-all hover:scale-105 shadow-sm"
+                    style={{ backgroundColor: "#dcfce7", color: "#15803d" }}
+                  >
+                    <Pencil size={14} />
+                  </button>
+                  {deleteConfirm === m.id ? (
+                    <div className="flex items-center gap-1 bg-red-50 p-1 rounded-xl">
+                      <button onClick={() => { onDelete(m.id); setDeleteConfirm(null); }} className="px-3 h-7 rounded-lg text-xs" style={{ backgroundColor: "#fee2e2", color: "#991b1b", fontWeight: 700 }}>Sí</button>
+                      <button onClick={() => setDeleteConfirm(null)} className="px-3 h-7 rounded-lg text-xs" style={{ backgroundColor: "white", color: "var(--foreground)", fontWeight: 700, border: "1px solid #fee2e2" }}>No</button>
                     </div>
-                  </div>
-
-                  <div className="flex items-center gap-2">
+                  ) : (
                     <button
-                      onClick={() => setViewingMember(m)}
-                      className="w-9 h-9 rounded-xl flex items-center justify-center transition-all hover:scale-105"
-                      style={{ backgroundColor: "var(--muted)", color: "var(--foreground)" }}
-                      title="Ver detalle"
+                      onClick={() => setDeleteConfirm(m.id)}
+                      className="w-9 h-9 rounded-xl flex items-center justify-center transition-all hover:scale-105 shadow-sm"
+                      style={{ backgroundColor: "#fee2e2", color: "#991b1b" }}
                     >
-                      <Eye size={15} />
+                      <Trash2 size={14} />
                     </button>
-                    <button
-                      onClick={() => setEditingMember(m)}
-                      className="w-9 h-9 rounded-xl flex items-center justify-center transition-all hover:scale-105"
-                      style={{ backgroundColor: "#dcfce7", color: "#15803d" }}
-                      title="Editar"
-                    >
-                      <Pencil size={14} />
-                    </button>
-                    {deleteConfirm === m.id ? (
-                      <div className="flex items-center gap-1">
-                        <button onClick={() => { onDelete(m.id); setDeleteConfirm(null); }} className="px-3 py-1.5 rounded-xl text-xs" style={{ backgroundColor: "#fee2e2", color: "#991b1b", fontWeight: 700 }}>Sí</button>
-                        <button onClick={() => setDeleteConfirm(null)} className="px-3 py-1.5 rounded-xl text-xs" style={{ backgroundColor: "var(--muted)", color: "var(--foreground)", fontWeight: 700 }}>No</button>
-                      </div>
-                    ) : (
-                      <button
-                        onClick={() => setDeleteConfirm(m.id)}
-                        className="w-9 h-9 rounded-xl flex items-center justify-center transition-all hover:scale-105"
-                        style={{ backgroundColor: "#fee2e2", color: "#991b1b" }}
-                        title="Eliminar"
-                      >
-                        <Trash2 size={14} />
-                      </button>
-                    )}
-                  </div>
+                  )}
                 </div>
               </div>
             );

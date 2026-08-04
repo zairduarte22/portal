@@ -1,0 +1,10 @@
+{
+  "description": "Transforms administrative reports into visually appealing, professional PDF documents for central administration and club directives, enhancing clarity and presentation.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}

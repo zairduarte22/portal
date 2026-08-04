@@ -47,9 +47,7 @@ export function AbonosCreditoTab({ onOpenDetalle }: { onOpenDetalle: (venta: any
   };
 
   const getSaldoPendiente = (v: any) => {
-    const total = parseFloat(v.total) - parseFloat(v.descuento || "0");
-    const pagado = v.pagos?.reduce((acc: number, p: any) => acc + parseFloat(p.pivot?.monto_abonado_usd || 0), 0) || 0;
-    return Math.max(0, total - pagado);
+    return v.pendiente !== undefined ? parseFloat(v.pendiente) : 0;
   };
 
     const clientesAgrupados = useMemo(() => {
@@ -68,8 +66,9 @@ export function AbonosCreditoTab({ onOpenDetalle }: { onOpenDetalle: (venta: any
       group.totalDeuda += getSaldoPendiente(v);
       
       if (v.fecha_vencimiento) {
-        // v.fecha_vencimiento is usually "YYYY-MM-DD"
-        const vDate = new Date(v.fecha_vencimiento + 'T00:00:00');
+        let dateStr = String(v.fecha_vencimiento);
+        if (!dateStr.includes('T')) dateStr += 'T00:00:00';
+        const vDate = new Date(dateStr);
         if (vDate < hoy) {
             group.tieneVencidas = true;
             group.facturasVencidas++;

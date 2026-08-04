@@ -1,3 +1,84 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
 @import './fonts.css';
 @import './tailwind.css';
 @import './theme.css';
+
+
+body {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+}
+
+.soft-card {
+  background: #ffffff;
+  box-shadow:
+    0 2px 8px rgba(30, 107, 69, 0.07),
+    0 8px 24px rgba(30, 107, 69, 0.06);
+  border-radius: 16px;
+  border: 1px solid rgba(30, 107, 69, 0.08);
+}
+
+.soft-card-inset {
+  background: linear-gradient(145deg, #e8ede9, #f2f6f2);
+  box-shadow:
+    inset 3px 3px 8px rgba(30, 107, 69, 0.10),
+    inset -3px -3px 8px rgba(255, 255, 255, 0.8);
+  border-radius: 12px;
+}
+
+.kpi-card {
+  background: #ffffff;
+  box-shadow:
+    0 2px 6px rgba(30, 107, 69, 0.06),
+    0 8px 20px rgba(30, 107, 69, 0.08);
+  border-radius: 16px;
+  border: 1px solid rgba(30, 107, 69, 0.08);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.kpi-card:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 4px 12px rgba(30, 107, 69, 0.10),
+    0 12px 28px rgba(30, 107, 69, 0.12);
+}
+
+.kpi-card-hero {
+  background: linear-gradient(135deg, #1e6b45 0%, #1a5c8a 100%);
+  box-shadow:
+    0 4px 16px rgba(30, 107, 69, 0.30),
+    0 12px 32px rgba(26, 92, 138, 0.25);
+  border-radius: 16px;
+  border: none;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.kpi-card-hero:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 6px 20px rgba(30, 107, 69, 0.35),
+    0 16px 40px rgba(26, 92, 138, 0.30);
+}
+
+.accent-pill {
+  background: linear-gradient(135deg, #1e6b45, #2d9460);
+  box-shadow: 0 4px 12px rgba(30, 107, 69, 0.35);
+  color: white;
+  border-radius: 999px;
+}
+
+.section-header {
+  font-family: 'Inter', sans-serif;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+.mono {
+  font-family: 'Inter', sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.page-bg {
+  background: #ffffff;
+}
+

@@ -406,8 +406,7 @@ class TascaController extends Controller
             $montoAbonarAhora += $pago['monto_usd'];
         }
 
-        $totalPagado = $pagadoAnteriormente + $montoAbonarAhora;
-        $totalVenta = $venta->total - $venta->descuento + $venta->cargo_servicio;
+        $totalVenta = $venta->total - $venta->descuento_real + $venta->cargo_servicio;
 
         DB::beginTransaction();
         try {
@@ -432,6 +431,8 @@ class TascaController extends Controller
             }
 
             // Determine new state
+            $totalPagado = $pagadoAnteriormente + $montoAbonarAhora;
+            
             if ($totalPagado >= $totalVenta - 0.01) { // -0.01 for floating point rounding
                 $venta->estado = 'Pagada';
             } else if ($totalPagado > 0) {
@@ -490,17 +491,32 @@ class TascaController extends Controller
         $ventasHoy = VentaTasca::with('pagos')->whereBetween('fecha', [$startDate, $endDate])
             ->whereIn('estado', ['Pagada', 'Credito', 'Parcial'])
             ->get();
-        $totalVentasHoy = $ventasHoy->sum(function($v) { return $v->total - $v->descuento + $v->cargo_servicio; });
+        $totalVentasHoy = $ventasHoy->sum(function($v) { return $v->total - $v->descuento_real + $v->cargo_servicio; });
 
         // 2. Desglose de métodos de pago (Pagos hechos en el periodo)
         $pagosHoy = DB::table('pago_venta_tasca')
             ->join('pagos_tasca', 'pago_venta_tasca.id_pago', '=', 'pagos_tasca.id')
+            ->join('ventas_tasca', 'pago_venta_tasca.id_venta', '=', 'ventas_tasca.id')
             ->whereBetween('pagos_tasca.fecha_pago', [$startDate, $endDate])
-            ->select('pagos_tasca.metodo_pago', DB::raw('SUM(pago_venta_tasca.monto_abonado_usd) as total'))
-            ->groupBy('pagos_tasca.metodo_pago')
+            ->select('pagos_tasca.metodo_pago', 'ventas_tasca.fecha as fecha_venta', 'pago_venta_tasca.monto_abonado_usd')
             ->get();
 
-        $desglose = $pagosHoy->pluck('total', 'metodo_pago')->toArray();
+        $desglose = [];
+        $abonosViejos = [];
+
+        $startRange = Carbon::parse($startDate)->startOfDay();
+        $endRange = Carbon::parse($endDate)->endOfDay();
+
+        foreach ($pagosHoy as $p) {
+            $fechaVenta = Carbon::parse($p->fecha_venta);
+            if ($fechaVenta->between($startRange, $endRange)) {
+                if (!isset($desglose[$p->metodo_pago])) $desglose[$p->metodo_pago] = 0;
+                $desglose[$p->metodo_pago] += $p->monto_abonado_usd;
+            } else {
+                if (!isset($abonosViejos[$p->metodo_pago])) $abonosViejos[$p->metodo_pago] = 0;
+                $abonosViejos[$p->metodo_pago] += $p->monto_abonado_usd;
+            }
+        }
 
         // 3. Cuánto es a crédito (Ventas hechas en el periodo que están en estado Credito o Parcial)
         $creditoHoy = 0;
@@ -510,10 +526,21 @@ class TascaController extends Controller
             }
         }
 
+        // 4. Deuda Total Histórica (Todo lo que se debe hasta la fecha)
+        $ventasPendientes = VentaTasca::with('pagos')
+            ->whereIn('estado', ['Credito', 'Parcial'])
+            ->get();
+        
+        $deudaTotalHistorica = $ventasPendientes->sum(function($v) {
+            return $v->pendiente;
+        });
+
         return response()->json([
             'ventas_dia_usd' => $totalVentasHoy,
             'desglose_pagos' => $desglose,
-            'credito_otorgado_hoy' => $creditoHoy
+            'abonos_viejos' => $abonosViejos,
+            'credito_otorgado_hoy' => $creditoHoy,
+            'deuda_total_historica' => $deudaTotalHistorica
         ]);
     }
 
@@ -578,8 +605,7 @@ class TascaController extends Controller
             ->whereBetween('fecha', [$startDate, $endDate])
             ->whereIn('estado', ['Pagada', 'Credito', 'Parcial'])
             ->get();
-            
-        $totalFacturado = $ventasPeriodo->sum(function($v) { return $v->total - $v->descuento; });
+        $totalFacturado = $ventasPeriodo->sum(function($v) { return $v->total - $v->descuento_real + $v->cargo_servicio; });
         $totalPendiente = $ventasPeriodo->whereIn('estado', ['Credito', 'Parcial'])->sum('pendiente');
         $totalContado = $totalFacturado - $totalPendiente;
 
@@ -674,8 +700,7 @@ class TascaController extends Controller
             ->whereBetween('fecha', [$startDate, $endDate])
             ->whereIn('estado', ['Pagada', 'Credito', 'Parcial'])
             ->get();
-            
-        $totalFacturado = $ventasPeriodo->sum(function($v) { return $v->total - $v->descuento; });
+        $totalFacturado = $ventasPeriodo->sum(function($v) { return $v->total - $v->descuento_real + $v->cargo_servicio; });
         // Asegurar que el pendiente y crédito sumen lo mismo
         $totalPendiente = $ventasPeriodo->whereIn('estado', ['Credito', 'Parcial'])->sum('pendiente');
         $totalContado = $totalFacturado - $totalPendiente;
@@ -1222,7 +1247,7 @@ class TascaController extends Controller
                 $ventasDiarias[$fecha] = 0;
             }
             
-            $ingresoVenta = $venta->total - $venta->descuento;
+            $ingresoVenta = $venta->total + $venta->cargo_servicio - $venta->descuento_real;
             $ingresosTotales += $ingresoVenta;
             $ventasDiarias[$fecha] += $ingresoVenta;
 
@@ -1321,6 +1346,60 @@ class TascaController extends Controller
                 'monto' => round($p->total, 2)
             ];
         });
+        // --- NUEVAS MÉTRICAS FINANCIERAS ---
+        
+        // 2. Inventario Valorizado Actual
+        // Calculamos el valor real multiplicando el stock por el costo de cada lote activo para no duplicar por medida (botella, trago)
+        $inventarioValorizado = \DB::table('lotes_tasca')
+            ->where('estado', 'Activo')
+            ->where('stock_actual', '>', 0)
+            ->sum(\DB::raw('stock_actual * costo_unitario'));
+
+        // 2. Cuentas por Cobrar Históricas (Ventas a Crédito/Parciales pendientes de cobro total)
+        $cuentasPorCobrar = \App\Models\VentaTasca::with('pagos')
+            ->whereIn('estado', ['Credito', 'Parcial'])
+            ->get()
+            ->sum(function($venta) {
+                return $venta->pendiente;
+            });
+
+        // 3. Cuentas por Pagar Históricas
+        // a) Compras pendientes o abonadas parcialmente
+        $cuentasPorPagarCompras = DB::table('compras_tasca')
+            ->whereIn('estado', ['Pendiente', 'Parcial'])
+            ->select(DB::raw('SUM(total_usd - abono_usd) as total'))
+            ->first()->total ?? 0;
+            
+        // b) Gastos Por Pagar
+        $cuentasPorPagarGastos = DB::table('gastos_tasca')
+            ->where('metodo_pago', 'Por Pagar')
+            ->sum('monto_usd') ?? 0;
+            
+        $cuentasPorPagar = $cuentasPorPagarCompras + $cuentasPorPagarGastos;
+
+        // 4. Métricas del Periodo (Gastos, Flujo)
+        $gastosPeriodo = DB::table('gastos_tasca')
+            ->whereBetween('fecha', [$startDate, $endDate])
+            ->where('categoria', '!=', 'Compra de Mercancia')
+            ->sum('monto_usd') ?? 0;
+
+        $ingresosEfectivos = DB::table('pago_venta_tasca')
+            ->join('pagos_tasca', 'pago_venta_tasca.id_pago', '=', 'pagos_tasca.id')
+            ->whereBetween('pagos_tasca.fecha_pago', [$startDate, $endDate])
+            ->sum('pago_venta_tasca.monto_abonado_usd') ?? 0;
+
+        // Los pagos a proveedores por compra de mercancía ya se registran automáticamente en gastos_tasca 
+        // bajo la categoría 'Compra de Mercancia', por lo que gastosPagadosPeriodo ya incluye todos los egresos.
+        $gastosPagadosPeriodo = DB::table('gastos_tasca')
+            ->whereBetween('fecha', [$startDate, $endDate])
+            ->where('metodo_pago', '!=', 'Por Pagar')
+            ->sum('monto_usd') ?? 0;
+
+        $egresosEfectivos = $gastosPagadosPeriodo;
+        $flujoCajaNeto = $ingresosEfectivos - $egresosEfectivos;
+        
+        // Ganancia Neta recalculada considerando Gastos
+        $gananciaNeta = $gananciaBruta - $gastosPeriodo;
 
         return response()->json([
             'kpis' => [
@@ -1329,8 +1408,18 @@ class TascaController extends Controller
                 'ingresos_totales' => round($ingresosTotales, 2),
                 'costo_total' => round($costoTotal, 2),
                 'ganancia_bruta' => round($gananciaBruta, 2),
+                'ganancia_neta' => round($gananciaNeta, 2),
+                'gastos_periodo' => round($gastosPeriodo, 2),
                 'margen' => round($margen, 2),
                 'ticket_promedio' => round($ticketPromedio, 2)
+            ],
+            'finanzas' => [
+                'inventario_valorizado' => round($inventarioValorizado, 2),
+                'cuentas_por_cobrar' => round($cuentasPorCobrar, 2),
+                'cuentas_por_pagar' => round($cuentasPorPagar, 2),
+                'flujo_caja_neto' => round($flujoCajaNeto, 2),
+                'ingresos_efectivos' => round($ingresosEfectivos, 2),
+                'egresos_efectivos' => round($egresosEfectivos, 2)
             ],
             'grafica_ventas_diarias' => $graficaVentas,
             'top_liquidez' => $topLiquidez,

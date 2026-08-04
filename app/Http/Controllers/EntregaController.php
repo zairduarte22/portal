@@ -312,6 +312,70 @@ class EntregaController extends Controller
         }
     }
 
+    public function show($id)
+    {
+        $entrega = Entrega::findOrFail($id);
+        $pagos = Pago::where('entrega_id', $entrega->id)->get();
+        
+        $ugaviMin = $pagos->whereNotNull('factura_ugavi')->min('factura_ugavi');
+        $ugaviMax = $pagos->whereNotNull('factura_ugavi')->max('factura_ugavi');
+        $rangoUgavi = $ugaviMin ? "$ugaviMin al $ugaviMax" : "N/A";
+
+        $fondoMin = $pagos->whereNotNull('factura_fondo')->min('factura_fondo');
+        $fondoMax = $pagos->whereNotNull('factura_fondo')->max('factura_fondo');
+        $rangoFondo = $fondoMin ? "$fondoMin al $fondoMax" : "N/A";
+
+        // Obtener deducciones aplicadas en esta entrega
+        $abonos = \App\Models\AbonoObligacion::with('obligacion')
+            ->where('referencia', 'like', 'ENTREGA-' . $id . '-%')
+            ->get();
+            
+        $deducciones = [];
+        foreach ($abonos as $abono) {
+            $obl = $abono->obligacion;
+            if (!$obl) continue;
+            
+            $monedaDeduccion = $abono->moneda_pago;
+            $tasa = floatval($abono->tasa_cambio) ?: 1;
+            
+            $montoPago = floatval($abono->monto_abonado);
+            
+            // Adjust montoPago to reflect the currency it was paid/deducted in
+            if ($monedaDeduccion === 'USD' && $obl->moneda === 'VES') {
+                $montoPago = $montoPago / $tasa;
+            } elseif ($monedaDeduccion === 'VES' && $obl->moneda === 'USD') {
+                $montoPago = $montoPago * $tasa;
+            }
+            
+            $montoBs = $monedaDeduccion === 'VES' ? $montoPago : 0;
+            $montoUsd = $monedaDeduccion === 'USD' ? $montoPago : 0;
+            
+            $deducciones[] = [
+                'id' => $abono->id,
+                'concepto' => $obl->descripcion,
+                'afecta' => $obl->tercero ?? 'UGAVI',
+                'bs' => $montoBs,
+                'usd' => $montoUsd,
+                'tipo' => $obl->tipo_obligacion
+            ];
+        }
+
+        $configuraciones = \App\Models\Configuracion::whereIn('clave', [
+            'firma_secretario_nombre', 
+            'firma_secretario_cedula', 
+            'firma_admin_nombre', 
+            'firma_admin_cedula'
+        ])->pluck('valor', 'clave')->toArray();
+
+        return response()->json([
+            'entrega' => $entrega,
+            'rangoUgavi' => $rangoUgavi,
+            'rangoFondo' => $rangoFondo,
+            'deducciones' => $deducciones,
+            'configuraciones' => $configuraciones
+        ]);
+    }
+
     public function downloadPdf($id)
     {
         $entrega = Entrega::findOrFail($id);

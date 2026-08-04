@@ -536,4 +536,47 @@ class ExportController extends Controller
             ->header('Content-Type', 'application/pdf')
             ->header('Content-Disposition', 'inline; filename="Reporte_General_Pagos.pdf"');
     }
+
+    public function reporteGeneralPagosJson(Request $request)
+    {
+        $f_inicio_str = $request->query('desde');
+        $f_fin_str = $request->query('hasta');
+
+        $query = DB::table('pagos');
+        if ($f_inicio_str) {
+            $query->where('fecha', '>=', $f_inicio_str);
+        }
+        if ($f_fin_str) {
+            $query->where('fecha', '<=', $f_fin_str);
+        }
+        $pagos = $query->orderBy('factura_ugavi', 'asc')->get();
+
+        $facturas_completo = [];
+        foreach ($pagos as $p) {
+            $facturas_completo[] = [
+                'FECHA' => $p->fecha,
+                'FACT_UGAVI' => $p->factura_ugavi,
+                'METODO_PAGO' => $p->metodo_pago,
+                'MONTO_BS' => floatval($p->monto_bs),
+                'MONTO_DIVISAS' => floatval($p->monto)
+            ];
+        }
+
+        $f_inicio_str = $f_inicio_str ?: date('Y-m-d');
+        $f_fin_str = $f_fin_str ?: date('Y-m-d');
+
+        require_once storage_path('app/private/reports/ReporteCuotas.php');
+
+        $filtroReporte = [$f_inicio_str, $f_fin_str];
+
+        // Call the function passing false to $descargarPdf to get the JSON array
+        $data = generarReporteConFormatoImagen(
+            $facturas_completo,
+            $filtroReporte,
+            false, // descargarPdf
+            ''
+        );
+
+        return response()->json($data);
+    }
 }

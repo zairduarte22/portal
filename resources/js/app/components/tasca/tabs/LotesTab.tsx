@@ -313,21 +313,47 @@ export default function LotesTab() {
   return (
     <div className="flex flex-col gap-6">
       
+      {/* Header con Título y Botón */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <h2 className="text-2xl sm:text-3xl font-black font-sans text-gray-900 tracking-tight flex items-center gap-2">
+          <Layers size={28} className="text-blue-600" />
+          Historial de Compras de Inventario
+        </h2>
+        <button 
+          onClick={openNewCompra}
+          className="flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl text-white shadow-md transition-transform hover:scale-105 w-full sm:w-auto"
+          style={{ background: "linear-gradient(135deg, #3b82f6, #2563eb)" }}
+        >
+          <PlusCircle size={20} /> Registrar Compra
+        </button>
+      </div>
+
       {/* Listado de Compras (Historial) */}
       <div className="p-6 rounded-2xl shadow-sm" style={{ backgroundColor: "var(--card)", border: "1px solid var(--border)" }}>
-        <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 mb-6">
-          <h2 className="text-lg sm:text-xl font-bold flex items-center gap-2" style={{ color: "var(--foreground)" }}>
-            <Layers size={24} className="text-blue-600 shrink-0" />
-            Historial de Compras de Inventario
-          </h2>
-          <button 
-            onClick={openNewCompra}
-            className="flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl text-white shadow-md transition-transform hover:scale-105 w-full sm:w-auto"
-            style={{ background: "linear-gradient(135deg, #3b82f6, #2563eb)" }}
-          >
-            <PlusCircle size={20} /> Registrar Compra
-          </button>
-        </div>
+
+        {/* METRICS ROW */}
+        {compras.length > 0 && (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <div className="p-4 rounded-2xl bg-black/5 dark:bg-white/5 border border-black/5 flex flex-col">
+              <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--muted-foreground)" }}>Total Compras</span>
+              <span className="text-2xl font-black mt-1" style={{ color: "var(--foreground)" }}>
+                ${compras.filter(c => c.estado !== 'Anulada').reduce((acc, c) => acc + parseFloat(c.total_usd), 0).toFixed(2)}
+              </span>
+            </div>
+            <div className="p-4 rounded-2xl bg-green-50 dark:bg-green-900/10 border border-green-100 flex flex-col">
+              <span className="text-xs font-bold uppercase tracking-wider text-green-600">Total Pagado</span>
+              <span className="text-2xl font-black mt-1 text-green-700">
+                ${compras.filter(c => c.estado !== 'Anulada').reduce((acc, c) => acc + parseFloat(c.abono_usd || '0'), 0).toFixed(2)}
+              </span>
+            </div>
+            <div className="p-4 rounded-2xl bg-orange-50 dark:bg-orange-900/10 border border-orange-100 flex flex-col">
+              <span className="text-xs font-bold uppercase tracking-wider text-orange-600">Por Pagar (Deuda)</span>
+              <span className="text-2xl font-black mt-1 text-orange-700">
+                ${compras.filter(c => c.estado !== 'Anulada').reduce((acc, c) => acc + (parseFloat(c.total_usd) - parseFloat(c.abono_usd || '0')), 0).toFixed(2)}
+              </span>
+            </div>
+          </div>
+        )}
 
         {compras.length === 0 ? (
           <div className="py-12 text-center" style={{ color: "var(--muted-foreground)" }}>
