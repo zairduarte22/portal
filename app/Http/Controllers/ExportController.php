@@ -490,10 +490,12 @@ class ExportController extends Controller
 
         $query = DB::table('pagos');
         if ($f_inicio_str) {
-            $query->where('fecha', '>=', $f_inicio_str);
+            $start_date = strlen($f_inicio_str) === 10 ? $f_inicio_str . ' 00:00:00' : $f_inicio_str;
+            $query->where('fecha', '>=', $start_date);
         }
         if ($f_fin_str) {
-            $query->where('fecha', '<=', $f_fin_str);
+            $end_date = strlen($f_fin_str) === 10 ? $f_fin_str . ' 23:59:59' : $f_fin_str;
+            $query->where('fecha', '<=', $end_date);
         }
         $pagos = $query->orderBy('factura_ugavi', 'asc')->get();
 
@@ -510,8 +512,12 @@ class ExportController extends Controller
             ];
         }
 
-        $f_inicio_str = $f_inicio_str ?: date('Y-m-d');
-        $f_fin_str = $f_fin_str ?: date('Y-m-d');
+        if (!$f_inicio_str) {
+            $f_inicio_str = count($pagos) > 0 ? substr($pagos->min('fecha'), 0, 10) : date('Y-m-d');
+        }
+        if (!$f_fin_str) {
+            $f_fin_str = count($pagos) > 0 ? substr($pagos->max('fecha'), 0, 10) : date('Y-m-d');
+        }
         
         $fecha_inicio = strtotime($f_inicio_str);
         $fecha_fin = strtotime($f_fin_str);
@@ -546,10 +552,12 @@ class ExportController extends Controller
 
         $query = DB::table('pagos');
         if ($f_inicio_str) {
-            $query->where('fecha', '>=', $f_inicio_str);
+            $start_date = strlen($f_inicio_str) === 10 ? $f_inicio_str . ' 00:00:00' : $f_inicio_str;
+            $query->where('fecha', '>=', $start_date);
         }
         if ($f_fin_str) {
-            $query->where('fecha', '<=', $f_fin_str);
+            $end_date = strlen($f_fin_str) === 10 ? $f_fin_str . ' 23:59:59' : $f_fin_str;
+            $query->where('fecha', '<=', $end_date);
         }
         $pagos = $query->orderBy('factura_ugavi', 'asc')->get();
 
@@ -566,8 +574,12 @@ class ExportController extends Controller
             ];
         }
 
-        $f_inicio_str = $f_inicio_str ?: date('Y-m-d');
-        $f_fin_str = $f_fin_str ?: date('Y-m-d');
+        if (!$f_inicio_str) {
+            $f_inicio_str = count($pagos) > 0 ? substr($pagos->min('fecha'), 0, 10) : date('Y-m-d');
+        }
+        if (!$f_fin_str) {
+            $f_fin_str = count($pagos) > 0 ? substr($pagos->max('fecha'), 0, 10) : date('Y-m-d');
+        }
 
         require_once storage_path('app/private/reports/ReporteCuotas.php');
 
