@@ -377,4 +377,65 @@ class ObligacionesController extends Controller
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }
+
+    public function reportePdf(Request $request)
+    {
+        $tipo = $request->query('tipo', 'COBRAR');
+        $categoria = $request->query('categoria', '');
+        $tercero = $request->query('tercero', '');
+        $estado = $request->query('estado', '');
+        
+        $query = Obligacion::with('bancoOrigen')
+            ->where('tipo_obligacion', $tipo);
+            
+        if (!empty($categoria)) {
+            $categoriasArr = array_map('trim', explode(',', $categoria));
+            $query->whereIn('categoria', $categoriasArr);
+        }
+        
+        if (!empty($tercero)) {
+            $tercerosArr = array_map('trim', explode(',', $tercero));
+            $query->whereIn('tercero', $tercerosArr);
+        }
+        
+        if (!empty($estado)) {
+            $query->where('estado', $estado);
+        }
+        
+        $obligaciones = $query->orderBy('estado', 'asc')
+            ->orderBy('fecha_emision', 'desc')
+            ->get();
+            
+        $totales = [
+            'VES' => ['deuda' => 0, 'abonado' => 0, 'restante' => 0],
+            'USD' => ['deuda' => 0, 'abonado' => 0, 'restante' => 0],
+        ];
+        
+        foreach ($obligaciones as $obl) {
+            $moneda = $obl->moneda;
+            $restante = $obl->monto_original - $obl->monto_abonado;
+            
+            if (isset($totales[$moneda])) {
+                $totales[$moneda]['deuda'] += $obl->monto_original;
+                $totales[$moneda]['abonado'] += $obl->monto_abonado;
+                $totales[$moneda]['restante'] += $restante;
+            }
+        }
+        
+        $data = [
+            'tipo' => $tipo,
+            'categoria' => $categoria,
+            'tercero' => $tercero,
+            'estado' => $estado,
+            'obligaciones' => $obligaciones,
+            'totales' => $totales,
+            'fecha_generacion' => date('d/m/Y H:i:s')
+        ];
+        
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('reportes.obligaciones', $data);
+        $pdf->setPaper('A4', 'portrait');
+        
+        return $pdf->stream("Reporte_Obligaciones_{$tipo}.pdf");
+    }
+
 }

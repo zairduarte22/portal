@@ -134,6 +134,7 @@ Route::prefix('finanzas')->group(function () {
     Route::get('/obligaciones/config', [ObligacionesController::class, 'getConfig']);
     Route::post('/obligaciones/config', [ObligacionesController::class, 'updateConfig']);
     Route::get('/obligaciones', [ObligacionesController::class, 'index']);
+    Route::get('/obligaciones/reporte', [ObligacionesController::class, 'reportePdf']);
     Route::post('/obligaciones', [ObligacionesController::class, 'store']);
     Route::put('/obligaciones/{id}', [ObligacionesController::class, 'update']);
     Route::delete('/obligaciones/{id}', [ObligacionesController::class, 'destroy']);
