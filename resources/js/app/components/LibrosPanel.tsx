@@ -13,8 +13,32 @@ export function LibrosPanel() {
   const [fechaFin, setFechaFin] = useState(getLastDayOfMonth());
   
   const [modalOpen, setModalOpen] = useState(false);
-  const [modalMode, setModalMode] = useState<"view" | "edit">("view");
+  const [modalMode, setModalMode] = useState<"view" | "edit" | "create">("view");
   const [selectedRecord, setSelectedRecord] = useState<any>(null);
+  
+  const [miembros, setMiembros] = useState<any[]>([]);
+  const [proveedores, setProveedores] = useState<any[]>([]);
+
+  const fetchAuxData = async () => {
+    try {
+      const resM = await fetch("/api/miembros");
+      if (resM.ok) {
+        const data = await resM.json();
+        // MiembroController returns data in data.data if paginated, or an array. Let's handle both.
+        setMiembros(Array.isArray(data) ? data : data.data || []);
+      }
+      const resP = await fetch("/api/finanzas/proveedores");
+      if (resP.ok) {
+        setProveedores(await resP.json());
+      }
+    } catch (err) {
+      console.error("Error fetching auxiliary data:", err);
+    }
+  };
+
+  useEffect(() => {
+    fetchAuxData();
+  }, []);
 
   const handleExport = () => {
     let url = `/api/finanzas/libro-${activeTab}/exportar?`;
@@ -60,7 +84,7 @@ export function LibrosPanel() {
     }
   };
 
-  const openModal = (record: any, mode: "view" | "edit") => {
+  const openModal = (record: any, mode: "view" | "edit" | "create") => {
     setSelectedRecord(record);
     setModalMode(mode);
     setModalOpen(true);
@@ -106,14 +130,23 @@ export function LibrosPanel() {
             Visualiza y exporta los libros de ventas e ingresos y compras.
           </p>
         </div>
-        <button
-          onClick={handleExport}
-          className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all hover:scale-105"
-          style={{ background: "linear-gradient(135deg, #3b82f6, #2563eb)", color: "#fff", boxShadow: "0 4px 14px rgba(59,130,246,0.3)" }}
-        >
-          <Download size={18} />
-          Exportar a Excel
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => openModal({}, "create")}
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all hover:scale-105"
+            style={{ backgroundColor: "var(--foreground)", color: "var(--background)" }}
+          >
+            Nuevo Movimiento
+          </button>
+          <button
+            onClick={handleExport}
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all hover:scale-105"
+            style={{ background: "linear-gradient(135deg, #3b82f6, #2563eb)", color: "#fff", boxShadow: "0 4px 14px rgba(59,130,246,0.3)" }}
+          >
+            <Download size={18} />
+            Exportar a Excel
+          </button>
+        </div>
       </div>
 
       {/* Tabs & Search */}
@@ -298,6 +331,9 @@ export function LibrosPanel() {
         record={selectedRecord}
         tipo={activeTab}
         mode={modalMode}
+        miembros={miembros}
+        proveedores={proveedores}
+        refreshProveedores={fetchAuxData}
       />
     </div>
   );

@@ -12,8 +12,10 @@ export function ConciliacionPanel() {
   const [fechaInicio, setFechaInicio] = useState(getFirstDayOfMonth());
   const [fechaFin, setFechaFin] = useState(getLastDayOfMonth());
   const [modalOpen, setModalOpen] = useState(false);
-  const [modalMode, setModalMode] = useState<"view" | "edit">("view");
+  const [modalMode, setModalMode] = useState<"view" | "edit" | "create">("view");
   const [selectedRecord, setSelectedRecord] = useState<any>(null);
+  const [categoriasFondo, setCategoriasFondo] = useState<any[]>([]);
+  const [beneficiariosFondo, setBeneficiariosFondo] = useState<any[]>([]);
 
   const fetchData = async () => {
     setLoading(true);
@@ -36,6 +38,29 @@ export function ConciliacionPanel() {
     setLoading(false);
   };
 
+  const fetchCategorias = async () => {
+    try {
+      const res = await fetch("/api/finanzas/categorias-fondo");
+      if (res.ok) setCategoriasFondo(await res.json());
+    } catch (error) {
+      console.error("Error cargando categorías:", error);
+    }
+  };
+
+  const fetchBeneficiarios = async () => {
+    try {
+      const res = await fetch("/api/finanzas/beneficiarios-fondo");
+      if (res.ok) setBeneficiariosFondo(await res.json());
+    } catch (error) {
+      console.error("Error cargando beneficiarios:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchCategorias();
+    fetchBeneficiarios();
+  }, []);
+
   useEffect(() => {
     fetchData();
   }, [activeTab, fechaInicio, fechaFin]);
@@ -57,7 +82,7 @@ export function ConciliacionPanel() {
     }
   };
 
-  const openModal = (record: any, mode: "view" | "edit") => {
+  const openModal = (record: any, mode: "view" | "edit" | "create") => {
     setSelectedRecord(record);
     setModalMode(mode);
     setModalOpen(true);
@@ -71,8 +96,10 @@ export function ConciliacionPanel() {
     const descMatch = item.descripcion?.toLowerCase().includes(term);
     const bankMatch = item.banco_nombre?.toLowerCase().includes(term);
     const opMatch = item.tipo_operacion?.toLowerCase().includes(term);
+    const catMatch = item.categoria_nombre?.toLowerCase().includes(term);
+    const benMatch = (item.beneficiario_nombre || item.beneficiario)?.toLowerCase().includes(term);
     
-    return referenceMatch || descMatch || bankMatch || opMatch;
+    return referenceMatch || descMatch || bankMatch || opMatch || catMatch || benMatch;
   });
 
   const totalIngresos = filteredData.reduce((acc, val) => acc + Number(val.debe || 0), 0); // En DB debe = ingreso
@@ -80,7 +107,7 @@ export function ConciliacionPanel() {
   const saldoNeto = totalIngresos - totalEgresos;
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
+    <div className="space-y-6 w-full mx-auto">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
@@ -92,20 +119,29 @@ export function ConciliacionPanel() {
             Supervisa los movimientos bancarios cruzados con los libros.
           </p>
         </div>
-        <button
-          onClick={() => {
-            const params = new URLSearchParams({ moneda: activeTab });
-            if (fechaInicio) params.append('desde', fechaInicio);
-            if (fechaFin) params.append('hasta', fechaFin);
-            const baseUrl = `/api/finanzas/conciliacion/exportar?${params.toString()}`;
-            window.open(baseUrl, '_blank');
-          }}
-          className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all hover:scale-105"
-          style={{ background: "linear-gradient(135deg, #a855f7, #9333ea)", color: "#fff", boxShadow: "0 4px 14px rgba(168,85,247,0.3)" }}
-        >
-          <Download size={18} />
-          Exportar Conciliación
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => openModal({}, "create")}
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all hover:scale-105"
+            style={{ backgroundColor: "var(--foreground)", color: "var(--background)" }}
+          >
+            Nuevo Movimiento
+          </button>
+          <button
+            onClick={() => {
+              const params = new URLSearchParams({ moneda: activeTab });
+              if (fechaInicio) params.append('desde', fechaInicio);
+              if (fechaFin) params.append('hasta', fechaFin);
+              const baseUrl = `/api/finanzas/conciliacion/exportar?${params.toString()}`;
+              window.open(baseUrl, '_blank');
+            }}
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all hover:scale-105"
+            style={{ background: "linear-gradient(135deg, #a855f7, #9333ea)", color: "#fff", boxShadow: "0 4px 14px rgba(168,85,247,0.3)" }}
+          >
+            <Download size={18} />
+            Exportar Conciliación
+          </button>
+        </div>
       </div>
 
       {/* Tabs & Search */}
@@ -200,6 +236,7 @@ export function ConciliacionPanel() {
                   <th className="px-4 py-4 text-[0.65rem] font-bold uppercase tracking-wider" style={{ color: "var(--muted-foreground)" }}>Fecha</th>
                   <th className="px-4 py-4 text-[0.65rem] font-bold uppercase tracking-wider" style={{ color: "var(--muted-foreground)" }}>Banco</th>
                   <th className="px-4 py-4 text-[0.65rem] font-bold uppercase tracking-wider" style={{ color: "var(--muted-foreground)" }}>Operación</th>
+                  <th className="px-4 py-4 text-[0.65rem] font-bold uppercase tracking-wider" style={{ color: "var(--muted-foreground)" }}>Categoría</th>
                   <th className="px-4 py-4 text-[0.65rem] font-bold uppercase tracking-wider" style={{ color: "var(--muted-foreground)" }}>Referencia</th>
                   <th className="px-4 py-4 text-[0.65rem] font-bold uppercase tracking-wider" style={{ color: "var(--muted-foreground)" }}>Beneficiario</th>
                   <th className="px-4 py-4 text-[0.65rem] font-bold uppercase tracking-wider" style={{ color: "var(--muted-foreground)" }}>Descripción</th>
@@ -227,16 +264,21 @@ export function ConciliacionPanel() {
                       </span>
                     </td>
                     <td className="px-4 py-4 whitespace-nowrap">
+                      <span className="text-xs font-semibold text-purple-600 bg-purple-50 px-2 py-1 rounded-md">
+                        {item.categoria_nombre || "Sin categoría"}
+                      </span>
+                    </td>
+                    <td className="px-4 py-4 whitespace-nowrap">
                       <span className="text-xs font-mono" style={{ color: "var(--muted-foreground)" }}>
                         {item.referencia || "-"}
                       </span>
                     </td>
-                    <td className="px-4 py-4">
-                      <span className="text-xs font-semibold" style={{ color: "var(--foreground)" }}>
-                        {item.beneficiario || "-"}
+                    <td className="px-4 py-4 whitespace-nowrap">
+                      <span className="text-xs font-semibold text-blue-600 bg-blue-50 px-2 py-1 rounded-md">
+                        {item.beneficiario_nombre || item.beneficiario || "-"}
                       </span>
                     </td>
-                    <td className="px-4 py-4">
+                    <td className="px-4 py-4 w-64">
                       <span className="text-xs" style={{ color: "var(--foreground)" }}>
                         {item.descripcion || "-"}
                       </span>
@@ -286,6 +328,10 @@ export function ConciliacionPanel() {
         record={selectedRecord}
         tipo={activeTab}
         mode={modalMode}
+        categorias={categoriasFondo}
+        refreshCategorias={fetchCategorias}
+        beneficiarios={beneficiariosFondo}
+        refreshBeneficiarios={fetchBeneficiarios}
       />
     </div>
   );

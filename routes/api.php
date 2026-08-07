@@ -7,6 +7,7 @@ use App\Http\Controllers\FacturaController;
 use App\Http\Controllers\PersonaController;
 use App\Http\Controllers\VinculacionController;
 use App\Http\Controllers\DocumentoMiembroController;
+use App\Http\Controllers\ProveedorController;
 use App\Http\Controllers\ObligacionesController;
 
 use App\Http\Controllers\AuthController;
@@ -20,6 +21,8 @@ use App\Http\Controllers\CarnetEmitidoController;
 use App\Http\Controllers\TascaController;
 use App\Http\Controllers\CobranzaController;
 use App\Http\Controllers\ExportController;
+use App\Http\Controllers\CategoriasFondoController;
+use App\Http\Controllers\BeneficiariosFondoController;
 
 Route::post('/login', [AuthController::class, 'login']);
 Route::get('/carnets/public/{id}', [CarnetEmitidoController::class, 'showPublic']);
@@ -121,14 +124,29 @@ Route::prefix('finanzas')->group(function () {
     Route::get('/libro-ventas/exportar', [\App\Http\Controllers\ExportController::class, 'exportarLibroVentas']);
     Route::get('/libro-compras/exportar', [\App\Http\Controllers\ExportController::class, 'exportarLibroCompras']);
     
+    Route::post('/libro/{tipo}', [FinanzasController::class, 'storeLibro']);
     Route::put('/libro/{tipo}/{id}', [FinanzasController::class, 'updateLibro']);
     Route::delete('/libro/{tipo}/{id}', [FinanzasController::class, 'deleteLibro']);
     
     Route::get('/conciliacion/exportar', [\App\Http\Controllers\ExportController::class, 'exportarConciliacion']);
     Route::get('/conciliacion/ves', [FinanzasController::class, 'conciliacionVes']);
     Route::get('/conciliacion/usd', [FinanzasController::class, 'conciliacionUsd']);
+    Route::post('/conciliacion/{tipo}', [FinanzasController::class, 'storeConciliacion']);
     Route::put('/conciliacion/{tipo}/{id}', [FinanzasController::class, 'updateConciliacion']);
     Route::delete('/conciliacion/{tipo}/{id}', [FinanzasController::class, 'deleteConciliacion']);
+    
+    // Proveedores para Libros Contables
+    Route::get('/proveedores', [ProveedorController::class, 'index']);
+    Route::post('/proveedores', [ProveedorController::class, 'store']);
+    Route::delete('/proveedores/{id}', [ProveedorController::class, 'destroy']);
+    
+    Route::get('/categorias-fondo', [CategoriasFondoController::class, 'index']);
+    Route::post('/categorias-fondo', [CategoriasFondoController::class, 'store']);
+    Route::delete('/categorias-fondo/{id}', [CategoriasFondoController::class, 'destroy']);
+    
+    Route::get('/beneficiarios-fondo', [BeneficiariosFondoController::class, 'index']);
+    Route::post('/beneficiarios-fondo', [BeneficiariosFondoController::class, 'store']);
+    Route::delete('/beneficiarios-fondo/{id}', [BeneficiariosFondoController::class, 'destroy']);
     
     // Obligaciones
     Route::get('/obligaciones/config', [ObligacionesController::class, 'getConfig']);

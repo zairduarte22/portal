@@ -7,18 +7,52 @@ interface FinanzasConciliacionModalProps {
   onSuccess: () => void;
   record: any;
   tipo: "ves" | "usd";
-  mode: "view" | "edit";
+  mode: "view" | "edit" | "create";
+  categorias: any[];
+  refreshCategorias: () => void;
+  beneficiarios: any[];
+  refreshBeneficiarios: () => void;
 }
 
-export function FinanzasConciliacionModal({ isOpen, onClose, onSuccess, record, tipo, mode }: FinanzasConciliacionModalProps) {
+export function FinanzasConciliacionModal({ isOpen, onClose, onSuccess, record, tipo, mode, categorias, refreshCategorias, beneficiarios, refreshBeneficiarios }: FinanzasConciliacionModalProps) {
   const [formData, setFormData] = useState<any>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [bancos, setBancos] = useState<any[]>([]);
+  
+  const [managingCategories, setManagingCategories] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState("");
+
+  const [managingBeneficiarios, setManagingBeneficiarios] = useState(false);
+  const [newBeneficiarioName, setNewBeneficiarioName] = useState("");
 
   useEffect(() => {
-    if (isOpen && record) {
-      setFormData(record);
+    // Cargar bancos para el modo crear
+    if (isOpen && mode === "create") {
+      fetch("/api/finanzas/obligaciones/config")
+        .then(res => res.json())
+        .then(data => {
+          if (data.bancos) {
+            setBancos(data.bancos.filter((b: any) => b.moneda === (tipo === 'ves' ? 'VES' : 'USD') || b.moneda === 'AMBOS'));
+          }
+        })
+        .catch(console.error);
     }
-  }, [isOpen, record]);
+  }, [isOpen, mode, tipo]);
+
+  useEffect(() => {
+    if (isOpen) {
+      if (mode === "create") {
+        setFormData({
+          tipo_operacion: "TRANSF",
+          debe: 0,
+          haber: 0,
+          fecha: new Date().toISOString().split('T')[0]
+        });
+      } else if (record) {
+        setFormData(record);
+      }
+    }
+  }, [isOpen, record, mode]);
 
   if (!isOpen) return null;
 
@@ -28,15 +62,20 @@ export function FinanzasConciliacionModal({ isOpen, onClose, onSuccess, record, 
 
     setIsSubmitting(true);
     try {
-      const res = await fetch(`/api/finanzas/conciliacion/${tipo}/${record.id}`, {
-        method: "PUT",
+      const url = mode === "create" 
+        ? `/api/finanzas/conciliacion/${tipo}`
+        : `/api/finanzas/conciliacion/${tipo}/${record.id}`;
+      const method = mode === "create" ? "POST" : "PUT";
+
+      const res = await fetch(url, {
+        method,
         headers: {
           "Content-Type": "application/json",
           "Accept": "application/json"
         },
         body: JSON.stringify(formData)
       });
-      if (!res.ok) throw new Error("Error al actualizar el registro");
+      if (!res.ok) throw new Error("Error al guardar el registro");
       
       onSuccess();
       onClose();
@@ -48,13 +87,146 @@ export function FinanzasConciliacionModal({ isOpen, onClose, onSuccess, record, 
     }
   };
 
+  const handleAddCategory = async () => {
+    if (!newCategoryName.trim()) return;
+    try {
+      const res = await fetch("/api/finanzas/categorias-fondo", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ categoria: newCategoryName })
+      });
+      if (res.ok) {
+        setNewCategoryName("");
+        refreshCategorias();
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const handleDeleteCategory = async (id: number) => {
+    if (!window.confirm("¿Seguro que deseas eliminar esta categoría?")) return;
+    try {
+      const res = await fetch(`/api/finanzas/categorias-fondo/${id}`, { method: "DELETE" });
+      if (res.ok) refreshCategorias();
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const handleAddBeneficiario = async () => {
+    if (!newBeneficiarioName.trim()) return;
+    try {
+      const res = await fetch("/api/finanzas/beneficiarios-fondo", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ nombre: newBeneficiarioName })
+      });
+      if (res.ok) {
+        setNewBeneficiarioName("");
+        refreshBeneficiarios();
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const handleDeleteBeneficiario = async (id: number) => {
+    if (!window.confirm("¿Seguro que deseas eliminar este beneficiario?")) return;
+    try {
+      const res = await fetch(`/api/finanzas/beneficiarios-fondo/${id}`, { method: "DELETE" });
+      if (res.ok) refreshBeneficiarios();
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose}></div>
+      <div className="absolute inset-0 bg-black/50" onClick={onClose}></div>
       <div className="relative bg-white rounded-3xl w-full max-w-2xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
+        
+        {/* MODAL GESTIÓN CATEGORÍAS */}
+        {managingCategories && (
+          <div className="absolute inset-0 bg-white z-20 flex flex-col">
+            <div className="flex items-center justify-between px-6 py-4 border-b bg-gray-50">
+              <h2 className="text-xl font-bold text-gray-800">Gestionar Categorías</h2>
+              <button onClick={() => setManagingCategories(false)} className="p-2 rounded-full hover:bg-gray-200 transition-colors">
+                <X size={20} className="text-gray-500" />
+              </button>
+            </div>
+            <div className="p-6 flex-1 overflow-auto">
+              <div className="flex gap-2 mb-6">
+                <input
+                  type="text"
+                  placeholder="Nueva categoría..."
+                  className="flex-1 px-4 py-2 border rounded-xl outline-none focus:ring-2 focus:ring-purple-200"
+                  value={newCategoryName}
+                  onChange={e => setNewCategoryName(e.target.value)}
+                />
+                <button
+                  onClick={handleAddCategory}
+                  className="px-4 py-2 bg-purple-600 text-white rounded-xl font-bold hover:bg-purple-700 transition-colors"
+                >
+                  Agregar
+                </button>
+              </div>
+              <ul className="space-y-2">
+                {categorias.map(cat => (
+                  <li key={cat.id} className="flex justify-between items-center p-3 bg-gray-50 rounded-xl border">
+                    <span className="font-semibold text-gray-700">{cat.categoria}</span>
+                    <button onClick={() => handleDeleteCategory(cat.id)} className="text-red-500 hover:text-red-700 font-bold text-sm">
+                      Eliminar
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        )}
+
+        {/* MODAL GESTIÓN BENEFICIARIOS */}
+        {managingBeneficiarios && (
+          <div className="absolute inset-0 bg-white z-30 flex flex-col">
+            <div className="flex items-center justify-between px-6 py-4 border-b bg-gray-50">
+              <h2 className="text-xl font-bold text-gray-800">Gestionar Beneficiarios</h2>
+              <button onClick={() => setManagingBeneficiarios(false)} className="p-2 rounded-full hover:bg-gray-200 transition-colors">
+                <X size={20} className="text-gray-500" />
+              </button>
+            </div>
+            <div className="p-6 flex-1 overflow-auto">
+              <div className="flex gap-2 mb-6">
+                <input
+                  type="text"
+                  placeholder="Nuevo beneficiario..."
+                  className="flex-1 px-4 py-2 border rounded-xl outline-none focus:ring-2 focus:ring-blue-200"
+                  value={newBeneficiarioName}
+                  onChange={e => setNewBeneficiarioName(e.target.value)}
+                />
+                <button
+                  onClick={handleAddBeneficiario}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-colors"
+                >
+                  Agregar
+                </button>
+              </div>
+              <ul className="space-y-2">
+                {beneficiarios.map(ben => (
+                  <li key={ben.id} className="flex justify-between items-center p-3 bg-gray-50 rounded-xl border">
+                    <span className="font-semibold text-gray-700">{ben.nombre}</span>
+                    <button onClick={() => handleDeleteBeneficiario(ben.id)} className="text-red-500 hover:text-red-700 font-bold text-sm">
+                      Eliminar
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        )}
+
         <div className="flex items-center justify-between px-6 py-4 border-b">
           <h2 className="text-xl font-bold text-gray-800">
-            {mode === "view" ? "Detalles de Conciliación" : "Editar Movimiento Bancario"}
+            {mode === "view" ? "Detalles de Conciliación" : mode === "create" ? "Nuevo Movimiento Bancario" : "Editar Movimiento Bancario"}
           </h2>
           <button onClick={onClose} className="p-2 rounded-full hover:bg-gray-100 transition-colors">
             <X size={20} className="text-gray-500" />
@@ -88,6 +260,48 @@ export function FinanzasConciliacionModal({ isOpen, onClose, onSuccess, record, 
                 </select>
               </div>
 
+              {mode === "create" && (
+                <div className="space-y-1.5 md:col-span-2">
+                  <label className="text-xs font-bold uppercase text-gray-500 tracking-wider">Banco</label>
+                  <select
+                    className="w-full px-4 py-2.5 rounded-xl border outline-none bg-white focus:ring-2 focus:ring-purple-200"
+                    value={formData.id_banco || ""}
+                    onChange={e => setFormData({ ...formData, id_banco: e.target.value })}
+                  >
+                    <option value="">Seleccione un banco...</option>
+                    {bancos.map(b => (
+                      <option key={b.id} value={b.id}>{b.nombre}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              <div className="space-y-1.5 flex flex-col">
+                <div className="flex justify-between items-center">
+                  <label className="text-xs font-bold uppercase text-gray-500 tracking-wider">Categoría</label>
+                  {mode !== "view" && (
+                    <button 
+                      type="button" 
+                      onClick={() => setManagingCategories(true)}
+                      className="text-xs font-bold text-purple-600 hover:text-purple-800"
+                    >
+                      Gestionar
+                    </button>
+                  )}
+                </div>
+                <select
+                  disabled={mode === "view"}
+                  className="w-full px-4 py-2.5 rounded-xl border outline-none bg-white focus:ring-2 focus:ring-purple-200 disabled:bg-gray-100 disabled:opacity-70"
+                  value={formData.categoria_id || ""}
+                  onChange={e => setFormData({ ...formData, categoria_id: e.target.value })}
+                >
+                  <option value="">Sin categoría</option>
+                  {categorias.map(cat => (
+                    <option key={cat.id} value={cat.id}>{cat.categoria}</option>
+                  ))}
+                </select>
+              </div>
+
               <div className="space-y-1.5">
                 <label className="text-xs font-bold uppercase text-gray-500 tracking-wider">Referencia</label>
                 <input
@@ -99,15 +313,34 @@ export function FinanzasConciliacionModal({ isOpen, onClose, onSuccess, record, 
                 />
               </div>
 
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold uppercase text-gray-500 tracking-wider">Beneficiario</label>
-                <input
-                  type="text"
+              <div className="space-y-1.5 md:col-span-2 flex flex-col">
+                <div className="flex justify-between items-center">
+                  <label className="text-xs font-bold uppercase text-gray-500 tracking-wider">Beneficiario</label>
+                  {mode !== "view" && (
+                    <button 
+                      type="button" 
+                      onClick={() => setManagingBeneficiarios(true)}
+                      className="text-xs font-bold text-blue-600 hover:text-blue-800"
+                    >
+                      Gestionar
+                    </button>
+                  )}
+                </div>
+                <select
                   disabled={mode === "view"}
-                  className="w-full px-4 py-2.5 rounded-xl border outline-none bg-white focus:ring-2 focus:ring-purple-200 disabled:bg-gray-100 disabled:opacity-70"
-                  value={formData.beneficiario || ""}
-                  onChange={e => setFormData({ ...formData, beneficiario: e.target.value })}
-                />
+                  className="w-full px-4 py-2.5 rounded-xl border outline-none bg-white focus:ring-2 focus:ring-blue-200 disabled:bg-gray-100 disabled:opacity-70"
+                  value={formData.beneficiario_id || ""}
+                  onChange={e => setFormData({ ...formData, beneficiario_id: e.target.value })}
+                >
+                  <option value="">Seleccione o sin beneficiario</option>
+                  {beneficiarios.map(ben => (
+                    <option key={ben.id} value={ben.id}>{ben.nombre}</option>
+                  ))}
+                </select>
+                {/* Fallback de texto si está viendo un registro viejo sin ID pero con texto */}
+                {mode === "view" && !formData.beneficiario_id && formData.beneficiario && (
+                  <div className="mt-1 text-xs text-gray-500">Valor anterior: {formData.beneficiario}</div>
+                )}
               </div>
               
               <div className="space-y-1.5 md:col-span-2">
@@ -157,16 +390,16 @@ export function FinanzasConciliacionModal({ isOpen, onClose, onSuccess, record, 
             {mode === "view" ? "Cerrar" : "Cancelar"}
           </button>
           
-          {mode === "edit" && (
+          {mode !== "view" && (
             <button
               form="concilForm"
               type="submit"
-              disabled={isSubmitting}
+              disabled={isSubmitting || (mode === 'create' && !formData.id_banco)}
               className="px-6 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 transition-transform hover:scale-105 text-white disabled:opacity-50 disabled:hover:scale-100"
               style={{ background: "linear-gradient(135deg, #a855f7, #9333ea)", boxShadow: "0 4px 14px rgba(168,85,247,0.3)" }}
             >
               {isSubmitting ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
-              Guardar Cambios
+              {mode === "create" ? "Crear Movimiento" : "Guardar Cambios"}
             </button>
           )}
         </div>

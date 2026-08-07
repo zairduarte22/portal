@@ -142,7 +142,7 @@ class PagoController extends Controller
                 'monto_bs' => $pago->monto_bs * 0.20,
                 'referencia' => $pago->referencia,
                 'numero_factura' => $facturaFondo,
-                'numero_control' => "00-" . $facturaFondo,
+                'numero_control' => "00-" . ($facturaFondo + 50),
             ]);
 
             // 2. Inserción en Bancos / Conciliación (100% del monto)

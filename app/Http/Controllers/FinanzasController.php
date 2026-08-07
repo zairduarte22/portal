@@ -34,7 +34,7 @@ class FinanzasController extends Controller
                 ->leftJoin('proveedor', 'libro_compras.id_proveedor', '=', 'proveedor.id')
                 ->select(
                     'libro_compras.*', 
-                    'proveedor.nombre as proveedor_nombre',
+                    'proveedor.razon_social as proveedor_nombre',
                     'proveedor.rif as proveedor_rif'
                 )
                 ->orderBy('libro_compras.fecha', 'desc')
@@ -52,9 +52,13 @@ class FinanzasController extends Controller
         try {
             $query = DB::table('cuenta_banco')
                 ->leftJoin('bancos', 'cuenta_banco.id_banco', '=', 'bancos.id')
+                ->leftJoin('categoria_fondos', 'cuenta_banco.categoria_id', '=', 'categoria_fondos.id')
+                ->leftJoin('beneficiarios_fondo', 'cuenta_banco.beneficiario_id', '=', 'beneficiarios_fondo.id')
                 ->select(
                     'cuenta_banco.*', 
-                    'bancos.nombre as banco_nombre'
+                    'bancos.nombre as banco_nombre',
+                    'categoria_fondos.categoria as categoria_nombre',
+                    'beneficiarios_fondo.nombre as beneficiario_nombre'
                 );
 
             if ($request->query('desde')) {
@@ -79,9 +83,13 @@ class FinanzasController extends Controller
         try {
             $query = DB::table('cuenta_moneda_extranjera')
                 ->leftJoin('bancos', 'cuenta_moneda_extranjera.id_banco', '=', 'bancos.id')
+                ->leftJoin('categoria_fondos', 'cuenta_moneda_extranjera.categoria_id', '=', 'categoria_fondos.id')
+                ->leftJoin('beneficiarios_fondo', 'cuenta_moneda_extranjera.beneficiario_id', '=', 'beneficiarios_fondo.id')
                 ->select(
                     'cuenta_moneda_extranjera.*', 
-                    'bancos.nombre as banco_nombre'
+                    'bancos.nombre as banco_nombre',
+                    'categoria_fondos.categoria as categoria_nombre',
+                    'beneficiarios_fondo.nombre as beneficiario_nombre'
                 );
 
             if ($request->query('desde')) {
@@ -97,6 +105,24 @@ class FinanzasController extends Controller
 
             return response()->json($movimientos);
         } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    public function storeLibro(Request $request, $tipo)
+    {
+        $table = $tipo === 'ventas' ? 'libro_ventas' : 'libro_compras';
+        try {
+            $data = $request->except(['id', 'created_at', 'updated_at', 'miembro_nombre', 'miembro_rif', 'proveedor_nombre', 'proveedor_rif']);
+            foreach ($data as $key => $value) {
+                if ($value === '') {
+                    $data[$key] = null;
+                }
+            }
+            DB::table($table)->insert($data);
+            return response()->json(['message' => 'Registro creado exitosamente'], 201);
+        } catch (\Exception $e) {
+            \Log::error('Store Libro Error: ' . $e->getMessage());
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }
@@ -134,13 +160,39 @@ class FinanzasController extends Controller
         }
     }
 
+    public function storeConciliacion(Request $request, $tipo)
+    {
+        $table = $tipo === 'ves' ? 'cuenta_banco' : 'cuenta_moneda_extranjera';
+        try {
+            $data = $request->except(['id', 'banco_nombre', 'categoria_nombre', 'beneficiario_nombre']);
+            foreach ($data as $key => $value) {
+                if ($value === '') {
+                    $data[$key] = null;
+                }
+            }
+            
+            DB::table($table)->insert($data);
+            return response()->json(['message' => 'Movimiento creado exitosamente'], 201);
+        } catch (\Exception $e) {
+            \Log::error('Store Error: ' . $e->getMessage());
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
     public function updateConciliacion(Request $request, $tipo, $id)
     {
         $table = $tipo === 'ves' ? 'cuenta_banco' : 'cuenta_moneda_extranjera';
         try {
-            DB::table($table)->where('id', $id)->update($request->except(['id', 'created_at', 'updated_at', 'banco_nombre']));
+            $data = $request->except(['id', 'created_at', 'updated_at', 'banco_nombre', 'categoria_nombre', 'beneficiario_nombre']);
+            foreach ($data as $key => $value) {
+                if ($value === '') {
+                    $data[$key] = null;
+                }
+            }
+            DB::table($table)->where('id', $id)->update($data);
             return response()->json(['message' => 'Registro actualizado exitosamente']);
         } catch (\Exception $e) {
+            \Log::error('Update Error: ' . $e->getMessage());
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }
