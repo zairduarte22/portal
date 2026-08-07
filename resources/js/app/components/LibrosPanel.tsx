@@ -18,6 +18,8 @@ export function LibrosPanel() {
   
   const [miembros, setMiembros] = useState<any[]>([]);
   const [proveedores, setProveedores] = useState<any[]>([]);
+  const [bancos, setBancos] = useState<any[]>([]);
+  const [categorias, setCategorias] = useState<any[]>([]);
 
   const fetchAuxData = async () => {
     try {
@@ -30,6 +32,17 @@ export function LibrosPanel() {
       const resP = await fetch("/api/finanzas/proveedores");
       if (resP.ok) {
         setProveedores(await resP.json());
+      }
+      
+      const resConfig = await fetch("/api/finanzas/obligaciones/config");
+      if (resConfig.ok) {
+        const configData = await resConfig.json();
+        setBancos(configData.bancos || []);
+      }
+      
+      const resCat = await fetch("/api/finanzas/categorias-fondo");
+      if (resCat.ok) {
+        setCategorias(await resCat.json());
       }
     } catch (err) {
       console.error("Error fetching auxiliary data:", err);
@@ -333,6 +346,8 @@ export function LibrosPanel() {
         mode={modalMode}
         miembros={miembros}
         proveedores={proveedores}
+        bancos={bancos}
+        categorias={categorias}
         refreshProveedores={fetchAuxData}
       />
     </div>

@@ -113,13 +113,59 @@ class FinanzasController extends Controller
     {
         $table = $tipo === 'ventas' ? 'libro_ventas' : 'libro_compras';
         try {
-            $data = $request->except(['id', 'created_at', 'updated_at', 'miembro_nombre', 'miembro_rif', 'proveedor_nombre', 'proveedor_rif']);
+            $registrarBanco = $request->input('registrar_banco', false);
+            $idBanco = $request->input('id_banco');
+            $categoriaBanco = $request->input('categoria_banco');
+            
+            $data = $request->except(['id', 'created_at', 'updated_at', 'miembro_nombre', 'miembro_rif', 'proveedor_nombre', 'proveedor_rif', 'registrar_banco', 'id_banco', 'categoria_banco']);
+            
             foreach ($data as $key => $value) {
                 if ($value === '') {
                     $data[$key] = null;
                 }
             }
-            DB::table($table)->insert($data);
+            
+            $idLibro = DB::table($table)->insertGetId($data);
+
+            if ($registrarBanco && $idBanco) {
+                $banco = DB::table('bancos')->where('id', $idBanco)->first();
+                if ($banco) {
+                    $tablaBanco = ($banco->divisa === 'USD') ? 'cuenta_moneda_extranjera' : 'cuenta_banco';
+                    
+                    $descripcion = ($tipo === 'ventas') 
+                        ? "Ingreso de Venta #" . ($data['numero_control'] ?? '')
+                        : "Egreso por Compra #" . ($data['numero_control'] ?? '');
+                        
+                    // Retrieve beneficiary name if applicable
+                    $beneficiarioNombre = null;
+                    if ($tipo === 'ventas' && !empty($data['id_miembro'])) {
+                        $miembro = DB::table('miembros')->where('id', $data['id_miembro'])->first();
+                        $beneficiarioNombre = $miembro ? $miembro->razon_social : null;
+                    } elseif ($tipo === 'compras' && !empty($data['id_proveedor'])) {
+                        $proveedor = DB::table('proveedor')->where('id', $data['id_proveedor'])->first();
+                        $beneficiarioNombre = $proveedor ? $proveedor->razon_social : null;
+                    }
+
+                    $monto = floatval($data['monto'] ?? 0);
+
+                    $bancoData = [
+                        'id_banco' => $idBanco,
+                        'fecha' => $data['fecha'] ?? date('Y-m-d'),
+                        'tipo_operacion' => 'TRANSF',
+                        'referencia' => $data['referencia'] ?? '',
+                        'beneficiario' => $beneficiarioNombre,
+                        'descripcion' => $descripcion,
+                        'debe' => ($tipo === 'compras') ? $monto : 0,
+                        'haber' => ($tipo === 'ventas') ? $monto : 0,
+                        'categoria_id' => $categoriaBanco,
+                        'id_venta' => ($tipo === 'ventas') ? $idLibro : null,
+                        'id_compra' => ($tipo === 'compras') ? $idLibro : null,
+                    ];
+                    
+                    DB::table($tablaBanco)->insert($bancoData);
+                }
+            }
+
             return response()->json(['message' => 'Registro creado exitosamente'], 201);
         } catch (\Exception $e) {
             \Log::error('Store Libro Error: ' . $e->getMessage());

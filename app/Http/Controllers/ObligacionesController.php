@@ -17,7 +17,7 @@ class ObligacionesController extends Controller
             $config = json_decode(file_get_contents($path), true);
         }
         
-        $bancos = DB::table('bancos')->select('id', 'nombre', 'divisa as moneda')->get();
+        $bancos = DB::table('bancos')->select('*', 'divisa as moneda')->get();
         
         return response()->json([
             'categorias' => $config['categorias'] ?? [],

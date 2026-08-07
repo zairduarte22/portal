@@ -10,10 +10,12 @@ interface FinanzasLibroModalProps {
   mode: "view" | "edit" | "create";
   miembros?: any[];
   proveedores?: any[];
+  bancos?: any[];
+  categorias?: any[];
   refreshProveedores?: () => void;
 }
 
-export function FinanzasLibroModal({ isOpen, onClose, onSuccess, record, tipo, mode, miembros = [], proveedores = [], refreshProveedores }: FinanzasLibroModalProps) {
+export function FinanzasLibroModal({ isOpen, onClose, onSuccess, record, tipo, mode, miembros = [], proveedores = [], bancos = [], categorias = [], refreshProveedores }: FinanzasLibroModalProps) {
   const [formData, setFormData] = useState<any>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -61,7 +63,10 @@ export function FinanzasLibroModal({ isOpen, onClose, onSuccess, record, tipo, m
           numero_factura: "",
           numero_control: "",
           id_miembro: "",
-          id_proveedor: ""
+          id_proveedor: "",
+          registrar_banco: false,
+          id_banco: "",
+          categoria_banco: ""
         });
       } else if (record) {
         setFormData(record);
@@ -174,13 +179,20 @@ export function FinanzasLibroModal({ isOpen, onClose, onSuccess, record, tipo, m
 
               <div className="space-y-1.5">
                 <label className="text-xs font-bold uppercase text-gray-500 tracking-wider">Método de Pago</label>
-                <input
-                  type="text"
+                <select
                   disabled={mode === "view"}
                   className="w-full px-4 py-2.5 rounded-xl border outline-none bg-white focus:ring-2 focus:ring-blue-200 disabled:bg-gray-100 disabled:opacity-70"
                   value={formData.metodo_pago || ""}
                   onChange={e => setFormData({ ...formData, metodo_pago: e.target.value })}
-                />
+                >
+                  <option value="">Seleccione un método...</option>
+                  <option value="Pago Movil/Transferencia">Pago Móvil / Transferencia</option>
+                  <option value="Efectivo Divisas">Efectivo Divisas</option>
+                  <option value="Efectivo VES">Efectivo VES</option>
+                  <option value="Zelle">Zelle</option>
+                  <option value="Punto de Venta">Punto de Venta</option>
+                  <option value="Cruces">Cruces</option>
+                </select>
               </div>
 
               <div className="space-y-1.5">
@@ -239,6 +251,54 @@ export function FinanzasLibroModal({ isOpen, onClose, onSuccess, record, tipo, m
                   onChange={e => setFormData({ ...formData, monto_bs: e.target.value })}
                 />
               </div>
+              {mode === "create" && (
+                <div className="sm:col-span-2 mt-2 pt-4 border-t border-gray-100">
+                  <label className="flex items-center gap-3 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      className="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 transition-all cursor-pointer"
+                      checked={formData.registrar_banco || false}
+                      onChange={e => setFormData({ ...formData, registrar_banco: e.target.checked })}
+                    />
+                    <span className="text-sm font-bold text-gray-700">Registrar movimiento automáticamente en el Banco</span>
+                  </label>
+
+                  {formData.registrar_banco && (
+                    <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4 bg-blue-50/50 p-4 rounded-2xl border border-blue-100 animate-in fade-in slide-in-from-top-4 duration-300">
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-bold uppercase text-gray-500 tracking-wider">Cuenta Bancaria</label>
+                        <select
+                          className="w-full px-4 py-2.5 rounded-xl border outline-none bg-white focus:ring-2 focus:ring-blue-200"
+                          value={formData.id_banco || ""}
+                          onChange={e => setFormData({ ...formData, id_banco: e.target.value })}
+                          required={formData.registrar_banco}
+                        >
+                          <option value="">Seleccione un banco...</option>
+                          {bancos.map((b: any) => (
+                            <option key={b.id} value={b.id}>
+                              {b.nombre} - {b.divisa} ({b.titular})
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-bold uppercase text-gray-500 tracking-wider">Categoría (Opcional)</label>
+                        <select
+                          className="w-full px-4 py-2.5 rounded-xl border outline-none bg-white focus:ring-2 focus:ring-blue-200"
+                          value={formData.categoria_banco || ""}
+                          onChange={e => setFormData({ ...formData, categoria_banco: e.target.value })}
+                        >
+                          <option value="">Sin Categoría</option>
+                          {categorias.map((c: any) => (
+                            <option key={c.id} value={c.id}>{c.categoria}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </form>
         </div>
