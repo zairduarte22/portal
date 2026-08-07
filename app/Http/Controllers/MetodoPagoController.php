@@ -10,11 +10,7 @@ class MetodoPagoController extends Controller
 {
     public function index(Request $request)
     {
-        $propietario = $request->query('propietario');
         $query = MetodoPago::with('banco');
-        if ($propietario) {
-            $query->where('propietario', $propietario);
-        }
         return response()->json($query->get());
     }
 
@@ -22,8 +18,7 @@ class MetodoPagoController extends Controller
     {
         $request->validate([
             'nombre' => 'required|string',
-            'id_banco' => 'nullable|integer|exists:bancos,id',
-            'propietario' => 'required|string'
+            'id_banco' => 'nullable|integer|exists:bancos,id'
         ]);
 
         $metodo = MetodoPago::create($request->all());
@@ -34,8 +29,7 @@ class MetodoPagoController extends Controller
     {
         $request->validate([
             'nombre' => 'required|string',
-            'id_banco' => 'nullable|integer|exists:bancos,id',
-            'propietario' => 'required|string'
+            'id_banco' => 'nullable|integer|exists:bancos,id'
         ]);
 
         $metodo = MetodoPago::findOrFail($id);
