@@ -12,10 +12,11 @@ interface FinanzasLibroModalProps {
   proveedores?: any[];
   bancos?: any[];
   categorias?: any[];
+  metodosPago?: any[];
   refreshProveedores?: () => void;
 }
 
-export function FinanzasLibroModal({ isOpen, onClose, onSuccess, record, tipo, mode, miembros = [], proveedores = [], bancos = [], categorias = [], refreshProveedores }: FinanzasLibroModalProps) {
+export function FinanzasLibroModal({ isOpen, onClose, onSuccess, record, tipo, mode, miembros = [], proveedores = [], bancos = [], categorias = [], metodosPago = [], refreshProveedores }: FinanzasLibroModalProps) {
   const [formData, setFormData] = useState<any>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -75,6 +76,22 @@ export function FinanzasLibroModal({ isOpen, onClose, onSuccess, record, tipo, m
   }, [isOpen, record, mode]);
 
   if (!isOpen) return null;
+
+  const handleMetodoPagoChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const nombreMetodo = e.target.value;
+    const metodo = metodosPago?.find((m: any) => m.nombre === nombreMetodo);
+    
+    setFormData((prev: any) => {
+      const updates = { ...prev, metodo_pago: nombreMetodo };
+      if (metodo && metodo.id_banco) {
+        updates.registrar_banco = true;
+        updates.id_banco = metodo.id_banco;
+      } else {
+        updates.id_banco = ''; // Reset if it doesn't link to a bank
+      }
+      return updates;
+    });
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -183,15 +200,12 @@ export function FinanzasLibroModal({ isOpen, onClose, onSuccess, record, tipo, m
                   disabled={mode === "view"}
                   className="w-full px-4 py-2.5 rounded-xl border outline-none bg-white focus:ring-2 focus:ring-blue-200 disabled:bg-gray-100 disabled:opacity-70"
                   value={formData.metodo_pago || ""}
-                  onChange={e => setFormData({ ...formData, metodo_pago: e.target.value })}
+                  onChange={handleMetodoPagoChange}
                 >
                   <option value="">Seleccione un método...</option>
-                  <option value="Pago Movil/Transferencia">Pago Móvil / Transferencia</option>
-                  <option value="Efectivo Divisas">Efectivo Divisas</option>
-                  <option value="Efectivo VES">Efectivo VES</option>
-                  <option value="Zelle">Zelle</option>
-                  <option value="Punto de Venta">Punto de Venta</option>
-                  <option value="Cruces">Cruces</option>
+                  {metodosPago.map((m: any) => (
+                    <option key={m.id} value={m.nombre}>{m.nombre}</option>
+                  ))}
                 </select>
               </div>
 
@@ -268,10 +282,11 @@ export function FinanzasLibroModal({ isOpen, onClose, onSuccess, record, tipo, m
                       <div className="space-y-1.5">
                         <label className="text-xs font-bold uppercase text-gray-500 tracking-wider">Cuenta Bancaria</label>
                         <select
-                          className="w-full px-4 py-2.5 rounded-xl border outline-none bg-white focus:ring-2 focus:ring-blue-200"
+                          className="w-full px-4 py-2.5 rounded-xl border outline-none bg-white focus:ring-2 focus:ring-blue-200 disabled:bg-gray-100"
                           value={formData.id_banco || ""}
                           onChange={e => setFormData({ ...formData, id_banco: e.target.value })}
                           required={formData.registrar_banco}
+                          disabled={!!(metodosPago.find(m => m.nombre === formData.metodo_pago)?.id_banco)}
                         >
                           <option value="">Seleccione un banco...</option>
                           {bancos.map((b: any) => (

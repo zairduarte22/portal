@@ -20,6 +20,7 @@ export function LibrosPanel() {
   const [proveedores, setProveedores] = useState<any[]>([]);
   const [bancos, setBancos] = useState<any[]>([]);
   const [categorias, setCategorias] = useState<any[]>([]);
+  const [metodosPago, setMetodosPago] = useState<any[]>([]);
 
   const fetchAuxData = async () => {
     try {
@@ -43,6 +44,11 @@ export function LibrosPanel() {
       const resCat = await fetch("/api/finanzas/categorias-fondo");
       if (resCat.ok) {
         setCategorias(await resCat.json());
+      }
+      
+      const resMet = await fetch("/api/finanzas/metodos-pago?propietario=FONDO");
+      if (resMet.ok) {
+        setMetodosPago(await resMet.json());
       }
     } catch (err) {
       console.error("Error fetching auxiliary data:", err);
@@ -348,6 +354,7 @@ export function LibrosPanel() {
         proveedores={proveedores}
         bancos={bancos}
         categorias={categorias}
+        metodosPago={metodosPago}
         refreshProveedores={fetchAuxData}
       />
     </div>

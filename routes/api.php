@@ -23,6 +23,8 @@ use App\Http\Controllers\CobranzaController;
 use App\Http\Controllers\ExportController;
 use App\Http\Controllers\CategoriasFondoController;
 use App\Http\Controllers\BeneficiariosFondoController;
+use App\Http\Controllers\BancoController;
+use App\Http\Controllers\MetodoPagoController;
 
 Route::post('/login', [AuthController::class, 'login']);
 Route::get('/carnets/public/{id}', [CarnetEmitidoController::class, 'showPublic']);
@@ -139,6 +141,16 @@ Route::prefix('finanzas')->group(function () {
     Route::get('/proveedores', [ProveedorController::class, 'index']);
     Route::post('/proveedores', [ProveedorController::class, 'store']);
     Route::delete('/proveedores/{id}', [ProveedorController::class, 'destroy']);
+    
+    Route::get('/bancos', [BancoController::class, 'index']);
+    Route::post('/bancos', [BancoController::class, 'store']);
+    Route::put('/bancos/{id}', [BancoController::class, 'update']);
+    Route::delete('/bancos/{id}', [BancoController::class, 'destroy']);
+    
+    Route::get('/metodos-pago', [MetodoPagoController::class, 'index']);
+    Route::post('/metodos-pago', [MetodoPagoController::class, 'store']);
+    Route::put('/metodos-pago/{id}', [MetodoPagoController::class, 'update']);
+    Route::delete('/metodos-pago/{id}', [MetodoPagoController::class, 'destroy']);
     
     Route::get('/categorias-fondo', [CategoriasFondoController::class, 'index']);
     Route::post('/categorias-fondo', [CategoriasFondoController::class, 'store']);
