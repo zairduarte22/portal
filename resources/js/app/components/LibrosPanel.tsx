@@ -46,7 +46,7 @@ export function LibrosPanel() {
         setCategorias(await resCat.json());
       }
       
-      const resMet = await fetch("/api/finanzas/metodos-pago?propietario=FONDO");
+      const resMet = await fetch("/api/finanzas/metodos-pago");
       if (resMet.ok) {
         setMetodosPago(await resMet.json());
       }

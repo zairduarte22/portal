@@ -15,7 +15,7 @@ export function BancosConfigPanel() {
 
   // Forms state
   const [bancoForm, setBancoForm] = useState({ nombre: '', titular: '', divisa: 'VES', propietario: 'FONDO' });
-  const [metodoForm, setMetodoForm] = useState({ nombre: '', id_banco: '', propietario: 'FONDO' });
+  const [metodoForm, setMetodoForm] = useState({ nombre: '', id_banco: '' });
   
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -52,13 +52,13 @@ export function BancosConfigPanel() {
 
   const openNewMetodo = () => {
     setEditMetodo(null);
-    setMetodoForm({ nombre: '', id_banco: '', propietario: 'FONDO' });
+    setMetodoForm({ nombre: '', id_banco: '' });
     setShowMetodoModal(true);
   };
 
   const openEditMetodo = (metodo: any) => {
     setEditMetodo(metodo);
-    setMetodoForm({ nombre: metodo.nombre, id_banco: metodo.id_banco || '', propietario: metodo.propietario });
+    setMetodoForm({ nombre: metodo.nombre, id_banco: metodo.id_banco || '' });
     setShowMetodoModal(true);
   };
 
@@ -199,7 +199,6 @@ export function BancosConfigPanel() {
             <table className="w-full text-sm text-left">
               <thead className="bg-gray-50 text-gray-600 font-bold uppercase text-xs">
                 <tr>
-                  <th className="px-4 py-3">Propietario</th>
                   <th className="px-4 py-3">Método de Pago</th>
                   <th className="px-4 py-3">Banco Vinculado (Destino)</th>
                   <th className="px-4 py-3 text-right">Acciones</th>
@@ -208,9 +207,6 @@ export function BancosConfigPanel() {
               <tbody className="divide-y divide-gray-200 bg-white">
                 {metodos.map(m => (
                   <tr key={m.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-3">
-                      <span className="px-2 py-1 bg-gray-100 text-gray-700 text-xs font-bold rounded-lg border border-gray-200">{m.propietario}</span>
-                    </td>
                     <td className="px-4 py-3 font-bold text-gray-800">{m.nombre}</td>
                     <td className="px-4 py-3 text-gray-600">
                       {m.banco ? (
@@ -291,17 +287,10 @@ export function BancosConfigPanel() {
                 <input required type="text" className="w-full px-4 py-2.5 rounded-xl border bg-gray-50 outline-none focus:ring-2 focus:ring-purple-500 focus:bg-white transition-all" value={metodoForm.nombre} onChange={e => setMetodoForm({...metodoForm, nombre: e.target.value})} placeholder="Ej. Pago Móvil / Transferencia" />
               </div>
               <div>
-                <label className="block text-xs font-bold uppercase text-gray-500 mb-1 tracking-wide">Propietario / Dept</label>
-                <select className="w-full px-4 py-2.5 rounded-xl border bg-gray-50 outline-none focus:ring-2 focus:ring-purple-500 focus:bg-white transition-all" value={metodoForm.propietario} onChange={e => setMetodoForm({...metodoForm, propietario: e.target.value})}>
-                  <option value="FONDO">Fondo UGAVI</option>
-                  <option value="TASCA">La Tasca</option>
-                </select>
-              </div>
-              <div>
                 <label className="block text-xs font-bold uppercase text-gray-500 mb-1 tracking-wide">Banco Destino (Opcional)</label>
                 <select className="w-full px-4 py-2.5 rounded-xl border bg-gray-50 outline-none focus:ring-2 focus:ring-purple-500 focus:bg-white transition-all" value={metodoForm.id_banco} onChange={e => setMetodoForm({...metodoForm, id_banco: e.target.value})}>
                   <option value="">-- Ninguno (No concilia en banco) --</option>
-                  {bancos.filter(b => b.propietario === metodoForm.propietario).map(b => (
+                  {bancos.map(b => (
                     <option key={b.id} value={b.id}>{b.nombre} ({b.divisa})</option>
                   ))}
                 </select>
