@@ -13,8 +13,7 @@ class MetodoPago extends Model
 
     protected $fillable = [
         'nombre',
-        'id_banco',
-        'propietario'
+        'id_banco'
     ];
 
     public function banco()
