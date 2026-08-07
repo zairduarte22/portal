@@ -5,11 +5,13 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class InsumoTasca extends Model
+class InsumoTienda extends Model
 {
+    use \App\Traits\BelongsToTienda;
+
     use HasFactory;
 
-    protected $table = 'insumos_tasca';
+    protected $table = 'insumos_tienda';
 
     protected $fillable = [
         'nombre',
@@ -29,12 +31,12 @@ class InsumoTasca extends Model
 
     public function lotes()
     {
-        return $this->hasMany(LoteTasca::class, 'id_insumo');
+        return $this->hasMany(LoteTienda::class, 'id_insumo');
     }
 
     public function lotesActivos()
     {
-        return $this->hasMany(LoteTasca::class, 'id_insumo')
+        return $this->hasMany(LoteTienda::class, 'id_insumo')
                     ->where('estado', 'Activo')
                     ->where('stock_actual', '>', 0)
                     ->orderBy('fecha_compra', 'asc');
@@ -42,7 +44,7 @@ class InsumoTasca extends Model
 
     public function productos()
     {
-        return $this->hasMany(ProductoTasca::class, 'id_insumo');
+        return $this->hasMany(ProductoTienda::class, 'id_insumo');
     }
 
     public function getStockTotalAttribute()

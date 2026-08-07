@@ -18,7 +18,7 @@ use App\Http\Controllers\EntregaController;
 use App\Http\Controllers\PagoCarnetController;
 use App\Http\Controllers\FinanzasController;
 use App\Http\Controllers\CarnetEmitidoController;
-use App\Http\Controllers\TascaController;
+use App\Http\Controllers\TiendaController;
 use App\Http\Controllers\CobranzaController;
 use App\Http\Controllers\ExportController;
 use App\Http\Controllers\CategoriasFondoController;
@@ -28,7 +28,7 @@ use App\Http\Controllers\MetodoPagoController;
 
 Route::post('/login', [AuthController::class, 'login']);
 Route::get('/carnets/public/{id}', [CarnetEmitidoController::class, 'showPublic']);
-Route::get('/tasca/menu-publico', [TascaController::class, 'getMenuPublico']);
+Route::get('/tienda/menu-publico', [TiendaController::class, 'getMenuPublico']);
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
@@ -50,7 +50,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/', [MiembroController::class, 'index']);
         Route::get('/{id}', [MiembroController::class, 'show']);
     Route::get('/{id}/estado-cuenta', [MiembroController::class, 'estadoCuenta']);
-    Route::get('/{id}/tasca-creditos', [\App\Http\Controllers\TascaController::class, 'getCreditosMiembro']);
+    Route::get('/{id}/tienda-creditos', [\App\Http\Controllers\TiendaController::class, 'getCreditosMiembro']);
     Route::post('/', [MiembroController::class, 'store']);
     Route::put('/{id}', [MiembroController::class, 'update']);
     Route::delete('/{id}', [MiembroController::class, 'destroy']);
@@ -186,72 +186,72 @@ Route::get('/carnets-emitidos/{id}/pdf', [CarnetEmitidoController::class, 'desca
 // MÓDULOS DE TASCA (Gestión y Ventas)
 // ==========================================
 
-Route::prefix('tasca')->group(function () {
+Route::prefix('tienda')->group(function () {
     // Productos
-    Route::get('/productos', [TascaController::class, 'getProductos']);
-    Route::post('/productos', [TascaController::class, 'storeProducto']);
-    Route::put('/productos/{id}', [TascaController::class, 'updateProducto']);
-    Route::delete('/productos/{id}', [TascaController::class, 'destroyProducto']);
-    Route::post('/productos-completos', [\App\Http\Controllers\InventarioTascaController::class, 'storeProductoCompleto']);
+    Route::get('/productos', [TiendaController::class, 'getProductos']);
+    Route::post('/productos', [TiendaController::class, 'storeProducto']);
+    Route::put('/productos/{id}', [TiendaController::class, 'updateProducto']);
+    Route::delete('/productos/{id}', [TiendaController::class, 'destroyProducto']);
+    Route::post('/productos-completos', [\App\Http\Controllers\InventarioTiendaController::class, 'storeProductoCompleto']);
     
     // Clientes
-    Route::get('/clientes', [TascaController::class, 'getClientes']);
+    Route::get('/clientes', [TiendaController::class, 'getClientes']);
     
     // Ventas
-    Route::get('/ventas', [TascaController::class, 'getVentas']);
-    Route::get('/ventas/estadisticas', [TascaController::class, 'getEstadisticas']);
-    Route::get('/ventas/reporte-pdf', [TascaController::class, 'reporteVentasPdf']);
-    Route::get('/ventas/reporte-data', [TascaController::class, 'reporteVentasData']);
-    Route::get('/reportes/rendimiento', [TascaController::class, 'getReporteRendimiento']);
-    Route::get('/ventas/{id}', [TascaController::class, 'getVenta']);
-    Route::get('/ventas/{id}/ticket', [TascaController::class, 'ticketVentaPdf']);
-    Route::post('/ventas', [TascaController::class, 'storeVenta']);
-    Route::get('/directores', [TascaController::class, 'getDirectores']);
-    Route::put('/ventas/{id}/detalles', [TascaController::class, 'updateVentaDetalles']);
-    Route::post('/ventas/{id}/pagar', [TascaController::class, 'pagarVenta']);
-    Route::post('/ventas/{id}/anular', [TascaController::class, 'anularVenta']);
+    Route::get('/ventas', [TiendaController::class, 'getVentas']);
+    Route::get('/ventas/estadisticas', [TiendaController::class, 'getEstadisticas']);
+    Route::get('/ventas/reporte-pdf', [TiendaController::class, 'reporteVentasPdf']);
+    Route::get('/ventas/reporte-data', [TiendaController::class, 'reporteVentasData']);
+    Route::get('/reportes/rendimiento', [TiendaController::class, 'getReporteRendimiento']);
+    Route::get('/ventas/{id}', [TiendaController::class, 'getVenta']);
+    Route::get('/ventas/{id}/ticket', [TiendaController::class, 'ticketVentaPdf']);
+    Route::post('/ventas', [TiendaController::class, 'storeVenta']);
+    Route::get('/directores', [TiendaController::class, 'getDirectores']);
+    Route::put('/ventas/{id}/detalles', [TiendaController::class, 'updateVentaDetalles']);
+    Route::post('/ventas/{id}/pagar', [TiendaController::class, 'pagarVenta']);
+    Route::post('/ventas/{id}/anular', [TiendaController::class, 'anularVenta']);
 
     // Inventario Avanzado (Insumos y Lotes)
-    Route::get('/notificaciones', [\App\Http\Controllers\InventarioTascaController::class, 'getNotificaciones']);
-    Route::get('/inventario/metricas', [TascaController::class, 'getMetricasInventario']);
-    Route::get('/insumos', [\App\Http\Controllers\InventarioTascaController::class, 'getInsumos']);
-    Route::get('/insumos/reporte', [\App\Http\Controllers\InventarioTascaController::class, 'reporteInventario']);
-    Route::post('/insumos', [\App\Http\Controllers\InventarioTascaController::class, 'storeInsumo']);
-    Route::put('/insumos/{id}', [\App\Http\Controllers\InventarioTascaController::class, 'updateInsumo']);
-    Route::delete('/insumos/{id}', [\App\Http\Controllers\InventarioTascaController::class, 'destroyInsumo']);
-    Route::get('/insumos/{id}/movimientos', [\App\Http\Controllers\InventarioTascaController::class, 'getMovimientos']);
-    Route::post('/insumos/{id}/ajustar', [\App\Http\Controllers\InventarioTascaController::class, 'ajustarInventario']);
-    Route::post('/productos-completos', [\App\Http\Controllers\InventarioTascaController::class, 'storeProductoCompleto']);
-    Route::put('/productos-completos/{id}', [\App\Http\Controllers\InventarioTascaController::class, 'updateProductoCompleto']);
-    Route::get('/compras', [\App\Http\Controllers\InventarioTascaController::class, 'getCompras']);
-    Route::post('/compras', [\App\Http\Controllers\InventarioTascaController::class, 'storeCompra']);
-    Route::post('/compras/{id}/anular', [\App\Http\Controllers\InventarioTascaController::class, 'anularCompra']);
+    Route::get('/notificaciones', [\App\Http\Controllers\InventarioTiendaController::class, 'getNotificaciones']);
+    Route::get('/inventario/metricas', [TiendaController::class, 'getMetricasInventario']);
+    Route::get('/insumos', [\App\Http\Controllers\InventarioTiendaController::class, 'getInsumos']);
+    Route::get('/insumos/reporte', [\App\Http\Controllers\InventarioTiendaController::class, 'reporteInventario']);
+    Route::post('/insumos', [\App\Http\Controllers\InventarioTiendaController::class, 'storeInsumo']);
+    Route::put('/insumos/{id}', [\App\Http\Controllers\InventarioTiendaController::class, 'updateInsumo']);
+    Route::delete('/insumos/{id}', [\App\Http\Controllers\InventarioTiendaController::class, 'destroyInsumo']);
+    Route::get('/insumos/{id}/movimientos', [\App\Http\Controllers\InventarioTiendaController::class, 'getMovimientos']);
+    Route::post('/insumos/{id}/ajustar', [\App\Http\Controllers\InventarioTiendaController::class, 'ajustarInventario']);
+    Route::post('/productos-completos', [\App\Http\Controllers\InventarioTiendaController::class, 'storeProductoCompleto']);
+    Route::put('/productos-completos/{id}', [\App\Http\Controllers\InventarioTiendaController::class, 'updateProductoCompleto']);
+    Route::get('/compras', [\App\Http\Controllers\InventarioTiendaController::class, 'getCompras']);
+    Route::post('/compras', [\App\Http\Controllers\InventarioTiendaController::class, 'storeCompra']);
+    Route::post('/compras/{id}/anular', [\App\Http\Controllers\InventarioTiendaController::class, 'anularCompra']);
     
-    Route::get('/insumos/{id_insumo}/lotes', [\App\Http\Controllers\InventarioTascaController::class, 'getLotes']);
-    Route::post('/lotes', [\App\Http\Controllers\InventarioTascaController::class, 'storeLote']);
-    Route::put('/lotes/{id}', [\App\Http\Controllers\InventarioTascaController::class, 'updateLote']);
-    Route::delete('/lotes/{id}', [\App\Http\Controllers\InventarioTascaController::class, 'destroyLote']);
+    Route::get('/insumos/{id_insumo}/lotes', [\App\Http\Controllers\InventarioTiendaController::class, 'getLotes']);
+    Route::post('/lotes', [\App\Http\Controllers\InventarioTiendaController::class, 'storeLote']);
+    Route::put('/lotes/{id}', [\App\Http\Controllers\InventarioTiendaController::class, 'updateLote']);
+    Route::delete('/lotes/{id}', [\App\Http\Controllers\InventarioTiendaController::class, 'destroyLote']);
 
     // Proveedores y Gastos
-    Route::get('/proveedores', [\App\Http\Controllers\TascaGastosController::class, 'getProveedores']);
-    Route::post('/proveedores', [\App\Http\Controllers\TascaGastosController::class, 'storeProveedor']);
-    Route::put('/proveedores/{id}', [\App\Http\Controllers\TascaGastosController::class, 'updateProveedor']);
-    Route::delete('/proveedores/{id}', [\App\Http\Controllers\TascaGastosController::class, 'destroyProveedor']);
+    Route::get('/proveedores', [\App\Http\Controllers\TiendaGastosController::class, 'getProveedores']);
+    Route::post('/proveedores', [\App\Http\Controllers\TiendaGastosController::class, 'storeProveedor']);
+    Route::put('/proveedores/{id}', [\App\Http\Controllers\TiendaGastosController::class, 'updateProveedor']);
+    Route::delete('/proveedores/{id}', [\App\Http\Controllers\TiendaGastosController::class, 'destroyProveedor']);
 
-    Route::get('/gastos', [\App\Http\Controllers\TascaGastosController::class, 'getGastos']);
-    Route::post('/gastos', [\App\Http\Controllers\TascaGastosController::class, 'storeGasto']);
-    Route::put('/gastos/{id}', [\App\Http\Controllers\TascaGastosController::class, 'updateGasto']);
-    Route::delete('/gastos/{id}', [\App\Http\Controllers\TascaGastosController::class, 'destroyGasto']);
+    Route::get('/gastos', [\App\Http\Controllers\TiendaGastosController::class, 'getGastos']);
+    Route::post('/gastos', [\App\Http\Controllers\TiendaGastosController::class, 'storeGasto']);
+    Route::put('/gastos/{id}', [\App\Http\Controllers\TiendaGastosController::class, 'updateGasto']);
+    Route::delete('/gastos/{id}', [\App\Http\Controllers\TiendaGastosController::class, 'destroyGasto']);
 
-    Route::post('/compras/{id}/pagar', [\App\Http\Controllers\InventarioTascaController::class, 'pagarCompra']);
+    Route::post('/compras/{id}/pagar', [\App\Http\Controllers\InventarioTiendaController::class, 'pagarCompra']);
 
-    // Clientes de Tasca (Foráneos y Miembros)
-    // El GET lo maneja TascaController@getClientes para incluir métricas
-    Route::post('/clientes', [\App\Http\Controllers\ClienteTascaController::class, 'store']);
-    Route::put('/clientes/{id}', [\App\Http\Controllers\ClienteTascaController::class, 'update']);
-    Route::delete('/clientes/{id}', [\App\Http\Controllers\ClienteTascaController::class, 'destroy']);
+    // Clientes de Tienda (Foráneos y Miembros)
+    // El GET lo maneja TiendaController@getClientes para incluir métricas
+    Route::post('/clientes', [\App\Http\Controllers\ClienteTiendaController::class, 'store']);
+    Route::put('/clientes/{id}', [\App\Http\Controllers\ClienteTiendaController::class, 'update']);
+    Route::delete('/clientes/{id}', [\App\Http\Controllers\ClienteTiendaController::class, 'destroy']);
 });
 
 });
 
-Route::get('/test-reporte', [App\Http\Controllers\TascaController::class, 'getReporteRendimiento']);
+Route::get('/test-reporte', [App\Http\Controllers\TiendaController::class, 'getReporteRendimiento']);

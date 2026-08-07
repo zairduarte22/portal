@@ -5,11 +5,13 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class CompraTasca extends Model
+class CompraTienda extends Model
 {
+    use \App\Traits\BelongsToTienda;
+
     use HasFactory;
 
-    protected $table = 'compras_tasca';
+    protected $table = 'compras_tienda';
 
     protected $fillable = [
         'fecha_compra',
@@ -22,16 +24,16 @@ class CompraTasca extends Model
 
     public function lotes()
     {
-        return $this->hasMany(LoteTasca::class, 'compra_id');
+        return $this->hasMany(LoteTienda::class, 'compra_id');
     }
 
     public function proveedor()
     {
-        return $this->belongsTo(ProveedorTasca::class, 'proveedor_id');
+        return $this->belongsTo(ProveedorTienda::class, 'proveedor_id');
     }
 
     public function gastos()
     {
-        return $this->hasMany(GastoTasca::class, 'compra_id');
+        return $this->hasMany(GastoTienda::class, 'compra_id');
     }
 }

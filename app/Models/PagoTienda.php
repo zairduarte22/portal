@@ -4,9 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class PagoTasca extends Model
+class PagoTienda extends Model
 {
-    protected $table = 'pagos_tasca';
+    use \App\Traits\BelongsToTienda;
+
+    protected $table = 'pagos_tienda';
     protected $guarded = [];
 
     protected $casts = [
@@ -18,6 +20,6 @@ class PagoTasca extends Model
 
     public function ventas()
     {
-        return $this->belongsToMany(VentaTasca::class, 'pago_venta_tasca', 'id_pago', 'id_venta')->withPivot('monto_abonado_usd');
+        return $this->belongsToMany(VentaTienda::class, 'pago_venta_tienda', 'id_pago', 'id_venta')->withPivot('monto_abonado_usd');
     }
 }

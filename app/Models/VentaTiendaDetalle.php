@@ -4,9 +4,9 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class VentaTascaDetalle extends Model
+class VentaTiendaDetalle extends Model
 {
-    protected $table = 'ventas_tasca_detalles';
+    protected $table = 'ventas_tienda_detalles';
     protected $guarded = [];
 
     protected $casts = [
@@ -16,11 +16,11 @@ class VentaTascaDetalle extends Model
 
     public function venta()
     {
-        return $this->belongsTo(VentaTasca::class, 'id_venta');
+        return $this->belongsTo(VentaTienda::class, 'id_venta');
     }
 
     public function producto()
     {
-        return $this->belongsTo(ProductoTasca::class, 'id_producto');
+        return $this->belongsTo(ProductoTienda::class, 'id_producto');
     }
 }

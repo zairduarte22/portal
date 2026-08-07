@@ -3,24 +3,24 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\ProductoTasca;
-use App\Models\ClienteTasca;
-use App\Models\VentaTasca;
-use App\Models\VentaTascaDetalle;
-use App\Models\PagoTasca;
+use App\Models\ProductoTienda;
+use App\Models\ClienteTienda;
+use App\Models\VentaTienda;
+use App\Models\VentaTiendaDetalle;
+use App\Models\PagoTienda;
 use App\Models\Miembro;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use App\Models\Persona;
 
-class TascaController extends Controller
+class TiendaController extends Controller
 {
     // ==========================================
-    // PRODUCTOS (Gestión Tasca)
+    // PRODUCTOS (Gestión Tienda)
     // ==========================================
     public function getProductos()
     {
-        return response()->json(ProductoTasca::with('insumo.lotesActivos')->get());
+        return response()->json(ProductoTienda::with('insumo.lotesActivos')->get());
     }
 
     public function storeProducto(Request $request)
@@ -30,26 +30,26 @@ class TascaController extends Controller
             'precio' => 'required|numeric|min:0',
             'precio_miembro' => 'nullable|numeric|min:0',
             'stock' => 'nullable|integer|min:0',
-            'codigo_barras' => 'nullable|string|unique:productos_tasca',
-            'id_insumo' => 'nullable|exists:insumos_tasca,id',
+            'codigo_barras' => 'nullable|string|unique:productos_tienda',
+            'id_insumo' => 'nullable|exists:insumos_tienda,id',
             'medida_descuento' => 'nullable|numeric|min:0'
         ]);
 
-        $producto = ProductoTasca::create($request->all());
+        $producto = ProductoTienda::create($request->all());
         return response()->json($producto, 201);
     }
 
     public function updateProducto(Request $request, $id)
     {
-        $producto = ProductoTasca::findOrFail($id);
+        $producto = ProductoTienda::findOrFail($id);
         
         $request->validate([
             'nombre' => 'required|string|max:255',
             'precio' => 'required|numeric|min:0',
             'precio_miembro' => 'nullable|numeric|min:0',
             'stock' => 'nullable|integer|min:0',
-            'codigo_barras' => 'nullable|string|unique:productos_tasca,codigo_barras,'.$id,
-            'id_insumo' => 'nullable|exists:insumos_tasca,id',
+            'codigo_barras' => 'nullable|string|unique:productos_tienda,codigo_barras,'.$id,
+            'id_insumo' => 'nullable|exists:insumos_tienda,id',
             'medida_descuento' => 'nullable|numeric|min:0'
         ]);
 
@@ -59,7 +59,7 @@ class TascaController extends Controller
 
     public function destroyProducto($id)
     {
-        $producto = ProductoTasca::findOrFail($id);
+        $producto = ProductoTienda::findOrFail($id);
         
         if ($producto->detalles()->count() > 0) {
             return response()->json(['error' => 'No se puede eliminar porque este producto está en una o más ventas.'], 400);
@@ -74,19 +74,19 @@ class TascaController extends Controller
     // ==========================================
     public function getClientes()
     {
-        $metricasForaneos = DB::table('ventas_tasca')
-            ->whereNotNull('id_cliente_tasca')
+        $metricasForaneos = DB::table('ventas_tienda')
+            ->whereNotNull('id_cliente_tienda')
             ->whereIn('estado', ['Pagada', 'Parcial', 'Credito'])
             ->select(
-                'id_cliente_tasca',
+                'id_cliente_tienda',
                 DB::raw('COUNT(id) as total_compras'),
                 DB::raw('SUM(total + cargo_servicio - descuento) as total_gastado')
             )
-            ->groupBy('id_cliente_tasca')
+            ->groupBy('id_cliente_tienda')
             ->get()
-            ->keyBy('id_cliente_tasca');
+            ->keyBy('id_cliente_tienda');
 
-        $metricasPersonas = DB::table('ventas_tasca')
+        $metricasPersonas = DB::table('ventas_tienda')
             ->whereNotNull('id_persona')
             ->whereIn('estado', ['Pagada', 'Parcial', 'Credito'])
             ->select(
@@ -98,29 +98,29 @@ class TascaController extends Controller
             ->get()
             ->keyBy('id_persona');
 
-        $favForaneos = DB::table('ventas_tasca')
-            ->join('ventas_tasca_detalles', 'ventas_tasca.id', '=', 'ventas_tasca_detalles.id_venta')
-            ->join('productos_tasca', 'ventas_tasca_detalles.id_producto', '=', 'productos_tasca.id')
-            ->whereNotNull('ventas_tasca.id_cliente_tasca')
-            ->whereIn('ventas_tasca.estado', ['Pagada', 'Parcial', 'Credito'])
-            ->select('ventas_tasca.id_cliente_tasca', 'productos_tasca.nombre', DB::raw('SUM(ventas_tasca_detalles.cantidad) as total_cantidad'))
-            ->groupBy('ventas_tasca.id_cliente_tasca', 'productos_tasca.nombre')
+        $favForaneos = DB::table('ventas_tienda')
+            ->join('ventas_tienda_detalles', 'ventas_tienda.id', '=', 'ventas_tienda_detalles.id_venta')
+            ->join('productos_tienda', 'ventas_tienda_detalles.id_producto', '=', 'productos_tienda.id')
+            ->whereNotNull('ventas_tienda.id_cliente_tienda')
+            ->whereIn('ventas_tienda.estado', ['Pagada', 'Parcial', 'Credito'])
+            ->select('ventas_tienda.id_cliente_tienda', 'productos_tienda.nombre', DB::raw('SUM(ventas_tienda_detalles.cantidad) as total_cantidad'))
+            ->groupBy('ventas_tienda.id_cliente_tienda', 'productos_tienda.nombre')
             ->orderBy('total_cantidad', 'desc')
             ->get()
-            ->groupBy('id_cliente_tasca');
+            ->groupBy('id_cliente_tienda');
 
-        $favPersonas = DB::table('ventas_tasca')
-            ->join('ventas_tasca_detalles', 'ventas_tasca.id', '=', 'ventas_tasca_detalles.id_venta')
-            ->join('productos_tasca', 'ventas_tasca_detalles.id_producto', '=', 'productos_tasca.id')
-            ->whereNotNull('ventas_tasca.id_persona')
-            ->whereIn('ventas_tasca.estado', ['Pagada', 'Parcial', 'Credito'])
-            ->select('ventas_tasca.id_persona', 'productos_tasca.nombre', DB::raw('SUM(ventas_tasca_detalles.cantidad) as total_cantidad'))
-            ->groupBy('ventas_tasca.id_persona', 'productos_tasca.nombre')
+        $favPersonas = DB::table('ventas_tienda')
+            ->join('ventas_tienda_detalles', 'ventas_tienda.id', '=', 'ventas_tienda_detalles.id_venta')
+            ->join('productos_tienda', 'ventas_tienda_detalles.id_producto', '=', 'productos_tienda.id')
+            ->whereNotNull('ventas_tienda.id_persona')
+            ->whereIn('ventas_tienda.estado', ['Pagada', 'Parcial', 'Credito'])
+            ->select('ventas_tienda.id_persona', 'productos_tienda.nombre', DB::raw('SUM(ventas_tienda_detalles.cantidad) as total_cantidad'))
+            ->groupBy('ventas_tienda.id_persona', 'productos_tienda.nombre')
             ->orderBy('total_cantidad', 'desc')
             ->get()
             ->groupBy('id_persona');
 
-        $foraneos = ClienteTasca::all()->map(function($cliente) use ($metricasForaneos, $favForaneos) {
+        $foraneos = ClienteTienda::all()->map(function($cliente) use ($metricasForaneos, $favForaneos) {
             $m = $metricasForaneos->get($cliente->id);
             $f = $favForaneos->get($cliente->id);
             $cliente->total_compras = $m ? $m->total_compras : 0;
@@ -157,7 +157,7 @@ class TascaController extends Controller
             'telefono' => 'nullable|string'
         ]);
 
-        $cliente = ClienteTasca::create($request->all());
+        $cliente = ClienteTienda::create($request->all());
         return response()->json($cliente, 201);
     }
 
@@ -181,7 +181,7 @@ class TascaController extends Controller
     // ==========================================
     public function getVentas(Request $request)
     {
-        $query = VentaTasca::with(['clienteForaneo', 'miembro', 'persona', 'pagos', 'detalles.producto.insumo'])
+        $query = VentaTienda::with(['clienteForaneo', 'miembro', 'persona', 'pagos', 'detalles.producto.insumo'])
                             ->orderBy('id', 'desc');
                             
         if ($request->filled('start_date') && $request->filled('end_date')) {
@@ -193,7 +193,7 @@ class TascaController extends Controller
 
     public function getVenta($id)
     {
-        $venta = VentaTasca::with(['clienteForaneo', 'miembro', 'persona', 'detalles.producto.insumo', 'pagos', 'autorizador'])->findOrFail($id);
+        $venta = VentaTienda::with(['clienteForaneo', 'miembro', 'persona', 'detalles.producto.insumo', 'pagos', 'autorizador'])->findOrFail($id);
         
         // Sincronizar el descuento real con el atributo de descuento en la BD de forma lazy
         if ($venta->descuento > 0 && $venta->descuento_real == 0) {
@@ -212,21 +212,21 @@ class TascaController extends Controller
         // Se puede iniciar una venta asociándola a un Miembro o a un Cliente Foráneo
         $request->validate([
             'id_cliente_miembro' => 'nullable|exists:miembros,id',
-            'id_cliente_tasca' => 'nullable|exists:clientes_tasca,id',
+            'id_cliente_tienda' => 'nullable|exists:clientes_tienda,id',
             'id_persona' => 'nullable|exists:personas,id'
         ]);
 
-        if (!$request->id_cliente_miembro && !$request->id_cliente_tasca) {
+        if (!$request->id_cliente_miembro && !$request->id_cliente_tienda) {
             return response()->json(['error' => 'Debe seleccionar un cliente o miembro para la venta.'], 400);
         }
 
         $tasa = \DB::table('tasas')->orderBy('fecha', 'desc')->first();
         $tasaActual = $tasa ? (float) $tasa->monto : 36.5;
 
-        $venta = VentaTasca::create([
+        $venta = VentaTienda::create([
             'id_cliente_miembro' => $request->id_cliente_miembro,
             'id_persona' => $request->id_persona,
-            'id_cliente_tasca' => $request->id_cliente_tasca,
+            'id_cliente_tienda' => $request->id_cliente_tienda,
             'total' => 0,
             'descuento' => 0,
             'estado' => 'Pendiente',
@@ -239,11 +239,11 @@ class TascaController extends Controller
 
     public function updateVentaDetalles(Request $request, $id)
     {
-        $venta = VentaTasca::findOrFail($id);
+        $venta = VentaTienda::findOrFail($id);
         
         $request->validate([
             'detalles' => 'required|array',
-            'detalles.*.id_producto' => 'required|exists:productos_tasca,id',
+            'detalles.*.id_producto' => 'required|exists:productos_tienda,id',
             'detalles.*.cantidad' => 'required|numeric|min:0.01',
         ]);
 
@@ -251,7 +251,7 @@ class TascaController extends Controller
         try {
             // Eliminar detalles anteriores y reponer stock
             foreach ($venta->detalles as $detalle) {
-                $prod = ProductoTasca::find($detalle->id_producto);
+                $prod = ProductoTienda::find($detalle->id_producto);
                 if ($prod) {
                     if ($prod->tipo === 'servicio') {
                         continue;
@@ -282,7 +282,7 @@ class TascaController extends Controller
                     }
                 }
             }
-            VentaTascaDetalle::where('id_venta', $id)->delete();
+            VentaTiendaDetalle::where('id_venta', $id)->delete();
 
             $total = 0;
             $descuentoTotal = 0;
@@ -290,7 +290,7 @@ class TascaController extends Controller
             $esMiembroSolvente = $venta->miembro && $venta->miembro->solvencia === 'Solvente';
             
             foreach ($request->detalles as $det) {
-                $producto = ProductoTasca::findOrFail($det['id_producto']);
+                $producto = ProductoTienda::findOrFail($det['id_producto']);
                 
                 if ($producto->stock < $det['cantidad']) {
                     throw new \Exception("Stock insuficiente para el producto: {$producto->nombre}");
@@ -315,7 +315,7 @@ class TascaController extends Controller
                     $descuentoTotal += ($precioOriginal - $precioReal) * $det['cantidad'];
                 }
 
-                VentaTascaDetalle::create([
+                VentaTiendaDetalle::create([
                     'id_venta' => $id,
                     'id_producto' => $producto->id,
                     'cantidad' => $det['cantidad'],
@@ -370,7 +370,7 @@ class TascaController extends Controller
             $venta->save();
 
             DB::commit();
-            return response()->json(VentaTasca::with(['clienteForaneo', 'miembro', 'persona', 'detalles.producto.insumo', 'pagos', 'autorizador'])->find($id));
+            return response()->json(VentaTienda::with(['clienteForaneo', 'miembro', 'persona', 'detalles.producto.insumo', 'pagos', 'autorizador'])->find($id));
         } catch (\Exception $e) {
             DB::rollBack();
             return response()->json(['error' => $e->getMessage()], 400);
@@ -379,7 +379,7 @@ class TascaController extends Controller
 
     public function pagarVenta(Request $request, $id)
     {
-        $venta = VentaTasca::with('pagos')->findOrFail($id);
+        $venta = VentaTienda::with('pagos')->findOrFail($id);
         $estadoAnterior = $venta->estado;
         
         if ($venta->estado === 'Pagada' || $venta->estado === 'Anulada') {
@@ -416,7 +416,7 @@ class TascaController extends Controller
                     continue;
                 }
 
-                $nuevoPago = PagoTasca::create([
+                $nuevoPago = PagoTienda::create([
                     'monto_usd' => $pagoData['monto_usd'],
                     'tasa' => $pagoData['tasa'],
                     'monto_bs' => $pagoData['monto_bs'] ?? 0,
@@ -475,7 +475,7 @@ class TascaController extends Controller
             $venta->save();
 
             DB::commit();
-            return response()->json(VentaTasca::with(['clienteForaneo', 'miembro', 'persona', 'detalles.producto.insumo', 'pagos', 'autorizador'])->find($id));
+            return response()->json(VentaTienda::with(['clienteForaneo', 'miembro', 'persona', 'detalles.producto.insumo', 'pagos', 'autorizador'])->find($id));
         } catch (\Exception $e) {
             DB::rollBack();
             return response()->json(['error' => $e->getMessage()], 400);
@@ -488,17 +488,17 @@ class TascaController extends Controller
         $endDate = $request->query('end_date', Carbon::now()->toDateString());
 
         // 1. Ventas del Periodo (Total USD de ventas cobradas o hechas en el periodo)
-        $ventasHoy = VentaTasca::with('pagos')->whereBetween('fecha', [$startDate, $endDate])
+        $ventasHoy = VentaTienda::with('pagos')->whereBetween('fecha', [$startDate, $endDate])
             ->whereIn('estado', ['Pagada', 'Credito', 'Parcial'])
             ->get();
         $totalVentasHoy = $ventasHoy->sum(function($v) { return $v->total - $v->descuento_real + $v->cargo_servicio; });
 
         // 2. Desglose de métodos de pago (Pagos hechos en el periodo)
-        $pagosHoy = DB::table('pago_venta_tasca')
-            ->join('pagos_tasca', 'pago_venta_tasca.id_pago', '=', 'pagos_tasca.id')
-            ->join('ventas_tasca', 'pago_venta_tasca.id_venta', '=', 'ventas_tasca.id')
-            ->whereBetween('pagos_tasca.fecha_pago', [$startDate, $endDate])
-            ->select('pagos_tasca.metodo_pago', 'ventas_tasca.fecha as fecha_venta', 'pago_venta_tasca.monto_abonado_usd')
+        $pagosHoy = DB::table('pago_venta_tienda')
+            ->join('pagos_tienda', 'pago_venta_tienda.id_pago', '=', 'pagos_tienda.id')
+            ->join('ventas_tienda', 'pago_venta_tienda.id_venta', '=', 'ventas_tienda.id')
+            ->whereBetween('pagos_tienda.fecha_pago', [$startDate, $endDate])
+            ->select('pagos_tienda.metodo_pago', 'ventas_tienda.fecha as fecha_venta', 'pago_venta_tienda.monto_abonado_usd')
             ->get();
 
         $desglose = [];
@@ -527,7 +527,7 @@ class TascaController extends Controller
         }
 
         // 4. Deuda Total Histórica (Todo lo que se debe hasta la fecha)
-        $ventasPendientes = VentaTasca::with('pagos')
+        $ventasPendientes = VentaTienda::with('pagos')
             ->whereIn('estado', ['Credito', 'Parcial'])
             ->get();
         
@@ -549,16 +549,16 @@ class TascaController extends Controller
         $startDate = $request->query('start_date', Carbon::now()->toDateString());
         $endDate = $request->query('end_date', Carbon::now()->toDateString());
         
-        $pagos = DB::table('pago_venta_tasca')
-            ->join('pagos_tasca', 'pago_venta_tasca.id_pago', '=', 'pagos_tasca.id')
-            ->join('ventas_tasca', 'pago_venta_tasca.id_venta', '=', 'ventas_tasca.id')
-            ->whereBetween('pagos_tasca.fecha_pago', [$startDate, $endDate])
+        $pagos = DB::table('pago_venta_tienda')
+            ->join('pagos_tienda', 'pago_venta_tienda.id_pago', '=', 'pagos_tienda.id')
+            ->join('ventas_tienda', 'pago_venta_tienda.id_venta', '=', 'ventas_tienda.id')
+            ->whereBetween('pagos_tienda.fecha_pago', [$startDate, $endDate])
             ->select(
-                'pagos_tasca.metodo_pago',
-                'pago_venta_tasca.monto_abonado_usd',
-                'pagos_tasca.monto_bs',
-                'ventas_tasca.fecha as fecha_venta',
-                'pagos_tasca.fecha_pago'
+                'pagos_tienda.metodo_pago',
+                'pago_venta_tienda.monto_abonado_usd',
+                'pagos_tienda.monto_bs',
+                'ventas_tienda.fecha as fecha_venta',
+                'pagos_tienda.fecha_pago'
             )
             ->get();
 
@@ -601,7 +601,7 @@ class TascaController extends Controller
             }
         }
 
-        $ventasPeriodo = VentaTasca::with(['miembro', 'persona', 'clienteForaneo'])
+        $ventasPeriodo = VentaTienda::with(['miembro', 'persona', 'clienteForaneo'])
             ->whereBetween('fecha', [$startDate, $endDate])
             ->whereIn('estado', ['Pagada', 'Credito', 'Parcial'])
             ->get();
@@ -640,16 +640,16 @@ class TascaController extends Controller
         $formato = $request->query('format', 'carta'); // 'carta' o 'ticket'
         
         // Pagos realizados en el rango de fechas
-        $pagos = DB::table('pago_venta_tasca')
-            ->join('pagos_tasca', 'pago_venta_tasca.id_pago', '=', 'pagos_tasca.id')
-            ->join('ventas_tasca', 'pago_venta_tasca.id_venta', '=', 'ventas_tasca.id')
-            ->whereBetween('pagos_tasca.fecha_pago', [$startDate, $endDate])
+        $pagos = DB::table('pago_venta_tienda')
+            ->join('pagos_tienda', 'pago_venta_tienda.id_pago', '=', 'pagos_tienda.id')
+            ->join('ventas_tienda', 'pago_venta_tienda.id_venta', '=', 'ventas_tienda.id')
+            ->whereBetween('pagos_tienda.fecha_pago', [$startDate, $endDate])
             ->select(
-                'pagos_tasca.metodo_pago',
-                'pago_venta_tasca.monto_abonado_usd',
-                'pagos_tasca.monto_bs',
-                'ventas_tasca.fecha as fecha_venta',
-                'pagos_tasca.fecha_pago'
+                'pagos_tienda.metodo_pago',
+                'pago_venta_tienda.monto_abonado_usd',
+                'pagos_tienda.monto_bs',
+                'ventas_tienda.fecha as fecha_venta',
+                'pagos_tienda.fecha_pago'
             )
             ->get();
 
@@ -696,7 +696,7 @@ class TascaController extends Controller
         }
 
         // 2. Facturación del Periodo (Excluyendo Anuladas y Pendientes sin finalizar)
-        $ventasPeriodo = VentaTasca::with('miembro')
+        $ventasPeriodo = VentaTienda::with('miembro')
             ->whereBetween('fecha', [$startDate, $endDate])
             ->whereIn('estado', ['Pagada', 'Credito', 'Parcial'])
             ->get();
@@ -721,7 +721,7 @@ class TascaController extends Controller
         }
         
         $pdf->SetCreator('Fondo2');
-        $pdf->SetAuthor('Tasca');
+        $pdf->SetAuthor('Tienda');
         $pdf->SetTitle('Reporte de Ventas');
         $pdf->setPrintHeader(false);
         $pdf->setPrintFooter(false);
@@ -1022,7 +1022,7 @@ class TascaController extends Controller
 
     public function getCreditosMiembro($id)
     {
-        $ventas = VentaTasca::with(['detalles.producto', 'pagos'])
+        $ventas = VentaTienda::with(['detalles.producto', 'pagos'])
             ->where('id_cliente_miembro', $id)
             ->whereIn('estado', ['Credito', 'Parcial'])
             ->orderBy('fecha', 'desc')
@@ -1038,7 +1038,7 @@ class TascaController extends Controller
 
     public function anularVenta($id)
     {
-        $venta = VentaTasca::with('detalles')->findOrFail($id);
+        $venta = VentaTienda::with('detalles')->findOrFail($id);
         
         if ($venta->estado === 'Anulada') {
             return response()->json(['error' => 'La venta ya está anulada.'], 400);
@@ -1048,7 +1048,7 @@ class TascaController extends Controller
         try {
             // Reponer stock
             foreach ($venta->detalles as $detalle) {
-                $prod = ProductoTasca::with('insumo.lotes')->find($detalle->id_producto);
+                $prod = ProductoTienda::with('insumo.lotes')->find($detalle->id_producto);
                 if ($prod && $prod->insumo) {
                     $mlAReponer = $detalle->cantidad * ($prod->medida_descuento > 0 ? $prod->medida_descuento : 1);
                     // Reponer en el lote más reciente (o el último creado)
@@ -1064,7 +1064,7 @@ class TascaController extends Controller
             }
 
             // Eliminar pagos asociados para limpiar finanzas si aplica
-            DB::table('pago_venta_tasca')->where('id_venta', $id)->delete();
+            DB::table('pago_venta_tienda')->where('id_venta', $id)->delete();
 
             $venta->estado = 'Anulada';
             $venta->save();
@@ -1079,7 +1079,7 @@ class TascaController extends Controller
 
     public function ticketVentaPdf($id)
     {
-        $venta = VentaTasca::with(['clienteForaneo', 'miembro', 'persona', 'detalles.producto.insumo', 'pagos'])->findOrFail($id);
+        $venta = VentaTienda::with(['clienteForaneo', 'miembro', 'persona', 'detalles.producto.insumo', 'pagos'])->findOrFail($id);
         
         // Calcular altura dinámica
         $baseHeight = 110;
@@ -1092,7 +1092,7 @@ class TascaController extends Controller
         $pdf = new \TCPDF('P', 'mm', array(80, $totalHeight));
         $pdf->SetMargins(4, 6, 4);
         $pdf->SetCreator('Fondo2');
-        $pdf->SetAuthor('Tasca');
+        $pdf->SetAuthor('Tienda');
         $pdf->SetTitle('Ticket de Venta #' . $venta->id);
         $pdf->setPrintHeader(false);
         $pdf->setPrintFooter(false);
@@ -1128,7 +1128,7 @@ class TascaController extends Controller
                 </tr>
                 <tr>
                     <td style='text-align:left;'>Estado: " . ucfirst(strtolower($venta->estado)) . "</td>
-                    <td style='text-align:right;'>Caja: Tasca</td>
+                    <td style='text-align:right;'>Caja: Tienda</td>
                 </tr>
             </table>
 
@@ -1193,7 +1193,7 @@ class TascaController extends Controller
         $html .= "
             <div style='text-align:center; font-family: {$fontFamily}; margin-top: 10px;'>
                 <strong style='font-size: 9px;'>*** GRACIAS POR SU COMPRA ***</strong><br>
-                <span style='font-size: 7px; color: #444; display:block; margin-top: 4px;'>Este documento es un comprobante de venta interno de la Tasca y carece de validez fiscal o tributaria.</span>
+                <span style='font-size: 7px; color: #444; display:block; margin-top: 4px;'>Este documento es un comprobante de venta interno de la Tienda y carece de validez fiscal o tributaria.</span>
             </div>
         ";
 
@@ -1219,7 +1219,7 @@ class TascaController extends Controller
         $endDate = $request->query('end_date', Carbon::now()->toDateString());
 
         // Traer ventas dentro del rango (solo no anuladas ni pendientes)
-        $ventas = VentaTasca::with(['detalles.producto'])
+        $ventas = VentaTienda::with(['detalles.producto'])
             ->whereBetween('fecha', [$startDate, $endDate])
             ->whereIn('estado', ['Pagada', 'Credito', 'Parcial'])
             ->get();
@@ -1232,7 +1232,7 @@ class TascaController extends Controller
         $topProductos = [];
 
         // Pre-cargar todos los productos para incluir los "olvidados" (con 0 ventas en el periodo)
-        $todosLosProductos = \App\Models\ProductoTasca::all();
+        $todosLosProductos = \App\Models\ProductoTienda::all();
         foreach ($todosLosProductos as $prod) {
             $topProductos[$prod->id] = [
                 'nombre' => $prod->nombre_completo,
@@ -1302,14 +1302,14 @@ class TascaController extends Controller
 
         // 4. Productos olvidados (0 ventas en su historia total)
         // Obtenemos los IDs de productos que sí tienen ventas registradas en alguna venta no anulada
-        $productosConVentas = DB::table('ventas_tasca_detalles')
-            ->join('ventas_tasca', 'ventas_tasca_detalles.id_venta', '=', 'ventas_tasca.id')
-            ->whereNotIn('ventas_tasca.estado', ['Anulada', 'anulada'])
-            ->pluck('ventas_tasca_detalles.id_producto')
+        $productosConVentas = DB::table('ventas_tienda_detalles')
+            ->join('ventas_tienda', 'ventas_tienda_detalles.id_venta', '=', 'ventas_tienda.id')
+            ->whereNotIn('ventas_tienda.estado', ['Anulada', 'anulada'])
+            ->pluck('ventas_tienda_detalles.id_producto')
             ->unique()
             ->toArray();
             
-        $productosOlvidados = \App\Models\ProductoTasca::whereNotIn('id', $productosConVentas)
+        $productosOlvidados = \App\Models\ProductoTienda::whereNotIn('id', $productosConVentas)
             ->get()
             ->map(function($prod) {
                 return [
@@ -1333,11 +1333,11 @@ class TascaController extends Controller
         });
 
         // Desglose de pagos en el rango
-        $pagos = DB::table('pago_venta_tasca')
-            ->join('pagos_tasca', 'pago_venta_tasca.id_pago', '=', 'pagos_tasca.id')
-            ->whereBetween('pagos_tasca.fecha_pago', [$startDate, $endDate])
-            ->select('pagos_tasca.metodo_pago', DB::raw('SUM(pago_venta_tasca.monto_abonado_usd) as total'))
-            ->groupBy('pagos_tasca.metodo_pago')
+        $pagos = DB::table('pago_venta_tienda')
+            ->join('pagos_tienda', 'pago_venta_tienda.id_pago', '=', 'pagos_tienda.id')
+            ->whereBetween('pagos_tienda.fecha_pago', [$startDate, $endDate])
+            ->select('pagos_tienda.metodo_pago', DB::raw('SUM(pago_venta_tienda.monto_abonado_usd) as total'))
+            ->groupBy('pagos_tienda.metodo_pago')
             ->get();
             
         $ventasPorMetodo = $pagos->map(function($p) {
@@ -1350,13 +1350,13 @@ class TascaController extends Controller
         
         // 2. Inventario Valorizado Actual
         // Calculamos el valor real multiplicando el stock por el costo de cada lote activo para no duplicar por medida (botella, trago)
-        $inventarioValorizado = \DB::table('lotes_tasca')
+        $inventarioValorizado = \DB::table('lotes_tienda')
             ->where('estado', 'Activo')
             ->where('stock_actual', '>', 0)
             ->sum(\DB::raw('stock_actual * costo_unitario'));
 
         // 2. Cuentas por Cobrar Históricas (Ventas a Crédito/Parciales pendientes de cobro total)
-        $cuentasPorCobrar = \App\Models\VentaTasca::with('pagos')
+        $cuentasPorCobrar = \App\Models\VentaTienda::with('pagos')
             ->whereIn('estado', ['Credito', 'Parcial'])
             ->get()
             ->sum(function($venta) {
@@ -1365,32 +1365,32 @@ class TascaController extends Controller
 
         // 3. Cuentas por Pagar Históricas
         // a) Compras pendientes o abonadas parcialmente
-        $cuentasPorPagarCompras = DB::table('compras_tasca')
+        $cuentasPorPagarCompras = DB::table('compras_tienda')
             ->whereIn('estado', ['Pendiente', 'Parcial'])
             ->select(DB::raw('SUM(total_usd - abono_usd) as total'))
             ->first()->total ?? 0;
             
         // b) Gastos Por Pagar
-        $cuentasPorPagarGastos = DB::table('gastos_tasca')
+        $cuentasPorPagarGastos = DB::table('gastos_tienda')
             ->where('metodo_pago', 'Por Pagar')
             ->sum('monto_usd') ?? 0;
             
         $cuentasPorPagar = $cuentasPorPagarCompras + $cuentasPorPagarGastos;
 
         // 4. Métricas del Periodo (Gastos, Flujo)
-        $gastosPeriodo = DB::table('gastos_tasca')
+        $gastosPeriodo = DB::table('gastos_tienda')
             ->whereBetween('fecha', [$startDate, $endDate])
             ->where('categoria', '!=', 'Compra de Mercancia')
             ->sum('monto_usd') ?? 0;
 
-        $ingresosEfectivos = DB::table('pago_venta_tasca')
-            ->join('pagos_tasca', 'pago_venta_tasca.id_pago', '=', 'pagos_tasca.id')
-            ->whereBetween('pagos_tasca.fecha_pago', [$startDate, $endDate])
-            ->sum('pago_venta_tasca.monto_abonado_usd') ?? 0;
+        $ingresosEfectivos = DB::table('pago_venta_tienda')
+            ->join('pagos_tienda', 'pago_venta_tienda.id_pago', '=', 'pagos_tienda.id')
+            ->whereBetween('pagos_tienda.fecha_pago', [$startDate, $endDate])
+            ->sum('pago_venta_tienda.monto_abonado_usd') ?? 0;
 
-        // Los pagos a proveedores por compra de mercancía ya se registran automáticamente en gastos_tasca 
+        // Los pagos a proveedores por compra de mercancía ya se registran automáticamente en gastos_tienda 
         // bajo la categoría 'Compra de Mercancia', por lo que gastosPagadosPeriodo ya incluye todos los egresos.
-        $gastosPagadosPeriodo = DB::table('gastos_tasca')
+        $gastosPagadosPeriodo = DB::table('gastos_tienda')
             ->whereBetween('fecha', [$startDate, $endDate])
             ->where('metodo_pago', '!=', 'Por Pagar')
             ->sum('monto_usd') ?? 0;
@@ -1432,7 +1432,7 @@ class TascaController extends Controller
 
     public function getMenuPublico()
     {
-        $productos = \App\Models\ProductoTasca::with('insumo')->get();
+        $productos = \App\Models\ProductoTienda::with('insumo')->get();
         $disponibles = $productos->filter(function($p) {
             return $p->stock > 0;
         })->map(function($p) {
@@ -1456,14 +1456,14 @@ class TascaController extends Controller
 
     public function getMetricasInventario()
     {
-        $totalProductos = \App\Models\InsumoTasca::count();
+        $totalProductos = \App\Models\InsumoTienda::count();
         
-        $valorTotalCosto = \DB::table('lotes_tasca')
+        $valorTotalCosto = \DB::table('lotes_tienda')
             ->where('estado', 'Activo')
             ->where('stock_actual', '>', 0)
             ->sum(\DB::raw('stock_actual * costo_unitario'));
             
-        $insumos = \App\Models\InsumoTasca::with(['productos', 'lotesActivos'])->get();
+        $insumos = \App\Models\InsumoTienda::with(['productos', 'lotesActivos'])->get();
         $valorTotalVenta = 0;
         
         foreach ($insumos as $insumo) {

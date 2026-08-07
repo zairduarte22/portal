@@ -4,9 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class ProductoTasca extends Model
+class ProductoTienda extends Model
 {
-    protected $table = 'productos_tasca';
+    use \App\Traits\BelongsToTienda;
+
+    protected $table = 'productos_tienda';
     protected $guarded = [];
 
     protected $casts = [
@@ -38,7 +40,7 @@ class ProductoTasca extends Model
         }
 
         if ($this->id_insumo) {
-            $insumo = $this->relationLoaded('insumo') ? $this->insumo : \App\Models\InsumoTasca::find($this->id_insumo);
+            $insumo = $this->relationLoaded('insumo') ? $this->insumo : \App\Models\InsumoTienda::find($this->id_insumo);
             if ($insumo) {
                 $lote = null;
                 if ($insumo->relationLoaded('lotesActivos') && $insumo->lotesActivos->count() > 0) {
@@ -67,7 +69,7 @@ class ProductoTasca extends Model
     public function getNombreCompletoAttribute()
     {
         if ($this->id_insumo) {
-            $insumo = $this->relationLoaded('insumo') ? $this->insumo : InsumoTasca::find($this->id_insumo);
+            $insumo = $this->relationLoaded('insumo') ? $this->insumo : InsumoTienda::find($this->id_insumo);
             if ($insumo) {
                 if (stripos($this->nombre, $insumo->nombre) !== false) {
                     return $this->nombre;
@@ -80,17 +82,17 @@ class ProductoTasca extends Model
 
     public function detalles()
     {
-        return $this->hasMany(VentaTascaDetalle::class, 'id_producto');
+        return $this->hasMany(VentaTiendaDetalle::class, 'id_producto');
     }
 
     public function insumo()
     {
-        return $this->belongsTo(InsumoTasca::class, 'id_insumo');
+        return $this->belongsTo(InsumoTienda::class, 'id_insumo');
     }
 
     public function componentes()
     {
-        return $this->belongsToMany(ProductoTasca::class, 'productos_compuestos_detalles', 'id_padre', 'id_hijo')
+        return $this->belongsToMany(ProductoTienda::class, 'productos_compuestos_detalles', 'id_padre', 'id_hijo')
                     ->withPivot('cantidad');
     }
 
@@ -120,7 +122,7 @@ class ProductoTasca extends Model
             return 0;
         }
         
-        $insumo = $this->relationLoaded('insumo') ? $this->insumo : InsumoTasca::find($this->id_insumo);
+        $insumo = $this->relationLoaded('insumo') ? $this->insumo : InsumoTienda::find($this->id_insumo);
         if (!$insumo) return 0;
         
         $totalMl = $insumo->stock_total;

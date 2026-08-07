@@ -3,14 +3,14 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\ClienteTasca;
+use App\Models\ClienteTienda;
 use App\Models\Miembro;
 
-class ClienteTascaController extends Controller
+class ClienteTiendaController extends Controller
 {
     public function index()
     {
-        $foraneos = ClienteTasca::orderBy('nombre', 'asc')->get();
+        $foraneos = ClienteTienda::orderBy('nombre', 'asc')->get();
         $miembros = Miembro::with(['persona', 'user'])->where('estatus', 'Activo')->orderBy('razon_social', 'asc')->get();
 
         return response()->json([
@@ -27,14 +27,14 @@ class ClienteTascaController extends Controller
             'telefono' => 'nullable|string|max:50',
         ]);
 
-        $cliente = ClienteTasca::create($request->only('nombre', 'cedula', 'telefono'));
+        $cliente = ClienteTienda::create($request->only('nombre', 'cedula', 'telefono'));
 
         return response()->json($cliente, 201);
     }
 
     public function update(Request $request, $id)
     {
-        $cliente = ClienteTasca::findOrFail($id);
+        $cliente = ClienteTienda::findOrFail($id);
 
         $request->validate([
             'nombre' => 'required|string|max:255',
@@ -49,7 +49,7 @@ class ClienteTascaController extends Controller
 
     public function destroy($id)
     {
-        $cliente = ClienteTasca::findOrFail($id);
+        $cliente = ClienteTienda::findOrFail($id);
         $cliente->delete();
 
         return response()->json(['message' => 'Cliente eliminado con éxito']);

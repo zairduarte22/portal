@@ -3,17 +3,17 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\InsumoTasca;
-use App\Models\LoteTasca;
+use App\Models\InsumoTienda;
+use App\Models\LoteTienda;
 
-class InventarioTascaController extends Controller
+class InventarioTiendaController extends Controller
 {
     public function getNotificaciones()
     {
         $thirtyDaysFromNow = \Carbon\Carbon::now()->addDays(30)->toDateString();
         $today = \Carbon\Carbon::now()->toDateString();
         
-        $expiringLotes = \App\Models\LoteTasca::with('insumo:id,nombre')
+        $expiringLotes = \App\Models\LoteTienda::with('insumo:id,nombre')
             ->where('estado', 'Activo')
             ->where('stock_actual', '>', 0)
             ->whereNotNull('fecha_caducidad')
@@ -49,7 +49,7 @@ class InventarioTascaController extends Controller
 
     public function getInsumos()
     {
-        $insumos = InsumoTasca::with(['lotes', 'productos.insumo.lotesActivos', 'lotesActivos', 'productos.componentes'])->get();
+        $insumos = InsumoTienda::with(['lotes', 'productos.insumo.lotesActivos', 'lotesActivos', 'productos.componentes'])->get();
         
         $fechaHoy = \Carbon\Carbon::now();
         $fechaHace3Meses = \Carbon\Carbon::now()->subMonths(3);
@@ -58,26 +58,26 @@ class InventarioTascaController extends Controller
         $diasPeriodo = $fechaHace3Meses->diffInDays($fechaHoy);
         if ($diasPeriodo <= 0) $diasPeriodo = 90;
 
-        $ventasPorInsumo = \Illuminate\Support\Facades\DB::table('ventas_tasca_detalles')
-            ->join('ventas_tasca', 'ventas_tasca.id', '=', 'ventas_tasca_detalles.id_venta')
-            ->join('productos_tasca', 'productos_tasca.id', '=', 'ventas_tasca_detalles.id_producto')
-            ->where('ventas_tasca.fecha', '>=', $tresMesesAtras)
-            ->whereRaw("LOWER(ventas_tasca.estado) NOT IN ('anulada', 'anulado')")
-            ->select('productos_tasca.id_insumo', \Illuminate\Support\Facades\DB::raw('SUM(ventas_tasca_detalles.cantidad * productos_tasca.medida_descuento) as total_unidades_vendidas_3m'))
-            ->groupBy('productos_tasca.id_insumo')
-            ->pluck('total_unidades_vendidas_3m', 'productos_tasca.id_insumo');
+        $ventasPorInsumo = \Illuminate\Support\Facades\DB::table('ventas_tienda_detalles')
+            ->join('ventas_tienda', 'ventas_tienda.id', '=', 'ventas_tienda_detalles.id_venta')
+            ->join('productos_tienda', 'productos_tienda.id', '=', 'ventas_tienda_detalles.id_producto')
+            ->where('ventas_tienda.fecha', '>=', $tresMesesAtras)
+            ->whereRaw("LOWER(ventas_tienda.estado) NOT IN ('anulada', 'anulado')")
+            ->select('productos_tienda.id_insumo', \Illuminate\Support\Facades\DB::raw('SUM(ventas_tienda_detalles.cantidad * productos_tienda.medida_descuento) as total_unidades_vendidas_3m'))
+            ->groupBy('productos_tienda.id_insumo')
+            ->pluck('total_unidades_vendidas_3m', 'productos_tienda.id_insumo');
 
-        $ventasDiariasRaw = \Illuminate\Support\Facades\DB::table('ventas_tasca_detalles')
-            ->join('ventas_tasca', 'ventas_tasca.id', '=', 'ventas_tasca_detalles.id_venta')
-            ->join('productos_tasca', 'productos_tasca.id', '=', 'ventas_tasca_detalles.id_producto')
-            ->where('ventas_tasca.fecha', '>=', $tresMesesAtras)
-            ->whereRaw("LOWER(ventas_tasca.estado) NOT IN ('anulada', 'anulado')")
+        $ventasDiariasRaw = \Illuminate\Support\Facades\DB::table('ventas_tienda_detalles')
+            ->join('ventas_tienda', 'ventas_tienda.id', '=', 'ventas_tienda_detalles.id_venta')
+            ->join('productos_tienda', 'productos_tienda.id', '=', 'ventas_tienda_detalles.id_producto')
+            ->where('ventas_tienda.fecha', '>=', $tresMesesAtras)
+            ->whereRaw("LOWER(ventas_tienda.estado) NOT IN ('anulada', 'anulado')")
             ->select(
-                'productos_tasca.id_insumo', 
-                'ventas_tasca.fecha', 
-                \Illuminate\Support\Facades\DB::raw('SUM(ventas_tasca_detalles.cantidad * productos_tasca.medida_descuento) as cantidad_diaria')
+                'productos_tienda.id_insumo', 
+                'ventas_tienda.fecha', 
+                \Illuminate\Support\Facades\DB::raw('SUM(ventas_tienda_detalles.cantidad * productos_tienda.medida_descuento) as cantidad_diaria')
             )
-            ->groupBy('productos_tasca.id_insumo', 'ventas_tasca.fecha')
+            ->groupBy('productos_tienda.id_insumo', 'ventas_tienda.fecha')
             ->get();
             
         $ventasDiariasAgrupadas = $ventasDiariasRaw->groupBy('id_insumo');
@@ -132,7 +132,7 @@ class InventarioTascaController extends Controller
             'categoria' => 'nullable|string'
         ]);
 
-        $insumo = InsumoTasca::create($request->all());
+        $insumo = InsumoTienda::create($request->all());
         return response()->json($insumo, 201);
     }
 
@@ -155,7 +155,7 @@ class InventarioTascaController extends Controller
             'presentaciones.*.medida_descuento' => 'required|numeric|min:0.01',
             'presentaciones.*.codigo_barras' => 'nullable|string',
             'componentes' => 'nullable|array',
-            'componentes.*.id' => 'required|exists:productos_tasca,id',
+            'componentes.*.id' => 'required|exists:productos_tienda,id',
             'componentes.*.cantidad' => 'required|numeric|min:0.01',
         ]);
 
@@ -169,7 +169,7 @@ class InventarioTascaController extends Controller
             $tipo = $request->tipo ?? 'fisico';
 
             // 1. Crear Insumo Base (Siempre se crea para que aparezca en el UI)
-            $insumo = InsumoTasca::create([
+            $insumo = InsumoTienda::create([
                 'nombre' => $request->nombre,
                 'categoria' => $request->categoria,
                 'imagen' => $imagePath
@@ -177,7 +177,7 @@ class InventarioTascaController extends Controller
 
             // 2. Crear Inventario Inicial si es mayor a 0 y es físico
             if ($tipo === 'fisico' && $request->filled('inventario_inicial') && $request->inventario_inicial > 0) {
-                LoteTasca::create([
+                LoteTienda::create([
                     'id_insumo' => $insumo->id,
                     'codigo_lote' => 'INICIAL',
                     'cantidad_comprada' => $request->inventario_inicial,
@@ -190,7 +190,7 @@ class InventarioTascaController extends Controller
 
             // 3. Crear Presentaciones de Venta
             foreach ($request->presentaciones as $pres) {
-                $producto = \App\Models\ProductoTasca::create([
+                $producto = \App\Models\ProductoTienda::create([
                     'id_insumo' => $insumo->id,
                     'nombre' => $pres['nombre'],
                     'precio' => $pres['precio'],
@@ -241,7 +241,7 @@ class InventarioTascaController extends Controller
 
         \Illuminate\Support\Facades\DB::beginTransaction();
         try {
-            $insumo = InsumoTasca::findOrFail($id);
+            $insumo = InsumoTienda::findOrFail($id);
             
             $dataToUpdate = [
                 'nombre' => $request->nombre,
@@ -259,7 +259,7 @@ class InventarioTascaController extends Controller
             $idsToKeep = $presentacionesRequest->pluck('id')->filter()->toArray();
 
             // Verificar si las que se van a eliminar tienen ventas asociadas
-            $presentacionesAEliminar = \App\Models\ProductoTasca::where('id_insumo', $insumo->id)
+            $presentacionesAEliminar = \App\Models\ProductoTienda::where('id_insumo', $insumo->id)
                 ->whereNotIn('id', $idsToKeep)
                 ->get();
 
@@ -273,7 +273,7 @@ class InventarioTascaController extends Controller
             // Actualizar o Crear las presentaciones
             foreach ($request->presentaciones as $pres) {
                 if (isset($pres['id']) && $pres['id']) {
-                    $producto = \App\Models\ProductoTasca::find($pres['id']);
+                    $producto = \App\Models\ProductoTienda::find($pres['id']);
                     if ($producto && $producto->id_insumo == $insumo->id) {
                         $producto->update([
                             'nombre' => $pres['nombre'],
@@ -284,7 +284,7 @@ class InventarioTascaController extends Controller
                         ]);
                     }
                 } else {
-                    \App\Models\ProductoTasca::create([
+                    \App\Models\ProductoTienda::create([
                         'id_insumo' => $insumo->id,
                         'nombre' => $pres['nombre'],
                         'precio' => $pres['precio'],
@@ -305,7 +305,7 @@ class InventarioTascaController extends Controller
 
     public function updateInsumo(Request $request, $id)
     {
-        $insumo = InsumoTasca::findOrFail($id);
+        $insumo = InsumoTienda::findOrFail($id);
         
         $request->validate([
             'nombre' => 'required|string|max:255',
@@ -319,21 +319,21 @@ class InventarioTascaController extends Controller
     public function destroyInsumo($id)
     {
         // Al eliminar el insumo (producto base), eliminamos sus presentaciones asociadas
-        \App\Models\ProductoTasca::where('id_insumo', $id)->delete();
-        InsumoTasca::destroy($id);
+        \App\Models\ProductoTienda::where('id_insumo', $id)->delete();
+        InsumoTienda::destroy($id);
         return response()->json(['message' => 'Eliminado']);
     }
 
     // Lotes
     public function getLotes($id_insumo)
     {
-        return response()->json(LoteTasca::where('id_insumo', $id_insumo)->get());
+        return response()->json(LoteTienda::where('id_insumo', $id_insumo)->get());
     }
 
     public function storeLote(Request $request)
     {
         $request->validate([
-            'id_insumo' => 'required|exists:insumos_tasca,id',
+            'id_insumo' => 'required|exists:insumos_tienda,id',
             'codigo_lote' => 'nullable|string',
             'proveedor_id' => 'nullable|exists:proveedor,id',
             'cantidad_comprada' => 'required|numeric|min:0.01',
@@ -342,19 +342,19 @@ class InventarioTascaController extends Controller
             'fecha_caducidad' => 'nullable|date'
         ]);
 
-        $insumo = InsumoTasca::findOrFail($request->id_insumo);
+        $insumo = InsumoTienda::findOrFail($request->id_insumo);
 
         $data = $request->all();
         $data['stock_actual'] = $data['cantidad_comprada'];
         $data['estado'] = 'Activo';
 
-        $lote = LoteTasca::create($data);
+        $lote = LoteTienda::create($data);
         return response()->json($lote, 201);
     }
 
     public function getCompras()
     {
-        return response()->json(\App\Models\CompraTasca::with(['lotes.insumo.lotesActivos', 'proveedor', 'gastos'])->orderBy('fecha_compra', 'desc')->get());
+        return response()->json(\App\Models\CompraTienda::with(['lotes.insumo.lotesActivos', 'proveedor', 'gastos'])->orderBy('fecha_compra', 'desc')->get());
     }
 
     public function storeCompra(Request $request)
@@ -362,7 +362,7 @@ class InventarioTascaController extends Controller
         $request->validate([
             'fecha_compra' => 'required|date',
             'referencia_factura' => 'nullable|string',
-            'proveedor_id' => 'nullable|exists:proveedores_tasca,id',
+            'proveedor_id' => 'nullable|exists:proveedores_tienda,id',
             'tipo_compra' => 'required|in:Contado,Credito',
             'pagos' => 'nullable|array',
             'pagos.*.metodo_pago' => 'required_with:pagos|string',
@@ -370,7 +370,7 @@ class InventarioTascaController extends Controller
             'pagos.*.monto_bs' => 'nullable|numeric|min:0',
             'pagos.*.referencia_pago' => 'nullable|string',
             'lotes' => 'required|array|min:1',
-            'lotes.*.id_insumo' => 'required|exists:insumos_tasca,id',
+            'lotes.*.id_insumo' => 'required|exists:insumos_tienda,id',
             'lotes.*.cantidad_comprada' => 'required|numeric|min:0.01',
             'lotes.*.costo_unitario' => 'required|numeric|min:0',
             'lotes.*.fecha_caducidad' => 'nullable|date'
@@ -385,7 +385,7 @@ class InventarioTascaController extends Controller
 
             $estado = $request->tipo_compra === 'Contado' ? 'Pagada' : 'Pendiente';
 
-            $compra = \App\Models\CompraTasca::create([
+            $compra = \App\Models\CompraTienda::create([
                 'fecha_compra' => $request->fecha_compra,
                 'referencia_factura' => $request->referencia_factura,
                 'proveedor_id' => $request->proveedor_id,
@@ -396,7 +396,7 @@ class InventarioTascaController extends Controller
 
             if ($request->tipo_compra === 'Contado' && $request->has('pagos')) {
                 foreach ($request->pagos as $pago) {
-                    \App\Models\GastoTasca::create([
+                    \App\Models\GastoTienda::create([
                         'categoria' => 'Compra de Mercancia',
                         'descripcion' => 'Pago por compra ' . ($request->referencia_factura ?? '#' . $compra->id),
                         'monto_usd' => $pago['monto_usd'],
@@ -411,7 +411,7 @@ class InventarioTascaController extends Controller
             }
 
             foreach ($request->lotes as $loteData) {
-                $insumo = InsumoTasca::findOrFail($loteData['id_insumo']);
+                $insumo = InsumoTienda::findOrFail($loteData['id_insumo']);
                 
                 $data = $loteData;
                 $data['compra_id'] = $compra->id;
@@ -419,7 +419,7 @@ class InventarioTascaController extends Controller
                 $data['estado'] = 'Activo';
                 $data['fecha_compra'] = $request->fecha_compra;
 
-                LoteTasca::create($data);
+                LoteTienda::create($data);
             }
             \Illuminate\Support\Facades\DB::commit();
             
@@ -441,7 +441,7 @@ class InventarioTascaController extends Controller
             'pagos.*.referencia_pago' => 'nullable|string',
         ]);
 
-        $compra = \App\Models\CompraTasca::findOrFail($id);
+        $compra = \App\Models\CompraTienda::findOrFail($id);
 
         \Illuminate\Support\Facades\DB::beginTransaction();
         try {
@@ -460,7 +460,7 @@ class InventarioTascaController extends Controller
             $compra->save();
 
             foreach ($request->pagos as $pago) {
-                \App\Models\GastoTasca::create([
+                \App\Models\GastoTienda::create([
                     'categoria' => 'Compra de Mercancia',
                     'descripcion' => 'Abono a compra ' . ($compra->referencia_factura ?? '#' . $compra->id),
                     'monto_usd' => $pago['monto_usd'],
@@ -486,7 +486,7 @@ class InventarioTascaController extends Controller
     {
         \Illuminate\Support\Facades\DB::beginTransaction();
         try {
-            $compra = \App\Models\CompraTasca::with('lotes')->findOrFail($id);
+            $compra = \App\Models\CompraTienda::with('lotes')->findOrFail($id);
             
             if ($compra->estado === 'Anulada') {
                 throw new \Exception('La compra ya está anulada');
@@ -511,7 +511,7 @@ class InventarioTascaController extends Controller
 
     public function updateLote(Request $request, $id)
     {
-        $lote = LoteTasca::findOrFail($id);
+        $lote = LoteTienda::findOrFail($id);
         
         $request->validate([
             'codigo_lote' => 'nullable|string',
@@ -529,14 +529,14 @@ class InventarioTascaController extends Controller
 
     public function destroyLote($id)
     {
-        LoteTasca::destroy($id);
+        LoteTienda::destroy($id);
         return response()->json(['message' => 'Eliminado']);
     }
 
     public function reporteInventario(Request $request)
     {
         $formato = $request->query('formato', 'pdf');
-        $insumos = InsumoTasca::with(['lotesActivos'])->orderBy('nombre')->get();
+        $insumos = InsumoTienda::with(['lotesActivos'])->orderBy('nombre')->get();
         
         $data = [];
         $totalValorizado = 0;
@@ -573,7 +573,7 @@ class InventarioTascaController extends Controller
             $html .= '<tr><td colspan="4" style="text-align:center;">Av. 18 de Octubre Local UGAVI N° 57000 Sector Aurora. Villa del Rosario Municipio Rosario de Perijá</td></tr>';
             $html .= '<tr><td colspan="4"></td></tr>';
             $html .= '<tr><td colspan="4" style="font-weight:bold; font-size:14px; text-align:center;">REPORTE DE INVENTARIO VALORIZADO</td></tr>';
-            $html .= '<tr><td colspan="2"><strong>Módulo:</strong> Gestión de Tasca</td><td colspan="2"><strong>Generado por:</strong> ' . $nombreUsuario . '</td></tr>';
+            $html .= '<tr><td colspan="2"><strong>Módulo:</strong> Gestión de Tienda</td><td colspan="2"><strong>Generado por:</strong> ' . $nombreUsuario . '</td></tr>';
             $html .= '<tr><td colspan="2"><strong>Fecha de Emisión:</strong> ' . $fechaEmision . '</td><td colspan="2"><strong>Total Ítems:</strong> ' . $totalItems . '</td></tr>';
             $html .= '<tr><td colspan="4"></td></tr>';
 
@@ -604,13 +604,13 @@ class InventarioTascaController extends Controller
             
             return response($html)
                 ->header('Content-Type', 'application/vnd.ms-excel; charset=UTF-8')
-                ->header('Content-Disposition', 'attachment; filename="Inventario_Tasca_'.date('Ymd').'.xls"');
+                ->header('Content-Disposition', 'attachment; filename="Inventario_Tienda_'.date('Ymd').'.xls"');
         }
         
         $pdf = new \TCPDF('P', 'mm', 'LETTER');
         $pdf->SetMargins(15, 15, 15);
         $pdf->SetAutoPageBreak(TRUE, 20);
-        $pdf->SetTitle('Reporte de Inventario Tasca');
+        $pdf->SetTitle('Reporte de Inventario Tienda');
         $pdf->setPrintHeader(false);
         $pdf->setPrintFooter(false);
         $pdf->AddPage();
@@ -655,7 +655,7 @@ class InventarioTascaController extends Controller
                     <td width=\"40%\">
                         <div class=\"report-title\">INVENTARIO VALORIZADO</div><br>
                         <div class=\"report-meta\">
-                            <strong>Módulo:</strong> Gestión de Tasca<br>
+                            <strong>Módulo:</strong> Gestión de Tienda<br>
                             <strong>Fecha de Emisión:</strong> {$fechaEmision}<br>
                             <strong>Generado por:</strong> {$nombreUsuario}
                         </div>
@@ -730,42 +730,42 @@ class InventarioTascaController extends Controller
         ";
         
         $pdf->writeHTML($html, true, false, true, false, '');
-        return response($pdf->Output('Inventario_Tasca_'.date('Ymd').'.pdf', 'I'))
+        return response($pdf->Output('Inventario_Tienda_'.date('Ymd').'.pdf', 'I'))
             ->header('Content-Type', 'application/pdf');
     }
 
     public function getMovimientos($id)
     {
-        $insumo = InsumoTasca::findOrFail($id);
+        $insumo = InsumoTienda::findOrFail($id);
         
-        $compras = LoteTasca::where('id_insumo', $id)
+        $compras = LoteTienda::where('id_insumo', $id)
             ->orderBy('fecha_compra', 'asc')
             ->orderBy('id', 'asc')
             ->get();
             
-        $ventas_detalladas = \Illuminate\Support\Facades\DB::table('ventas_tasca_detalles')
-            ->join('ventas_tasca', 'ventas_tasca_detalles.id_venta', '=', 'ventas_tasca.id')
-            ->join('productos_tasca', 'ventas_tasca_detalles.id_producto', '=', 'productos_tasca.id')
-            ->leftJoin('miembros', 'ventas_tasca.id_cliente_miembro', '=', 'miembros.id')
-            ->leftJoin('personas', 'ventas_tasca.id_persona', '=', 'personas.id')
-            ->leftJoin('clientes_tasca', 'ventas_tasca.id_cliente_tasca', '=', 'clientes_tasca.id')
-            ->where('productos_tasca.id_insumo', $id)
-            ->whereRaw("LOWER(ventas_tasca.estado) NOT IN ('anulada', 'anulado')")
+        $ventas_detalladas = \Illuminate\Support\Facades\DB::table('ventas_tienda_detalles')
+            ->join('ventas_tienda', 'ventas_tienda_detalles.id_venta', '=', 'ventas_tienda.id')
+            ->join('productos_tienda', 'ventas_tienda_detalles.id_producto', '=', 'productos_tienda.id')
+            ->leftJoin('miembros', 'ventas_tienda.id_cliente_miembro', '=', 'miembros.id')
+            ->leftJoin('personas', 'ventas_tienda.id_persona', '=', 'personas.id')
+            ->leftJoin('clientes_tienda', 'ventas_tienda.id_cliente_tienda', '=', 'clientes_tienda.id')
+            ->where('productos_tienda.id_insumo', $id)
+            ->whereRaw("LOWER(ventas_tienda.estado) NOT IN ('anulada', 'anulado')")
             ->select(
-                'ventas_tasca.id as id_venta',
-                'ventas_tasca.fecha',
-                'ventas_tasca.estado',
+                'ventas_tienda.id as id_venta',
+                'ventas_tienda.fecha',
+                'ventas_tienda.estado',
                 'miembros.razon_social as miembro_nombre',
                 'miembros.acronimo as miembro_apellido',
                 'personas.nombre as persona_nombre',
-                'clientes_tasca.nombre as cliente_foraneo_nombre',
-                'productos_tasca.nombre as presentacion',
-                'ventas_tasca_detalles.cantidad',
-                'ventas_tasca_detalles.subtotal as total',
-                'productos_tasca.medida_descuento'
+                'clientes_tienda.nombre as cliente_foraneo_nombre',
+                'productos_tienda.nombre as presentacion',
+                'ventas_tienda_detalles.cantidad',
+                'ventas_tienda_detalles.subtotal as total',
+                'productos_tienda.medida_descuento'
             )
-            ->orderBy('ventas_tasca.fecha', 'desc')
-            ->orderBy('ventas_tasca.id', 'desc')
+            ->orderBy('ventas_tienda.fecha', 'desc')
+            ->orderBy('ventas_tienda.id', 'desc')
             ->get();
             
         // Calcular en base a las unidades de insumo reales consumidas (cantidad * medida_descuento)
@@ -797,10 +797,10 @@ class InventarioTascaController extends Controller
 
         \Illuminate\Support\Facades\DB::beginTransaction();
         try {
-            $insumo = InsumoTasca::findOrFail($id);
+            $insumo = InsumoTienda::findOrFail($id);
             
             if ($request->tipo === 'aumento') {
-                LoteTasca::create([
+                LoteTienda::create([
                     'id_insumo' => $id,
                     'codigo_lote' => 'AJUSTE: ' . $request->motivo,
                     'cantidad_comprada' => $request->cantidad,
@@ -810,14 +810,14 @@ class InventarioTascaController extends Controller
                     'estado' => 'Activo'
                 ]);
             } else {
-                $producto = \App\Models\ProductoTasca::where('id_insumo', $id)->first();
+                $producto = \App\Models\ProductoTienda::where('id_insumo', $id)->first();
                 if (!$producto) {
                     throw new \Exception("Debe tener al menos una presentacion configurada para disminuir.");
                 }
                 
                 $qty = $request->cantidad / ($producto->medida_descuento ?: 1);
 
-                $ventaId = \Illuminate\Support\Facades\DB::table('ventas_tasca')->insertGetId([
+                $ventaId = \Illuminate\Support\Facades\DB::table('ventas_tienda')->insertGetId([
                     'fecha' => \Carbon\Carbon::now()->toDateString(),
                     'estado' => 'Ajuste', // Ignorado en reportes, pero descontado en recalculo
                     'total' => 0,
@@ -827,7 +827,7 @@ class InventarioTascaController extends Controller
                     'updated_at' => now()
                 ]);
 
-                \Illuminate\Support\Facades\DB::table('ventas_tasca_detalles')->insert([
+                \Illuminate\Support\Facades\DB::table('ventas_tienda_detalles')->insert([
                     'id_venta' => $ventaId,
                     'id_producto' => $producto->id,
                     'cantidad' => $qty,
@@ -839,7 +839,7 @@ class InventarioTascaController extends Controller
 
                 // Descontar inmediatamente de los lotes activos
                 $remaining = $request->cantidad;
-                $lotes = LoteTasca::where('id_insumo', $id)
+                $lotes = LoteTienda::where('id_insumo', $id)
                     ->where('stock_actual', '>', 0)
                     ->orderBy('fecha_compra', 'asc')
                     ->orderBy('id', 'asc')
@@ -874,10 +874,10 @@ class InventarioTascaController extends Controller
         $extension = strtolower($file->getClientOriginalExtension());
         
         if (!in_array($extension, ['jpg', 'jpeg', 'png', 'webp'])) {
-            return $file->store('productos_tasca', 'public');
+            return $file->store('productos_tienda', 'public');
         }
 
-        $filename = 'productos_tasca/' . uniqid() . '.webp';
+        $filename = 'productos_tienda/' . uniqid() . '.webp';
         $path = storage_path('app/public/' . $filename);
         
         if (!file_exists(dirname($path))) {
@@ -886,7 +886,7 @@ class InventarioTascaController extends Controller
         
         list($width, $height) = @getimagesize($file->getPathname());
         if (!$width || !$height) {
-            return $file->store('productos_tasca', 'public');
+            return $file->store('productos_tienda', 'public');
         }
 
         $src = null;
@@ -951,6 +951,6 @@ class InventarioTascaController extends Controller
             imagedestroy($dst);
         }
         
-        return $file->store('productos_tasca', 'public');
+        return $file->store('productos_tienda', 'public');
     }
 }

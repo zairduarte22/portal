@@ -5,11 +5,12 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class LoteTasca extends Model
+class LoteTienda extends Model
 {
+
     use HasFactory;
 
-    protected $table = 'lotes_tasca';
+    protected $table = 'lotes_tienda';
 
     protected $fillable = [
         'compra_id',
@@ -26,12 +27,12 @@ class LoteTasca extends Model
 
     public function insumo()
     {
-        return $this->belongsTo(InsumoTasca::class, 'id_insumo');
+        return $this->belongsTo(InsumoTienda::class, 'id_insumo');
     }
 
     public function compra()
     {
-        return $this->belongsTo(CompraTasca::class, 'compra_id');
+        return $this->belongsTo(CompraTienda::class, 'compra_id');
     }
 
     // public function proveedor()

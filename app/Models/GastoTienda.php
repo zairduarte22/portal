@@ -4,9 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class GastoTasca extends Model
+class GastoTienda extends Model
 {
-    protected $table = 'gastos_tasca';
+    use \App\Traits\BelongsToTienda;
+
+    protected $table = 'gastos_tienda';
     protected $fillable = [
         'categoria',
         'descripcion',
@@ -21,11 +23,11 @@ class GastoTasca extends Model
 
     public function proveedor()
     {
-        return $this->belongsTo(ProveedorTasca::class, 'proveedor_id');
+        return $this->belongsTo(ProveedorTienda::class, 'proveedor_id');
     }
 
     public function compra()
     {
-        return $this->belongsTo(CompraTasca::class, 'compra_id');
+        return $this->belongsTo(CompraTienda::class, 'compra_id');
     }
 }

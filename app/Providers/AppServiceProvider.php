@@ -12,6 +12,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+        $this->app->singleton(\App\Services\TiendaContext::class, function ($app) {
+            return new \App\Services\TiendaContext();
+        });
+
         $this->app->bind('path.public', function() {
             return base_path('../public_html');
         });

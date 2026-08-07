@@ -4,9 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class VentaTasca extends Model
+class VentaTienda extends Model
 {
-    protected $table = 'ventas_tasca';
+    use \App\Traits\BelongsToTienda;
+
+    protected $table = 'ventas_tienda';
     protected $guarded = [];
 
     protected $casts = [
@@ -32,7 +34,7 @@ class VentaTasca extends Model
         if ($this->relationLoaded('pagos')) {
             $totalPagado = $this->pagos->sum('pivot.monto_abonado_usd');
         } else {
-            $totalPagado = $this->pagos()->sum('pago_venta_tasca.monto_abonado_usd');
+            $totalPagado = $this->pagos()->sum('pago_venta_tienda.monto_abonado_usd');
         }
         
         $descuentoReal = $this->getDescuentoRealAttribute();
@@ -53,7 +55,7 @@ class VentaTasca extends Model
 
     public function clienteForaneo()
     {
-        return $this->belongsTo(ClienteTasca::class, 'id_cliente_tasca');
+        return $this->belongsTo(ClienteTienda::class, 'id_cliente_tienda');
     }
 
     public function miembro()
@@ -68,12 +70,12 @@ class VentaTasca extends Model
 
     public function detalles()
     {
-        return $this->hasMany(VentaTascaDetalle::class, 'id_venta');
+        return $this->hasMany(VentaTiendaDetalle::class, 'id_venta');
     }
 
     public function pagos()
     {
-        return $this->belongsToMany(PagoTasca::class, 'pago_venta_tasca', 'id_venta', 'id_pago')->withPivot('monto_abonado_usd');
+        return $this->belongsToMany(PagoTienda::class, 'pago_venta_tienda', 'id_venta', 'id_pago')->withPivot('monto_abonado_usd');
     }
 
     public function autorizador()
