@@ -14,7 +14,7 @@ export function AbonoModal({ isOpen, onClose, onSuccess, obligacion, config, edi
   const [formData, setFormData] = useState({
     fecha: editData?.fecha ? new Date(editData.fecha + "T12:00:00Z").toISOString().split("T")[0] : new Date().toISOString().split("T")[0],
     monto_abonado: editData?.monto_abonado || "",
-    banco_id: editData?.banco_id?.toString() || "",
+    metodo_pago: editData?.metodo_pago || "",
     referencia: editData?.referencia || "",
     tasa_cambio: editData ? (editData.monto_banco / editData.monto_abonado).toFixed(2) : ""
   });
@@ -22,9 +22,11 @@ export function AbonoModal({ isOpen, onClose, onSuccess, obligacion, config, edi
 
   // Derivar el tipo de operación (Ingreso o Egreso) y la moneda del banco
   const bancoSeleccionado = useMemo(() => {
-    if (!formData.banco_id) return null;
-    return config?.bancos?.find((b: any) => b.id.toString() === formData.banco_id);
-  }, [formData.banco_id, config]);
+    if (!formData.metodo_pago) return null;
+    const metodo = config?.metodos_pago?.find((m: any) => m.nombre === formData.metodo_pago);
+    if (!metodo) return null;
+    return config?.bancos?.find((b: any) => b.id === metodo.id_banco);
+  }, [formData.metodo_pago, config]);
 
   const monedaDeuda = obligacion?.moneda || "VES";
   const monedaBanco = bancoSeleccionado?.moneda || monedaDeuda;
@@ -64,7 +66,7 @@ export function AbonoModal({ isOpen, onClose, onSuccess, obligacion, config, edi
       monto_banco: montoBancoCalculado,
       moneda_pago: monedaBanco,
       tasa_cambio: requiereConversion ? parseFloat(formData.tasa_cambio) : null,
-      banco_id: formData.banco_id ? parseInt(formData.banco_id) : null,
+      metodo_pago: formData.metodo_pago || null,
       referencia: formData.referencia
     };
 
@@ -127,16 +129,19 @@ export function AbonoModal({ isOpen, onClose, onSuccess, obligacion, config, edi
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-bold uppercase text-gray-500 tracking-wider">Cuenta Bancaria ({obligacion.tipo_obligacion === 'COBRAR' ? 'Ingreso' : 'Egreso'})</label>
+              <label className="text-xs font-bold uppercase text-gray-500 tracking-wider">Método de Pago / Banco</label>
               <select
                 className="w-full px-4 py-2.5 rounded-xl border outline-none bg-white focus:ring-2 focus:ring-blue-200"
-                value={formData.banco_id}
-                onChange={e => setFormData({ ...formData, banco_id: e.target.value })}
+                value={formData.metodo_pago}
+                onChange={e => setFormData({ ...formData, metodo_pago: e.target.value })}
               >
                 <option value="">-- Ninguno (Cruce / Otro) --</option>
-                {config?.bancos?.map((b: any) => (
-                  <option key={b.id} value={b.id}>{b.nombre} ({b.moneda})</option>
-                ))}
+                {config?.metodos_pago?.map((m: any) => {
+                  const banco = config?.bancos?.find((b: any) => b.id === m.id_banco);
+                  return (
+                    <option key={m.id} value={m.nombre}>{m.nombre} {banco ? `(${banco.nombre} - ${banco.moneda})` : ''}</option>
+                  );
+                })}
               </select>
             </div>
 
@@ -184,8 +189,8 @@ export function AbonoModal({ isOpen, onClose, onSuccess, obligacion, config, edi
               <label className="text-xs font-bold uppercase text-gray-500 tracking-wider">Referencia Bancaria</label>
               <input
                 type="text"
-                required={!!formData.banco_id}
-                placeholder={formData.banco_id ? "N° de Transferencia / Recibo" : "Opcional (Ej. Cruce/Compensación)"}
+                required={!!formData.metodo_pago}
+                placeholder={formData.metodo_pago ? "N° de Transferencia / Recibo" : "Opcional (Ej. Cruce/Compensación)"}
                 className="w-full px-4 py-2.5 rounded-xl border outline-none bg-white focus:ring-2 focus:ring-blue-200"
                 value={formData.referencia}
                 onChange={e => setFormData({ ...formData, referencia: e.target.value })}

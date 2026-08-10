@@ -27,6 +27,7 @@ export function PagosPanel() {
   const [miembros, setMiembros] = useState<any[]>([]);
   const [facturas, setFacturas] = useState<any[]>([]);
   const [pagos, setPagos] = useState<any[]>([]);
+  const [metodosPago, setMetodosPago] = useState<any[]>([]);
   const [tasaDia, setTasaDia] = useState<number | "">("");
 
   const fetchData = async () => {
@@ -42,6 +43,7 @@ export function PagosPanel() {
       setMiembros(data.miembros || []);
       setFacturas(data.facturas || []);
       setPagos(data.pagos || []);
+      setMetodosPago(data.metodos_pago || []);
       if (data.tasa_dia) {
         setTasaDia(Number(data.tasa_dia));
       }
@@ -609,6 +611,7 @@ export function PagosPanel() {
           }}
           miembros={miembros}
           facturas={facturas}
+          metodosPago={metodosPago}
           tasaDia={tasaDia}
           mode={modalMode}
           pagoToEdit={pagoSeleccionado}

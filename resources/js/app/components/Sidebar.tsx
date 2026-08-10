@@ -41,6 +41,7 @@ const navGroups = [
       { id: "ugavibar/gastos", label: "Gastos", icon: Receipt, moduleId: "UgaviBarGastos" },
       { id: "ugavibar/compras", label: "Compras/Proveedores", icon: ShoppingBag, moduleId: "UgaviBarCompras" },
       { id: "ugavibar/clientes", label: "Clientes", icon: Users2, moduleId: "UgaviBarClientes" },
+      { id: "ugavibar/bancos", label: "Bancos (Tienda)", icon: Landmark, moduleId: "UgaviBarBancos" },
       { id: "ugavibar/reportes", label: "Reportes", icon: BarChart3, moduleId: "UgaviBarReportes" },
     ]
   },

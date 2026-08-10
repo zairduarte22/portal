@@ -10,9 +10,10 @@ interface PagoModalProps {
   tasaDia: number | "";
   mode?: "create" | "edit" | "view";
   pagoToEdit?: any;
+  metodosPago?: any[];
 }
 
-export function PagoModal({ isOpen, onClose, onSuccess, miembros, facturas, tasaDia, mode = "create", pagoToEdit }: PagoModalProps) {
+export function PagoModal({ isOpen, onClose, onSuccess, miembros, facturas, tasaDia, mode = "create", pagoToEdit, metodosPago = [] }: PagoModalProps) {
   const isCreating = mode === "create";
   const isViewing = mode === "view";
   const isEditing = mode === "edit";
@@ -55,7 +56,7 @@ export function PagoModal({ isOpen, onClose, onSuccess, miembros, facturas, tasa
       setMonto(0);
       setTasaCambio("");
       setMontoBs("");
-      setMetodoPago("Pago Movil/Transferencia");
+      setMetodoPago(metodosPago.length > 0 ? metodosPago[0].nombre : "Efectivo Divisas");
       setReferencia("");
       setFacturaUgavi("");
       setFacturaFondo("");
@@ -65,6 +66,9 @@ export function PagoModal({ isOpen, onClose, onSuccess, miembros, facturas, tasa
       setLocalFacturas(facturas);
       if (isCreating) {
         if (tasaDia !== "") setTasaCambio(tasaDia);
+        if (metodosPago.length > 0 && metodoPago === "Pago Movil/Transferencia") {
+          setMetodoPago(metodosPago[0].nombre);
+        }
       } else if (pagoToEdit) {
         // Edit/View mode
         if (pagoToEdit.facturas && pagoToEdit.facturas.length > 0) {
@@ -82,7 +86,7 @@ export function PagoModal({ isOpen, onClose, onSuccess, miembros, facturas, tasa
         setMonto(Number(pagoToEdit.monto) || 0);
         setMontoBs(Number(pagoToEdit.monto_bs) || "");
         setTasaCambio(Number(pagoToEdit.tasa_cambio) || "");
-        setMetodoPago(pagoToEdit.metodo_pago || "Pago Movil/Transferencia");
+        setMetodoPago(pagoToEdit.metodo_pago || (metodosPago.length > 0 ? metodosPago[0].nombre : "Efectivo Divisas"));
         setReferencia(pagoToEdit.referencia || "");
         setFacturaUgavi(pagoToEdit.factura_ugavi || "");
         setFacturaFondo(pagoToEdit.factura_fondo || "");
@@ -699,10 +703,10 @@ export function PagoModal({ isOpen, onClose, onSuccess, miembros, facturas, tasa
                         disabled={isViewing}
                         onChange={(e) => setMetodoPago(e.target.value)}
                       >
-                        <option value="Pago Movil/Transferencia">Pago Móvil / Transferencia</option>
-                        <option value="Zelle">Zelle</option>
-                        <option value="Efectivo Divisas">Efectivo Divisas</option>
-                        <option value="Cruces">Cruces</option>
+                        {metodosPago.map((mp: any) => (
+                          <option key={mp.id} value={mp.nombre}>{mp.nombre}</option>
+                        ))}
+                        <option value="Cruces" className="font-bold text-orange-600">Cruces (Cuentas por Cobrar)</option>
                       </select>
                     </div>
 

@@ -44,6 +44,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::prefix('configuraciones')->group(function () {
         Route::get('/general', [ConfiguracionController::class, 'getGeneralConfigs']);
         Route::post('/general', [ConfiguracionController::class, 'updateGeneralConfigs']);
+        
+        Route::get('/tiendas', [\App\Http\Controllers\TiendaConfigController::class, 'index']);
+        Route::post('/tiendas', [\App\Http\Controllers\TiendaConfigController::class, 'store']);
+        Route::put('/tiendas/{id}', [\App\Http\Controllers\TiendaConfigController::class, 'update']);
+        Route::delete('/tiendas/{id}', [\App\Http\Controllers\TiendaConfigController::class, 'destroy']);
     });
 
     Route::prefix('miembros')->group(function () {
@@ -250,6 +255,14 @@ Route::prefix('tienda')->group(function () {
     Route::post('/clientes', [\App\Http\Controllers\ClienteTiendaController::class, 'store']);
     Route::put('/clientes/{id}', [\App\Http\Controllers\ClienteTiendaController::class, 'update']);
     Route::delete('/clientes/{id}', [\App\Http\Controllers\ClienteTiendaController::class, 'destroy']);
+
+    // Finanzas de la Tienda (Conciliación Bancaria Local)
+    Route::get('/finanzas/bancos', [\App\Http\Controllers\TiendaFinanzasController::class, 'getBancos']);
+    Route::get('/finanzas/conciliacion/ves', [\App\Http\Controllers\TiendaFinanzasController::class, 'conciliacionVes']);
+    Route::get('/finanzas/conciliacion/usd', [\App\Http\Controllers\TiendaFinanzasController::class, 'conciliacionUsd']);
+    Route::post('/finanzas/conciliacion/{tipo}', [\App\Http\Controllers\TiendaFinanzasController::class, 'storeConciliacion']);
+    Route::put('/finanzas/conciliacion/{tipo}/{id}', [\App\Http\Controllers\TiendaFinanzasController::class, 'updateConciliacion']);
+    Route::delete('/finanzas/conciliacion/{tipo}/{id}', [\App\Http\Controllers\TiendaFinanzasController::class, 'deleteConciliacion']);
 });
 
 });

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
-import { Users, Plus, Edit2, Trash2, Key, LayoutGrid, Settings, Save, Loader2, Landmark } from "lucide-react";
+import { Users, Plus, Edit2, Trash2, Key, LayoutGrid, Settings, Save, Loader2, Landmark, Store } from "lucide-react";
 import { BancosConfigPanel } from './BancosConfigPanel';
+import { TiendasConfigPanel } from './TiendasConfigPanel';
 
 export function ConfiguracionesPanel({ currentUser }: { currentUser: any }) {
   const [usuarios, setUsuarios] = useState<any[]>([]);
@@ -171,6 +172,12 @@ export function ConfiguracionesPanel({ currentUser }: { currentUser: any }) {
           className={`px-4 py-2 font-bold rounded-lg transition-colors ${activeTab === 'bancos' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
         >
           <div className="flex items-center gap-2"><Landmark size={18}/> Bancos y Métodos</div>
+        </button>
+        <button 
+          onClick={() => setActiveTab('tiendas')}
+          className={`px-4 py-2 font-bold rounded-lg transition-colors ${activeTab === 'tiendas' ? 'bg-orange-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+        >
+          <div className="flex items-center gap-2"><Store size={18}/> Tiendas y Sucursales</div>
         </button>
       </div>
 
@@ -355,6 +362,10 @@ export function ConfiguracionesPanel({ currentUser }: { currentUser: any }) {
 
       {activeTab === 'bancos' && (
         <BancosConfigPanel />
+      )}
+
+      {activeTab === 'tiendas' && (
+        <TiendasConfigPanel />
       )}
     </div>
   );

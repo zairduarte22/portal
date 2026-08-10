@@ -13,10 +13,10 @@ class MasterUserSeeder extends Seeder
     public function run(): void
     {
         \App\Models\User::create([
-            'name' => 'Zair (Master)',
-            'email' => 'zair@admin.com',
-            'username' => 'zair',
-            'password' => \Illuminate\Support\Facades\Hash::make('Luis*2108'),
+            'name' => 'Administrador',
+            'email' => 'admin@admin.com',
+            'username' => 'admin',
+            'password' => \Illuminate\Support\Facades\Hash::make('password'),
             'is_master' => true,
             'modules' => json_encode(['Dashboard', 'MembersList', 'PersonasList', 'Reports', 'PagosPanel', 'CarnetsPanel', 'LibrosPanel', 'ConciliacionPanel', 'ObligacionesPanel', 'VentasTascaPanel', 'GestionTascaPanel', 'ConfiguracionesPanel'])
         ]);

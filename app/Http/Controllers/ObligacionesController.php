@@ -18,11 +18,15 @@ class ObligacionesController extends Controller
         }
         
         $bancos = DB::table('bancos')->select('*', 'divisa as moneda')->get();
+        $metodosPago = \App\Models\MetodoPago::whereHas('banco', function($q) {
+            $q->where('para_membresias', true);
+        })->orWhereNull('id_banco')->get();
         
         return response()->json([
             'categorias' => $config['categorias'] ?? [],
             'terceros' => $config['terceros'] ?? [],
-            'bancos' => $bancos
+            'bancos' => $bancos,
+            'metodos_pago' => $metodosPago
         ]);
     }
 
@@ -65,10 +69,6 @@ class ObligacionesController extends Controller
 
     public function store(Request $request)
     {
-        if (empty($request->banco_origen_id)) {
-            $request->merge(['banco_origen_id' => null]);
-        }
-
         $request->validate([
             'tipo_obligacion' => 'required|in:COBRAR,PAGAR',
             'categoria' => 'required|string',
@@ -76,9 +76,18 @@ class ObligacionesController extends Controller
             'monto_original' => 'required|numeric|min:0.01',
             'moneda' => 'required|in:VES,USD',
             'fecha_emision' => 'required|date',
-            'banco_origen_id' => 'nullable|integer|exists:bancos,id',
-            'referencia' => 'required_with:banco_origen_id|string|nullable'
+            'metodo_pago' => 'nullable|string',
+            'referencia' => 'required_with:metodo_pago|string|nullable'
         ]);
+
+        $banco_id = null;
+        if ($request->metodo_pago) {
+            $metodo = DB::table('metodos_pago')->where('nombre', $request->metodo_pago)->first();
+            if ($metodo) {
+                $banco_id = $metodo->id_banco;
+            }
+        }
+        $request->merge(['banco_origen_id' => $banco_id]);
 
         DB::beginTransaction();
         try {
@@ -119,18 +128,23 @@ class ObligacionesController extends Controller
 
     public function abonar(Request $request, $id)
     {
-        if (empty($request->banco_id)) {
-            $request->merge(['banco_id' => null]);
-        }
-
         $request->validate([
             'fecha' => 'required|date',
             'monto_abonado' => 'required|numeric|min:0.01',
             'monto_banco' => 'required|numeric|min:0',
             'moneda_pago' => 'required|in:VES,USD',
-            'banco_id' => 'nullable|integer|exists:bancos,id',
-            'referencia' => 'required_with:banco_id|string|nullable'
+            'metodo_pago' => 'nullable|string',
+            'referencia' => 'required_with:metodo_pago|string|nullable'
         ]);
+
+        $banco_id = null;
+        if ($request->metodo_pago) {
+            $metodo = DB::table('metodos_pago')->where('nombre', $request->metodo_pago)->first();
+            if ($metodo) {
+                $banco_id = $metodo->id_banco;
+            }
+        }
+        $request->merge(['banco_id' => $banco_id]);
 
         $obligacion = Obligacion::findOrFail($id);
 
@@ -194,18 +208,23 @@ class ObligacionesController extends Controller
 
     public function update(Request $request, $id)
     {
-        if (empty($request->banco_origen_id)) {
-            $request->merge(['banco_origen_id' => null]);
-        }
-
         $request->validate([
             'categoria' => 'required|string',
             'tercero' => 'required|string',
             'monto_original' => 'required|numeric|min:0.01',
             'fecha_emision' => 'required|date',
-            'banco_origen_id' => 'nullable|integer|exists:bancos,id',
-            'referencia' => 'required_with:banco_origen_id|string|nullable'
+            'metodo_pago' => 'nullable|string',
+            'referencia' => 'required_with:metodo_pago|string|nullable'
         ]);
+
+        $banco_id = null;
+        if ($request->metodo_pago) {
+            $metodo = DB::table('metodos_pago')->where('nombre', $request->metodo_pago)->first();
+            if ($metodo) {
+                $banco_id = $metodo->id_banco;
+            }
+        }
+        $request->merge(['banco_origen_id' => $banco_id]);
 
         $obligacion = Obligacion::findOrFail($id);
 
@@ -283,9 +302,18 @@ class ObligacionesController extends Controller
             'monto_abonado' => 'required|numeric|min:0.01',
             'monto_banco' => 'required|numeric|min:0.01',
             'moneda_pago' => 'required|in:VES,USD',
-            'banco_id' => 'required|integer|exists:bancos,id',
+            'metodo_pago' => 'required|string',
             'referencia' => 'required|string'
         ]);
+
+        $banco_id = null;
+        if ($request->metodo_pago) {
+            $metodo = DB::table('metodos_pago')->where('nombre', $request->metodo_pago)->first();
+            if ($metodo) {
+                $banco_id = $metodo->id_banco;
+            }
+        }
+        $request->merge(['banco_id' => $banco_id]);
 
         DB::beginTransaction();
         try {

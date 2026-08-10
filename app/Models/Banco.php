@@ -17,6 +17,13 @@ class Banco extends Model
     protected $fillable = [
         'nombre',
         'titular',
-        'divisa'
+        'divisa',
+        'propietario',
+        'para_membresias'
     ];
+
+    public function tiendas()
+    {
+        return $this->belongsToMany(Tienda::class, 'banco_tienda', 'banco_id', 'tienda_id');
+    }
 }

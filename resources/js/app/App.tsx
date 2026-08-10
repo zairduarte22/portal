@@ -22,6 +22,7 @@ import { UgaviBarCreditos } from "./components/tasca/pages/UgaviBarCreditos";
 import { UgaviBarCatalogo } from "./components/tasca/pages/UgaviBarCatalogo";
 import { UgaviBarGastos } from "./components/tasca/pages/UgaviBarGastos";
 import { UgaviBarCompras } from "./components/tasca/pages/UgaviBarCompras";
+import { TiendaBancosPanel } from "./components/TiendaBancosPanel";
 import { Miembro, Persona, Vinculacion, RelacionFamiliar } from "./components/mockData";
 import { Settings } from "lucide-react";
 import { Login } from "./components/Login";
@@ -289,6 +290,7 @@ export default function App() {
           <Route path="ugavibar/inventario" element={<ProtectedRoute moduleId="UgaviBarInventario" user={user}><UgaviBarInventario /></ProtectedRoute>} />
           <Route path="ugavibar/gastos" element={<ProtectedRoute moduleId="UgaviBarGastos" user={user}><UgaviBarGastos /></ProtectedRoute>} />
           <Route path="ugavibar/compras" element={<ProtectedRoute moduleId="UgaviBarCompras" user={user}><UgaviBarCompras /></ProtectedRoute>} />
+          <Route path="ugavibar/bancos" element={<ProtectedRoute moduleId="UgaviBarBancos" user={user}><TiendaBancosPanel tiendaId={1} /></ProtectedRoute>} />
           <Route path="ugavibar/reportes" element={<ProtectedRoute moduleId="UgaviBarReportes" user={user}><ReportesTascaPanel /></ProtectedRoute>} />
           <Route path="configuraciones" element={<ProtectedRoute moduleId="ConfiguracionesPanel" user={user}><ConfiguracionesPanel currentUser={user} /></ProtectedRoute>} />
           <Route path="reportes" element={<ProtectedRoute moduleId="Reports" user={user}><Reports members={members} personas={personas} /></ProtectedRoute>} />

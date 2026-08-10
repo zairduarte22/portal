@@ -59,7 +59,8 @@ class FinanzasController extends Controller
                     'bancos.nombre as banco_nombre',
                     'categoria_fondos.categoria as categoria_nombre',
                     'beneficiarios_fondo.nombre as beneficiario_nombre'
-                );
+                )
+                ->where('bancos.para_membresias', true);
 
             if ($request->query('desde')) {
                 $query->where('cuenta_banco.fecha', '>=', $request->query('desde'));
@@ -90,7 +91,8 @@ class FinanzasController extends Controller
                     'bancos.nombre as banco_nombre',
                     'categoria_fondos.categoria as categoria_nombre',
                     'beneficiarios_fondo.nombre as beneficiario_nombre'
-                );
+                )
+                ->where('bancos.para_membresias', true);
 
             if ($request->query('desde')) {
                 $query->where('cuenta_moneda_extranjera.fecha', '>=', $request->query('desde'));

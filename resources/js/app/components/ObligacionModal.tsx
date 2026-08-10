@@ -19,7 +19,7 @@ export function ObligacionModal({ isOpen, onClose, onSuccess, tipo, config, edit
     moneda: editData?.moneda || "VES",
     fecha_emision: editData?.fecha_emision ? new Date(editData.fecha_emision + "T12:00:00Z").toISOString().split("T")[0] : new Date().toISOString().split("T")[0],
     fecha_limite: editData?.fecha_limite ? new Date(editData.fecha_limite + "T12:00:00Z").toISOString().split("T")[0] : "",
-    banco_origen_id: editData?.banco_origen_id || "",
+    metodo_pago: editData?.metodo_pago || "",
     referencia: editData?.referencia || ""
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -49,8 +49,7 @@ export function ObligacionModal({ isOpen, onClose, onSuccess, tipo, config, edit
 
       const payload = { 
         ...formData, 
-        tipo_obligacion: tipo,
-        banco_origen_id: formData.banco_origen_id ? parseInt(formData.banco_origen_id) : null
+        tipo_obligacion: tipo
       };
       const url = editData ? `/api/finanzas/obligaciones/${editData.id}` : "/api/finanzas/obligaciones";
       const method = editData ? "PUT" : "POST";
@@ -220,22 +219,26 @@ export function ObligacionModal({ isOpen, onClose, onSuccess, tipo, config, edit
               </div>
 
               <div className="space-y-1.5 md:col-span-2 bg-gray-50 p-4 rounded-xl border border-gray-100">
-                <label className="text-xs font-bold uppercase text-gray-500 tracking-wider">Banco Origen/Destino (Opcional)</label>
+                <label className="text-xs font-bold uppercase text-gray-500 tracking-wider">Método de Pago / Banco (Opcional)</label>
                 <select
                   className="w-full px-4 py-2.5 rounded-xl border outline-none bg-white focus:ring-2 focus:ring-blue-200"
-                  value={formData.banco_origen_id}
-                  onChange={e => setFormData({ ...formData, banco_origen_id: e.target.value })}
+                  value={formData.metodo_pago}
+                  onChange={e => setFormData({ ...formData, metodo_pago: e.target.value })}
                 >
                   <option value="">Seleccione si aplica (movimiento bancario)...</option>
-                  {config?.bancos?.filter((b: any) => b.moneda === formData.moneda).map((b: any) => (
-                    <option key={b.id} value={b.id}>{b.nombre}</option>
-                  ))}
+                  {config?.metodos_pago?.map((m: any) => {
+                    const banco = config?.bancos?.find((b: any) => b.id === m.id_banco);
+                    if (banco && banco.moneda !== formData.moneda) return null; // Filtrar por moneda compatible
+                    return (
+                      <option key={m.id} value={m.nombre}>{m.nombre} {banco ? `(${banco.nombre})` : ''}</option>
+                    );
+                  })}
                 </select>
                 <p className="text-xs text-gray-400 mt-1">
-                  Si seleccionas un banco, se registrará el ingreso o egreso en la conciliación.
+                  Si seleccionas un método, se registrará el ingreso o egreso en la conciliación.
                 </p>
                 
-                {formData.banco_origen_id && (
+                {formData.metodo_pago && (
                   <div className="mt-3 space-y-1.5">
                     <label className="text-xs font-bold uppercase text-gray-500 tracking-wider">Referencia de Transacción</label>
                     <input

@@ -216,8 +216,8 @@ class TiendaController extends Controller
             'id_persona' => 'nullable|exists:personas,id'
         ]);
 
-        if (!$request->id_cliente_miembro && !$request->id_cliente_tienda) {
-            return response()->json(['error' => 'Debe seleccionar un cliente o miembro para la venta.'], 400);
+        if (!$request->id_cliente_miembro && !$request->id_cliente_tienda && !$request->id_persona) {
+            return response()->json(['error' => 'Debe seleccionar un cliente, miembro o persona para la venta.'], 400);
         }
 
         $tasa = \DB::table('tasas')->orderBy('fecha', 'desc')->first();

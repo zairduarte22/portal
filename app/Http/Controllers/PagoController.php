@@ -40,10 +40,16 @@ class PagoController extends Controller
         $tasaHoy = Tasa::orderBy('fecha', 'desc')->first();
         $costoCarnet = env('PRECIO_POR_CREDITO_USD', 25);
 
+        // Fetch dynamic payment methods that are for Memberships or have no bank associated (like cash)
+        $metodosPago = \App\Models\MetodoPago::whereHas('banco', function($q) {
+            $q->where('para_membresias', true);
+        })->orWhereNull('id_banco')->get();
+
         return response()->json([
             'miembros' => $miembros,
             'facturas' => $facturas,
             'pagos' => $pagos,
+            'metodos_pago' => $metodosPago,
             'tasa_dia' => $tasaHoy ? $tasaHoy->monto : null,
             'costo_carnet' => $costoCarnet
         ]);
@@ -63,9 +69,17 @@ class PagoController extends Controller
 
         $mp = $request->metodo_pago;
         $table = null;
-        if ($mp === 'Pago Movil/Transferencia') $table = 'cuenta_banco';
-        elseif ($mp === 'Zelle' || $mp === 'Efectivo Divisas') $table = 'cuenta_moneda_extranjera';
-        elseif ($mp === 'Cruces') $table = 'cruces';
+        if ($mp === 'Cruces') {
+            $table = 'cruces';
+        } else {
+            $metodoPago = DB::table('metodos_pago')->where('nombre', $mp)->first();
+            if ($metodoPago && $metodoPago->id_banco) {
+                $banco = DB::table('bancos')->where('id', $metodoPago->id_banco)->first();
+                if ($banco) {
+                    $table = ($banco->divisa === 'USD') ? 'cuenta_moneda_extranjera' : 'cuenta_banco';
+                }
+            }
+        }
 
         if ($table && !$request->force_duplicate_reference) {
             $existing = DB::table($table)
@@ -152,26 +166,25 @@ class PagoController extends Controller
             $bancoId = null;
             $tipoOperacion = '';
             
-            if ($mp === 'Pago Movil/Transferencia') {
-                $tableToUpdate = 'cuenta_banco';
-                $montoToSum = $pago->monto_bs;
-                $bancoId = DB::table('bancos')->where('nombre', 'BNC (Banco Nacional de Credito)')->value('id');
-                $tipoOperacion = 'TRANSF';
-            } elseif ($mp === 'Zelle') {
-                $tableToUpdate = 'cuenta_moneda_extranjera';
-                $montoToSum = $pago->monto;
-                $bancoId = DB::table('bancos')->where('nombre', 'Zelle')->value('id');
-                $tipoOperacion = 'TRANSF';
-            } elseif ($mp === 'Efectivo Divisas') {
-                $tableToUpdate = 'cuenta_moneda_extranjera';
-                $montoToSum = $pago->monto;
-                $bancoId = DB::table('bancos')->where('nombre', 'Efectivo Divisas')->value('id');
-                $tipoOperacion = 'TRANSF';
-            } elseif ($mp === 'Cruces') {
+            $categoriaFondo = DB::table('categoria_fondos')->where('nombre', 'Ingresos Por Cuotas')->first();
+            $categoriaId = $categoriaFondo ? $categoriaFondo->id : null;
+            
+            if ($mp === 'Cruces') {
                 $tableToUpdate = 'cruces';
                 $montoToSum = $pago->monto;
                 $bancoId = null;
                 $tipoOperacion = '';
+            } else {
+                $metodoPago = DB::table('metodos_pago')->where('nombre', $mp)->first();
+                if ($metodoPago && $metodoPago->id_banco) {
+                    $bancoId = $metodoPago->id_banco;
+                    $banco = DB::table('bancos')->where('id', $bancoId)->first();
+                    if ($banco) {
+                        $tableToUpdate = ($banco->divisa === 'USD') ? 'cuenta_moneda_extranjera' : 'cuenta_banco';
+                        $montoToSum = ($banco->divisa === 'USD') ? $pago->monto : $pago->monto_bs;
+                        $tipoOperacion = 'TRANSF';
+                    }
+                }
             }
 
             if ($tableToUpdate) {
@@ -209,6 +222,7 @@ class PagoController extends Controller
                             DB::table($tableToUpdate)->insert([
                                 'id_banco' => $bancoId,
                                 'id_venta' => $idVenta,
+                                'categoria_id' => $categoriaId,
                                 'fecha' => $request->fecha,
                                 'tipo_operacion' => $tipoOperacion,
                                 'referencia' => $pago->referencia,
@@ -289,36 +303,31 @@ class PagoController extends Controller
                     'referencia' => $dataToUpdate['referencia']
                 ]);
                 
+                $categoriaFondo = DB::table('categoria_fondos')->where('nombre', 'Ingresos Por Cuotas')->first();
+                $categoriaId = $categoriaFondo ? $categoriaFondo->id : null;
+                
                 // Helper mapping
                 $getBankMapping = function($mp, $pagoObj) {
-                    if ($mp === 'Pago Movil/Transferencia') {
-                        return [
-                            'table' => 'cuenta_banco',
-                            'montoToSum' => $pagoObj->monto_bs,
-                            'bancoId' => DB::table('bancos')->where('nombre', 'BNC (Banco Nacional de Credito)')->value('id'),
-                            'tipoOperacion' => 'TRANSF'
-                        ];
-                    } elseif ($mp === 'Zelle') {
-                        return [
-                            'table' => 'cuenta_moneda_extranjera',
-                            'montoToSum' => $pagoObj->monto,
-                            'bancoId' => DB::table('bancos')->where('nombre', 'Zelle')->value('id'),
-                            'tipoOperacion' => 'TRANSF'
-                        ];
-                    } elseif ($mp === 'Efectivo Divisas') {
-                        return [
-                            'table' => 'cuenta_moneda_extranjera',
-                            'montoToSum' => $pagoObj->monto,
-                            'bancoId' => DB::table('bancos')->where('nombre', 'Efectivo Divisas')->value('id'),
-                            'tipoOperacion' => 'TRANSF'
-                        ];
-                    } elseif ($mp === 'Cruces') {
+                    if ($mp === 'Cruces') {
                         return [
                             'table' => 'cruces',
                             'montoToSum' => $pagoObj->monto,
                             'bancoId' => null,
                             'tipoOperacion' => ''
                         ];
+                    }
+                    
+                    $metodoPago = DB::table('metodos_pago')->where('nombre', $mp)->first();
+                    if ($metodoPago && $metodoPago->id_banco) {
+                        $banco = DB::table('bancos')->where('id', $metodoPago->id_banco)->first();
+                        if ($banco) {
+                            return [
+                                'table' => ($banco->divisa === 'USD') ? 'cuenta_moneda_extranjera' : 'cuenta_banco',
+                                'montoToSum' => ($banco->divisa === 'USD') ? $pagoObj->monto : $pagoObj->monto_bs,
+                                'bancoId' => $banco->id,
+                                'tipoOperacion' => 'TRANSF'
+                            ];
+                        }
                     }
                     return null;
                 };
@@ -382,6 +391,7 @@ class PagoController extends Controller
                                     DB::table($newTable)->insert([
                                         'id_banco' => $newMapping['bancoId'],
                                         'id_venta' => $libroVenta->id,
+                                        'categoria_id' => $categoriaId,
                                         'fecha' => $request->fecha,
                                         'tipo_operacion' => $newMapping['tipoOperacion'],
                                         'referencia' => $dataToUpdate['referencia'],
