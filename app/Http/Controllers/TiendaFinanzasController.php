@@ -11,7 +11,7 @@ class TiendaFinanzasController extends Controller
     public function getBancos()
     {
         try {
-            $tiendaId = TiendaContext::getInstance()->getTiendaId();
+            $tiendaId = app(TiendaContext::class)->getTiendaId();
             if (!$tiendaId) return response()->json(['error' => 'No hay tienda en contexto'], 400);
 
             $bancos = DB::table('bancos')
@@ -29,7 +29,7 @@ class TiendaFinanzasController extends Controller
     public function conciliacionVes(Request $request)
     {
         try {
-            $tiendaId = TiendaContext::getInstance()->getTiendaId();
+            $tiendaId = app(TiendaContext::class)->getTiendaId();
             if (!$tiendaId) return response()->json(['error' => 'No hay tienda en contexto'], 400);
 
             $query = DB::table('cuenta_banco')
@@ -65,7 +65,7 @@ class TiendaFinanzasController extends Controller
     public function conciliacionUsd(Request $request)
     {
         try {
-            $tiendaId = TiendaContext::getInstance()->getTiendaId();
+            $tiendaId = app(TiendaContext::class)->getTiendaId();
             if (!$tiendaId) return response()->json(['error' => 'No hay tienda en contexto'], 400);
 
             $query = DB::table('cuenta_moneda_extranjera')
@@ -103,7 +103,7 @@ class TiendaFinanzasController extends Controller
         $table = $tipo === 'ves' ? 'cuenta_banco' : 'cuenta_moneda_extranjera';
         try {
             // Verificar si el banco pertenece a la tienda
-            $tiendaId = TiendaContext::getInstance()->getTiendaId();
+            $tiendaId = app(TiendaContext::class)->getTiendaId();
             $data = $request->except(['id', 'banco_nombre', 'categoria_nombre', 'beneficiario_nombre']);
             
             $bancoEnTienda = DB::table('banco_tienda')
@@ -133,7 +133,7 @@ class TiendaFinanzasController extends Controller
     {
         $table = $tipo === 'ves' ? 'cuenta_banco' : 'cuenta_moneda_extranjera';
         try {
-            $tiendaId = TiendaContext::getInstance()->getTiendaId();
+            $tiendaId = app(TiendaContext::class)->getTiendaId();
             $data = $request->except(['id', 'created_at', 'updated_at', 'banco_nombre', 'categoria_nombre', 'beneficiario_nombre']);
             
             if (isset($data['id_banco'])) {

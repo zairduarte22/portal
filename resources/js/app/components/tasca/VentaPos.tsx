@@ -52,7 +52,7 @@ export function VentaPos() {
     });
     fetch("/api/tienda/directores").then(res => res.json()).then(setDirectores).catch(() => {});
     fetch("/api/tienda/finanzas/bancos").then(res => res.json()).then(setBancos).catch(() => {});
-    fetch("/api/metodos-pago").then(res => res.json()).then(setMetodosPagoList).catch(() => {});
+    fetch("/api/finanzas/metodos-pago").then(res => res.json()).then(setMetodosPagoList).catch(() => {});
   }, [id]);
 
   if (!venta) return <div className="p-10 text-center">Cargando venta...</div>;
@@ -234,8 +234,8 @@ export function VentaPos() {
     setReferencia("");
   };
 
-  const metodosTienda = metodosPagoList.filter(m => 
-    m.id_banco === null || bancos.some(b => b.id === m.id_banco)
+  const metodosTienda = (Array.isArray(metodosPagoList) ? metodosPagoList : []).filter(m => 
+    m.id_banco === null || (Array.isArray(bancos) ? bancos : []).some(b => b.id === m.id_banco)
   );
 
   const handleProcesar = async (isCredit = false) => {

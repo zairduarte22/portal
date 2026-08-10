@@ -36,7 +36,7 @@ export function AbonosCreditoTab({ onOpenDetalle }: { onOpenDetalle: (venta: any
       .catch(console.error);
 
     fetch("/api/tienda/finanzas/bancos").then(res => res.json()).then(setBancos).catch(() => {});
-    fetch("/api/metodos-pago").then(res => res.json()).then(setMetodosPagoList).catch(() => {});
+    fetch("/api/finanzas/metodos-pago").then(res => res.json()).then(setMetodosPagoList).catch(() => {});
   };
 
   useEffect(() => {
@@ -127,8 +127,8 @@ export function AbonosCreditoTab({ onOpenDetalle }: { onOpenDetalle: (venta: any
     }
   };
 
-  const metodosTienda = metodosPagoList.filter(m => 
-    m.id_banco === null || bancos.some(b => b.id === m.id_banco)
+  const metodosTienda = (Array.isArray(metodosPagoList) ? metodosPagoList : []).filter(m => 
+    m.id_banco === null || (Array.isArray(bancos) ? bancos : []).some(b => b.id === m.id_banco)
   );
 
   const handleAbonarMultiples = async (e: React.FormEvent) => {
