@@ -125,7 +125,7 @@ export default function LotesTab() {
   const [compraItems, setCompraItems] = useState<any[]>([emptyLoteItem()]);
 
   const loadInsumos = () => {
-    fetch("/api/tasca/insumos")
+    fetch("/api/tienda/insumos")
       .then(res => res.json())
       .then(data => {
         if (Array.isArray(data)) setInsumos(data);
@@ -134,7 +134,7 @@ export default function LotesTab() {
   };
 
   const loadCompras = () => {
-    fetch("/api/tasca/compras")
+    fetch("/api/tienda/compras")
       .then(res => res.json())
       .then(data => {
         if (Array.isArray(data)) setCompras(data);
@@ -143,7 +143,7 @@ export default function LotesTab() {
   };
 
   const loadProveedores = () => {
-    fetch("/api/tasca/proveedores")
+    fetch("/api/tienda/proveedores")
       .then(res => res.json())
       .then(data => {
         if (Array.isArray(data)) setProveedores(data);
@@ -194,7 +194,7 @@ export default function LotesTab() {
       }))
     };
 
-    fetch("/api/tasca/compras", {
+    fetch("/api/tienda/compras", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload)
@@ -211,7 +211,7 @@ export default function LotesTab() {
 
   const anularCompra = (id: number) => {
     if (confirm("¿Seguro que deseas anular esta compra? Esto revertirá el stock de todos los insumos incluidos.")) {
-      fetch(`/api/tasca/compras/${id}/anular`, { method: "POST" })
+      fetch(`/api/tienda/compras/${id}/anular`, { method: "POST" })
         .then(async res => {
           if (!res.ok) throw new Error("Error al anular compra");
           loadCompras();
@@ -233,7 +233,7 @@ export default function LotesTab() {
       return;
     }
 
-    fetch(`/api/tasca/compras/${showAbonoModal.id}/pagar`, {
+    fetch(`/api/tienda/compras/${showAbonoModal.id}/pagar`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -464,7 +464,7 @@ export default function LotesTab() {
                           if (e.target.value === 'nuevo') {
                             const nombre = prompt("Nombre del nuevo proveedor:");
                             if (nombre) {
-                              fetch("/api/tasca/proveedores", {
+                              fetch("/api/tienda/proveedores", {
                                 method: "POST",
                                 headers: { "Content-Type": "application/json" },
                                 body: JSON.stringify({ nombre })

@@ -62,7 +62,7 @@ export default function ProductosTab() {
   }, [componentes, formData.tipo, productos]);
 
   const loadProductos = () => {
-    fetch("/api/tasca/insumos")
+    fetch("/api/tienda/insumos")
       .then(res => res.json())
       .then(data => {
         if (Array.isArray(data)) {
@@ -73,7 +73,7 @@ export default function ProductosTab() {
       })
       .catch(console.error);
 
-    fetch("/api/tasca/inventario/metricas")
+    fetch("/api/tienda/inventario/metricas")
       .then(res => res.json())
       .then(data => {
         if (data && typeof data.totalProductos !== 'undefined') {
@@ -229,7 +229,7 @@ export default function ProductosTab() {
       fd.append('_method', 'PUT');
     }
 
-    const url = editingId ? `/api/tasca/productos-completos/${editingId}` : "/api/tasca/productos-completos";
+    const url = editingId ? `/api/tienda/productos-completos/${editingId}` : "/api/tienda/productos-completos";
 
     fetch(url, {
       method: "POST",
@@ -265,7 +265,7 @@ export default function ProductosTab() {
 
   const handleDelete = (id: number) => {
     if (confirm("¿Seguro que deseas eliminar este producto físico y todo su historial/presentaciones?")) {
-      fetch(`/api/tasca/insumos/${id}`, { method: "DELETE" })
+      fetch(`/api/tienda/insumos/${id}`, { method: "DELETE" })
         .then(async res => {
           if (!res.ok) throw new Error("Error al eliminar");
           loadProductos();

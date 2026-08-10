@@ -25,12 +25,12 @@ export function UgaviBarVentas() {
 
   const loadVentas = () => {
     const query = `?start_date=${startDate}&end_date=${endDate}`;
-    fetch(`/api/tasca/ventas${query}`)
+    fetch(`/api/tienda/ventas${query}`)
       .then(res => res.json())
       .then(data => setVentas(data))
       .catch(console.error);
 
-    fetch(`/api/tasca/ventas/estadisticas${query}`)
+    fetch(`/api/tienda/ventas/estadisticas${query}`)
       .then(res => res.json())
       .then(data => setEstadisticas(data))
       .catch(console.error);
@@ -42,7 +42,7 @@ export function UgaviBarVentas() {
 
   const handleAnular = (id: number) => {
     if (confirm("¿Estás seguro de anular esta venta? El stock se devolverá al inventario.")) {
-      fetch(`/api/tasca/ventas/${id}/anular`, { method: "POST" })
+      fetch(`/api/tienda/ventas/${id}/anular`, { method: "POST" })
         .then(async res => {
           if (!res.ok) {
             const err = await res.json();
@@ -70,7 +70,7 @@ export function UgaviBarVentas() {
 
   const handleImprimirTicket = async (v: any) => {
     try {
-      const res = await fetch(`/api/tasca/ventas/${v.id}`);
+      const res = await fetch(`/api/tienda/ventas/${v.id}`);
       if (!res.ok) throw new Error("Error al obtener detalles");
       const ventaDetallada = await res.json();
       

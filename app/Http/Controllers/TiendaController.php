@@ -428,6 +428,43 @@ class TiendaController extends Controller
 
                 // Attach to pivot
                 $venta->pagos()->attach($nuevoPago->id, ['monto_abonado_usd' => $pagoData['monto_usd']]);
+
+                // Registrar en bancos si se proporciona id_banco
+                if (!empty($pagoData['id_banco'])) {
+                    $isBs = strtoupper($pagoData['moneda'] ?? 'USD') === 'VES';
+                    $table = $isBs ? 'cuenta_banco' : 'cuenta_moneda_extranjera';
+                    
+                    $montoIngreso = $isBs ? ($pagoData['monto_bs'] ?? 0) : $pagoData['monto_usd'];
+                    
+                    if ($montoIngreso > 0) {
+                        $clienteNombre = $venta->cliente_foraneo ? $venta->cliente_foraneo->nombre : ($venta->miembro ? $venta->miembro->razon_social : 'Cliente Desconocido');
+                        
+                        // Buscar categoría "Ventas POS"
+                        $categoria = DB::table('categoria_fondos')->where('categoria', 'Ventas POS')->first();
+                        if (!$categoria) {
+                            $catId = DB::table('categoria_fondos')->insertGetId([
+                                'categoria' => 'Ventas POS',
+                                'created_at' => now(),
+                                'updated_at' => now()
+                            ]);
+                        } else {
+                            $catId = $categoria->id;
+                        }
+
+                        DB::table($table)->insert([
+                            'fecha' => Carbon::now()->toDateString(),
+                            'id_banco' => $pagoData['id_banco'],
+                            'referencia' => $pagoData['referencia'] ?? ('Venta POS #' . $venta->id),
+                            'descripcion' => 'Venta POS a ' . $clienteNombre,
+                            'monto_ingreso' => $montoIngreso,
+                            'monto_egreso' => 0,
+                            'categoria_id' => $catId,
+                            'id_pago_tienda' => $nuevoPago->id,
+                            'created_at' => now(),
+                            'updated_at' => now()
+                        ]);
+                    }
+                }
             }
 
             // Determine new state

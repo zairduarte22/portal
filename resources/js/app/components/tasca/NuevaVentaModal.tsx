@@ -19,7 +19,7 @@ export function NuevaVentaModal({ onClose, onVentaCreated }: { onClose: () => vo
 
   useEffect(() => {
     fetch("/api/miembros").then(res => res.json()).then(setMiembros);
-    fetch("/api/tasca/clientes").then(res => res.json()).then(data => setClientesForaneos(data.foraneos || data));
+    fetch("/api/tienda/clientes").then(res => res.json()).then(data => setClientesForaneos(data.foraneos || data));
     fetch("/api/personas").then(res => res.json()).then(setPersonas);
     fetch("/api/vinculaciones").then(res => res.json()).then(setVinculaciones);
     fetch("/api/carnets-emitidos").then(res => res.json()).then(setCarnetsEmitidos);
@@ -28,12 +28,12 @@ export function NuevaVentaModal({ onClose, onVentaCreated }: { onClose: () => vo
     }
   }, [activeTab]);
 
-  const createVenta = (id_cliente_miembro: number | null, id_cliente_tasca: number | null, id_persona: number | null = null) => {
+  const createVenta = (id_cliente_miembro: number | null, id_cliente_tienda: number | null, id_persona: number | null = null) => {
     setLoading(true);
-    fetch("/api/tasca/ventas", {
+    fetch("/api/tienda/ventas", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id_cliente_miembro, id_cliente_tasca, id_persona })
+      body: JSON.stringify({ id_cliente_miembro, id_cliente_tienda, id_persona })
     }).then(async res => {
       if (!res.ok) throw new Error("Error al crear venta");
       const data = await res.json();
@@ -68,7 +68,7 @@ export function NuevaVentaModal({ onClose, onVentaCreated }: { onClose: () => vo
   const handleNuevoClienteSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    fetch("/api/tasca/clientes", {
+    fetch("/api/tienda/clientes", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(nuevoCliente)

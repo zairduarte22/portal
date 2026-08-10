@@ -9,7 +9,7 @@ export function UgaviBarInventario() {
   const [showNotifications, setShowNotifications] = useState(false);
 
   const fetchNotifications = () => {
-    fetch("/api/tasca/notificaciones")
+    fetch("/api/tienda/notificaciones")
       .then(res => res.json())
       .then(data => {
         if (Array.isArray(data)) {
@@ -39,7 +39,7 @@ export function UgaviBarInventario() {
         
         <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto justify-end">
           <button 
-            onClick={() => window.open('/api/tasca/insumos/reporte?formato=pdf', '_blank')}
+            onClick={() => window.open('/api/tienda/insumos/reporte?formato=pdf', '_blank')}
             className="flex items-center justify-center gap-2 p-2.5 sm:px-4 sm:py-2 text-sm font-bold bg-white border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors shadow-sm"
             title="Descargar Reporte en PDF"
           >
@@ -48,7 +48,7 @@ export function UgaviBarInventario() {
           </button>
           
           <button 
-            onClick={() => window.open('/api/tasca/insumos/reporte?formato=excel', '_blank')}
+            onClick={() => window.open('/api/tienda/insumos/reporte?formato=excel', '_blank')}
             className="flex items-center justify-center gap-2 p-2.5 sm:px-4 sm:py-2 text-sm font-bold bg-white border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors shadow-sm"
             title="Descargar Reporte en Excel (CSV)"
           >

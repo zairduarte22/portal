@@ -16,6 +16,9 @@ export function VentaPos() {
   const [referencia, setReferencia] = useState("");
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   
+  const [bancos, setBancos] = useState<any[]>([]);
+  const [metodosPagoList, setMetodosPagoList] = useState<any[]>([]);
+  
   const [tasa, setTasa] = useState("");
   const [loading, setLoading] = useState(false);
   const [directores, setDirectores] = useState<any[]>([]);
@@ -32,7 +35,7 @@ export function VentaPos() {
   const [aplicaCargoServicio, setAplicaCargoServicio] = useState(false);
 
   useEffect(() => {
-    fetch(`/api/tasca/ventas/${id}`)
+    fetch(`/api/tienda/ventas/${id}`)
       .then(res => res.json())
       .then(data => {
         if (data.detalles) {
@@ -43,11 +46,13 @@ export function VentaPos() {
           setAplicaCargoServicio(true);
         }
       });
-    fetch("/api/tasca/productos").then(res => res.json()).then(setProductos);
+    fetch("/api/tienda/productos").then(res => res.json()).then(setProductos);
     fetch("/api/pagos/init").then(res => res.json()).then(data => {
       if (data.tasa_dia) setTasa(data.tasa_dia.toString());
     });
-    fetch("/api/tasca/directores").then(res => res.json()).then(setDirectores).catch(() => {});
+    fetch("/api/tienda/directores").then(res => res.json()).then(setDirectores).catch(() => {});
+    fetch("/api/tienda/finanzas/bancos").then(res => res.json()).then(setBancos).catch(() => {});
+    fetch("/api/metodos-pago").then(res => res.json()).then(setMetodosPagoList).catch(() => {});
   }, [id]);
 
   if (!venta) return <div className="p-10 text-center">Cargando venta...</div>;
@@ -175,7 +180,7 @@ export function VentaPos() {
   };
 
   const updateDetalles = (detalles: any[], applyCargo: boolean = aplicaCargoServicio) => {
-    fetch(`/api/tasca/ventas/${id}/detalles`, {
+    fetch(`/api/tienda/ventas/${id}/detalles`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ detalles, aplica_cargo_servicio: applyCargo })
@@ -203,23 +208,35 @@ export function VentaPos() {
     if (isNaN(amount) || amount <= 0) return alert("Ingrese un monto válido");
     if (amount > saldoPendiente + 0.01) return alert("El monto supera el saldo pendiente");
     
-    if ((metodoPago.includes('Transferencia') || metodoPago.includes('Zelle')) && !referencia) {
+    // Find the selected method
+    const selectedMethod = metodosTienda.find(m => m.id.toString() === metodoPago);
+    if (!selectedMethod) return alert("Seleccione un método de pago válido");
+
+    const isEfectivo = selectedMethod.nombre.toLowerCase().includes('efectivo');
+    const isBs = selectedMethod.banco?.divisa === 'VES';
+    
+    if (!isEfectivo && !referencia) {
         return alert("La referencia es obligatoria para este método de pago");
     }
 
-    const needsBs = metodoPago.includes('Transferencia') || metodoPago.includes('POS') || metodoPago.includes('Efectivo Bs');
-
     setPagos([...pagos, {
-        metodo_pago: metodoPago,
+        id_banco_metodo: selectedMethod.id,
+        id_banco: selectedMethod.id_banco,
+        metodo_pago: selectedMethod.nombre,
+        moneda: selectedMethod.banco?.divisa || 'USD',
         monto_usd: amount,
         tasa: parseFloat(tasa || "1"),
-        monto_bs: needsBs ? amount * parseFloat(tasa || "1") : 0,
+        monto_bs: isBs ? amount * parseFloat(tasa || "1") : 0,
         referencia: referencia
     }]);
     
     setMontoUsd("");
     setReferencia("");
   };
+
+  const metodosTienda = metodosPagoList.filter(m => 
+    m.id_banco === null || bancos.some(b => b.id === m.id_banco)
+  );
 
   const handleProcesar = async (isCredit = false) => {
     if (!isCredit && saldoPendiente > 0.01) {
@@ -229,7 +246,7 @@ export function VentaPos() {
     setLoading(true);
 
     try {
-      const res = await fetch(`/api/tasca/ventas/${id}/pagar`, {
+      const res = await fetch(`/api/tienda/ventas/${id}/pagar`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ pagos, id_autorizador: isCredit && !isSolvente ? selectedDirector : null })
@@ -253,7 +270,7 @@ export function VentaPos() {
 
   const handleAnular = () => {
     if (confirm("¿Seguro que deseas anular esta venta?")) {
-      fetch(`/api/tasca/ventas/${id}/anular`, { method: "POST" })
+      fetch(`/api/tienda/ventas/${id}/anular`, { method: "POST" })
         .then(() => navigate("/gestion/ugavibar/ventas"));
     }
   };
@@ -579,11 +596,11 @@ export function VentaPos() {
                         <label className="block text-xs font-bold text-gray-500 mb-1">Método de Pago</label>
                         <select value={metodoPago} onChange={e => setMetodoPago(e.target.value)} className="w-full p-2.5 border rounded-xl bg-white text-sm font-medium focus:ring-2 focus:ring-blue-500">
                             <option value="" disabled>Seleccione un método</option>
-                            <option value="Efectivo Divisas">Efectivo Divisas</option>
-                            <option value="Pago Movil/Transferencia">Pago Móvil / Transferencia</option>
-                            <option value="Zelle">Zelle</option>
-                            <option value="Punto de Venta/POS">Punto de Venta / POS</option>
-                            <option value="Efectivo Bs.">Efectivo Bs.</option>
+                            {metodosTienda.map(mp => (
+                              <option key={mp.id} value={mp.id}>
+                                {mp.banco ? `${mp.banco.nombre} - ` : ''}{mp.nombre}
+                              </option>
+                            ))}
                         </select>
                       </div>
                       <div>
@@ -596,13 +613,13 @@ export function VentaPos() {
                     </div>
                     
                     <div className="mt-3">
-                      {!metodoPago.includes('Efectivo') && (
+                      {metodoPago && !metodosTienda.find(m => m.id.toString() === metodoPago)?.nombre.toLowerCase().includes('efectivo') && (
                           <div className="mb-3">
                             <label className="block text-xs font-bold text-gray-500 mb-1">Referencia</label>
-                            <input type="text" value={referencia} onChange={e => setReferencia(e.target.value)} placeholder={(metodoPago.includes('Transferencia') || metodoPago.includes('Zelle')) ? 'Obligatorio' : 'Opcional'} className="w-full p-2.5 border rounded-xl bg-white text-sm focus:ring-2 focus:ring-blue-500" />
+                            <input type="text" value={referencia} onChange={e => setReferencia(e.target.value)} placeholder="Obligatorio" className="w-full p-2.5 border rounded-xl bg-white text-sm focus:ring-2 focus:ring-blue-500" />
                           </div>
                       )}
-                      {montoUsd && (metodoPago.includes('Transferencia') || metodoPago.includes('POS') || metodoPago.includes('Efectivo Bs')) && (
+                      {montoUsd && metodosTienda.find(m => m.id.toString() === metodoPago)?.banco?.divisa === 'VES' && (
                           <p className="text-xs text-gray-500 font-bold mb-3">Equivalente: Bs. {(parseFloat(montoUsd) * parseFloat(tasa || "1")).toFixed(2)} (Tasa: {tasa})</p>
                       )}
                       <button type="button" onClick={handleAddPago} disabled={!metodoPago} className={`w-full py-3 ${!metodoPago ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-blue-100 text-blue-700 hover:bg-blue-200'} font-black rounded-xl text-sm transition-colors`}>

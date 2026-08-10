@@ -6,7 +6,7 @@ export function InventarioRapidoTab() {
   const [search, setSearch] = useState("");
 
   useEffect(() => {
-    fetch("/api/tasca/insumos")
+    fetch("/api/tienda/insumos")
       .then(res => res.json())
       .then(setInsumos)
       .catch(console.error);

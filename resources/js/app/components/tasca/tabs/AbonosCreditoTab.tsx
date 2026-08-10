@@ -11,6 +11,9 @@ export function AbonosCreditoTab({ onOpenDetalle }: { onOpenDetalle: (venta: any
   const [showReportModal, setShowReportModal] = useState(false);
   const [selectedInvoices, setSelectedInvoices] = useState<number[]>([]);
   
+  const [bancos, setBancos] = useState<any[]>([]);
+  const [metodosPagoList, setMetodosPagoList] = useState<any[]>([]);
+  
   const [montoAbono, setMontoAbono] = useState("");
   const [metodoPago, setMetodoPago] = useState("");
   const [referencia, setReferencia] = useState("");
@@ -18,7 +21,7 @@ export function AbonosCreditoTab({ onOpenDetalle }: { onOpenDetalle: (venta: any
   const [isProcessing, setIsProcessing] = useState(false);
 
   const loadVentasCredito = () => {
-    fetch("/api/tasca/ventas")
+    fetch("/api/tienda/ventas")
       .then(res => res.json())
       .then((data: any[]) => {
         setVentas(data.filter(v => v.estado === 'Credito' || v.estado === 'Parcial'));
@@ -31,6 +34,9 @@ export function AbonosCreditoTab({ onOpenDetalle }: { onOpenDetalle: (venta: any
         if (data.tasa_dia) setTasa(data.tasa_dia.toString());
       })
       .catch(console.error);
+
+    fetch("/api/tienda/finanzas/bancos").then(res => res.json()).then(setBancos).catch(() => {});
+    fetch("/api/metodos-pago").then(res => res.json()).then(setMetodosPagoList).catch(() => {});
   };
 
   useEffect(() => {
@@ -121,14 +127,24 @@ export function AbonosCreditoTab({ onOpenDetalle }: { onOpenDetalle: (venta: any
     }
   };
 
+  const metodosTienda = metodosPagoList.filter(m => 
+    m.id_banco === null || bancos.some(b => b.id === m.id_banco)
+  );
+
   const handleAbonarMultiples = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!showAbonoModal || !montoAbono || parseFloat(montoAbono) <= 0 || selectedInvoices.length === 0) return;
 
     let amountToDistribute = parseFloat(montoAbono);
-    const needsBs = metodoPago.includes('Transferencia') || metodoPago.includes('POS') || metodoPago.includes('Efectivo Bs');
+    
+    // Find the selected method
+    const selectedMethod = metodosTienda.find(m => m.id.toString() === metodoPago);
+    if (!selectedMethod) return alert("Seleccione un método de pago válido");
 
-    if ((metodoPago.includes('Transferencia') || metodoPago.includes('Zelle')) && !referencia) {
+    const isEfectivo = selectedMethod.nombre.toLowerCase().includes('efectivo');
+    const isBs = selectedMethod.banco?.divisa === 'VES';
+    
+    if (!isEfectivo && !referencia) {
         return alert("La referencia es obligatoria para este método de pago");
     }
 
@@ -148,16 +164,19 @@ export function AbonosCreditoTab({ onOpenDetalle }: { onOpenDetalle: (venta: any
         amountToDistribute -= pagoAsignado;
         amountToDistribute = Math.round(amountToDistribute * 100) / 100;
 
-        const res = await fetch(`/api/tasca/ventas/${v.id}/pagar`, {
+        const res = await fetch(`/api/tienda/ventas/${v.id}/pagar`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             pagos: [
               {
-                metodo_pago: metodoPago,
+                id_banco_metodo: selectedMethod.id,
+                id_banco: selectedMethod.id_banco,
+                metodo_pago: selectedMethod.nombre,
+                moneda: selectedMethod.banco?.divisa || 'USD',
                 monto_usd: pagoAsignado,
                 tasa: parseFloat(tasa),
-                monto_bs: needsBs ? pagoAsignado * parseFloat(tasa) : 0,
+                monto_bs: isBs ? pagoAsignado * parseFloat(tasa) : 0,
                 referencia: referencia
               }
             ]
@@ -597,29 +616,29 @@ export function AbonosCreditoTab({ onOpenDetalle }: { onOpenDetalle: (venta: any
                     className="w-full p-2.5 border rounded-xl text-sm focus:ring-2 focus:ring-blue-500"
                   >
                     <option value="" disabled>Seleccione un método</option>
-                    <option value="Efectivo Divisas">Efectivo Divisas</option>
-                    <option value="Pago Movil/Transferencia">Pago Móvil / Transferencia</option>
-                    <option value="Zelle">Zelle</option>
-                    <option value="Punto de Venta/POS">Punto de Venta / POS</option>
-                    <option value="Efectivo Bs.">Efectivo Bs.</option>
+                    {metodosTienda.map(mp => (
+                      <option key={mp.id} value={mp.id}>
+                        {mp.banco ? `${mp.banco.nombre} - ` : ''}{mp.nombre}
+                      </option>
+                    ))}
                   </select>
                 </div>
               </div>
 
-              {!metodoPago.includes('Efectivo') && (
+              {!metodoPago || (metodoPago && !metodosTienda.find(m => m.id.toString() === metodoPago)?.nombre.toLowerCase().includes('efectivo')) ? (
                 <div>
                   <label className="block text-xs font-bold text-gray-500 mb-1">Referencia</label>
                   <input 
                     type="text" 
                     value={referencia} 
                     onChange={e => setReferencia(e.target.value)} 
-                    placeholder={(metodoPago.includes('Transferencia') || metodoPago.includes('Zelle')) ? 'Obligatorio' : 'Opcional'}
+                    placeholder="Obligatorio"
                     className="w-full p-2.5 border rounded-xl text-sm focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
-              )}
+              ) : null}
 
-              {montoAbono && (metodoPago.includes('Transferencia') || metodoPago.includes('POS') || metodoPago.includes('Efectivo Bs') || metodoPago.includes('Pago Móvil')) && (
+              {montoAbono && metodosTienda.find(m => m.id.toString() === metodoPago)?.banco?.divisa === 'VES' && (
                   <p className="text-xs text-gray-500 font-bold mb-3 border-l-4 border-blue-500 pl-3">Equivalente: Bs. {(parseFloat(montoAbono) * parseFloat(tasa)).toFixed(2)} (Tasa: {tasa})</p>
               )}
 

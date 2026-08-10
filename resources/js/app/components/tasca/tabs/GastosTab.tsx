@@ -23,7 +23,7 @@ export default function GastosTab() {
 
   const loadGastos = () => {
     setLoading(true);
-    fetch("/api/tasca/gastos")
+    fetch("/api/tienda/gastos")
       .then(res => res.json())
       .then(data => {
         if (Array.isArray(data)) setGastos(data);
@@ -33,7 +33,7 @@ export default function GastosTab() {
   };
 
   const loadProveedores = () => {
-    fetch("/api/tasca/proveedores")
+    fetch("/api/tienda/proveedores")
       .then(res => res.json())
       .then(data => {
         if (Array.isArray(data)) setProveedores(data);
@@ -78,7 +78,7 @@ export default function GastosTab() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const url = gastoEditId ? `/api/tasca/gastos/${gastoEditId}` : "/api/tasca/gastos";
+    const url = gastoEditId ? `/api/tienda/gastos/${gastoEditId}` : "/api/tienda/gastos";
     const method = gastoEditId ? "PUT" : "POST";
     
     const payload = {
@@ -103,7 +103,7 @@ export default function GastosTab() {
 
   const handleDelete = (id: number) => {
     if (confirm("¿Estás seguro de eliminar este gasto?")) {
-      fetch(`/api/tasca/gastos/${id}`, { method: "DELETE" })
+      fetch(`/api/tienda/gastos/${id}`, { method: "DELETE" })
         .then(async res => {
           if (!res.ok) throw new Error("Error al eliminar");
           loadGastos();
@@ -285,7 +285,7 @@ export default function GastosTab() {
                       if (e.target.value === 'nuevo') {
                         const nombre = prompt("Nombre del nuevo proveedor:");
                         if (nombre) {
-                          fetch("/api/tasca/proveedores", {
+                          fetch("/api/tienda/proveedores", {
                             method: "POST",
                             headers: { "Content-Type": "application/json" },
                             body: JSON.stringify({ nombre })

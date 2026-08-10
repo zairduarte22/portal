@@ -1,4 +1,4 @@
-ï»¿import { useState } from 'react';
+import { useState } from 'react';
 import { X, Trash2, Edit2, ChevronDown, ChevronUp, AlertTriangle } from 'lucide-react';
 import { AbonoModal } from './AbonoModal';
 import { ObligacionModal } from './ObligacionModal';
@@ -18,7 +18,7 @@ export default function DetalleObligacionModal({ isOpen, onClose, obligacion, co
   if (!isOpen || !obligacion) return null;
 
   const handleDelete = async () => {
-    if (!confirm('Â¿EstÃ¡s seguro de eliminar esta obligaciÃ³n? Se borrarÃ¡n todos los abonos y movimientos bancarios asociados.')) return;
+    if (!confirm('¿Estás seguro de eliminar esta obligación? Se borrarán todos los abonos y movimientos bancarios asociados.')) return;
     
     try {
       const res = await fetch(`/api/finanzas/obligaciones/${obligacion.id}`, { method: 'DELETE' });
@@ -31,7 +31,7 @@ export default function DetalleObligacionModal({ isOpen, onClose, obligacion, co
   };
 
   const handleDeleteAbono = async (id: number) => {
-    if (!confirm('Â¿Seguro que deseas eliminar este abono? Se borrarÃ¡ el movimiento bancario asociado y se recalcularÃ¡ la deuda.')) return;
+    if (!confirm('¿Seguro que deseas eliminar este abono? Se borrará el movimiento bancario asociado y se recalculará la deuda.')) return;
     
     try {
       const res = await fetch(`/api/finanzas/obligaciones/abonos/${id}`, { method: 'DELETE' });
@@ -48,8 +48,8 @@ export default function DetalleObligacionModal({ isOpen, onClose, obligacion, co
       <div className="bg-white rounded-3xl w-full max-w-4xl max-h-[90vh] overflow-y-auto shadow-2xl">
         <div className="flex justify-between items-center p-6 border-b border-gray-100 sticky top-0 bg-white z-10">
           <div>
-            <h2 className="text-xl font-bold text-gray-800">Detalles de ObligaciÃ³n</h2>
-            <p className="text-sm text-gray-500">Historial y gestiÃ³n de pagos</p>
+            <h2 className="text-xl font-bold text-gray-800">Detalles de Obligación</h2>
+            <p className="text-sm text-gray-500">Historial y gestión de pagos</p>
           </div>
           <button onClick={onClose} className="p-2 text-gray-400 hover:bg-gray-50 rounded-full transition-colors">
             <X size={20} />
@@ -68,12 +68,12 @@ export default function DetalleObligacionModal({ isOpen, onClose, obligacion, co
               </div>
               <div>
                 <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Fechas</p>
-                <p className="text-sm text-gray-800">EmisiÃ³n: {new Date(obligacion.fecha_emision + "T12:00:00Z").toLocaleDateString()}</p>
-                <p className="text-sm text-gray-800">LÃ­mite: {obligacion.fecha_limite ? new Date(obligacion.fecha_limite + "T12:00:00Z").toLocaleDateString() : 'No aplica'}</p>
+                <p className="text-sm text-gray-800">Emisión: {new Date(obligacion.fecha_emision + "T12:00:00Z").toLocaleDateString()}</p>
+                <p className="text-sm text-gray-800">Límite: {obligacion.fecha_limite ? new Date(obligacion.fecha_limite + "T12:00:00Z").toLocaleDateString() : 'No aplica'}</p>
               </div>
               {obligacion.descripcion && (
                 <div>
-                  <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Motivo / DescripciÃ³n</p>
+                  <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Motivo / Descripción</p>
                   <p className="text-sm text-gray-800">{obligacion.descripcion}</p>
                 </div>
               )}
@@ -156,7 +156,7 @@ export default function DetalleObligacionModal({ isOpen, onClose, obligacion, co
               </div>
             ) : (
               <div className="text-center py-8 bg-gray-50 rounded-xl border border-dashed border-gray-200">
-                <p className="text-gray-500 text-sm">No hay abonos registrados para esta obligaciÃ³n.</p>
+                <p className="text-gray-500 text-sm">No hay abonos registrados para esta obligación.</p>
               </div>
             )}
           </div>

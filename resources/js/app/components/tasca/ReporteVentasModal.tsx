@@ -10,13 +10,13 @@ export function ReporteVentasModal({ onClose }: { onClose: () => void }) {
 
   const handleGenerate = async () => {
     if (reportFormat === "carta") {
-        window.open(`/api/tasca/ventas/reporte-pdf?start_date=${startDate}&end_date=${endDate}&format=carta`, '_blank');
+        window.open(`/api/tienda/ventas/reporte-pdf?start_date=${startDate}&end_date=${endDate}&format=carta`, '_blank');
         onClose();
         return;
     }
 
     try {
-        const res = await fetch(`/api/tasca/ventas/reporte-data?start_date=${startDate}&end_date=${endDate}`);
+        const res = await fetch(`/api/tienda/ventas/reporte-data?start_date=${startDate}&end_date=${endDate}`);
         if (!res.ok) throw new Error("Error obteniendo datos");
         const data = await res.json();
         

@@ -1802,7 +1802,7 @@ ALTER SEQUENCE public.ventas_tasca_detalles_id_seq OWNED BY public.ventas_tienda
 
 CREATE TABLE public.ventas_tienda (
     id bigint CONSTRAINT ventas_tasca_id_not_null NOT NULL,
-    id_cliente_tasca bigint,
+    id_cliente_tienda bigint,
     id_cliente_miembro bigint,
     total numeric(10,2) DEFAULT '0'::numeric CONSTRAINT ventas_tasca_total_not_null NOT NULL,
     descuento numeric(10,2) DEFAULT '0'::numeric CONSTRAINT ventas_tasca_descuento_not_null NOT NULL,
@@ -3314,7 +3314,7 @@ ALTER TABLE ONLY public.ventas_tienda
 --
 
 ALTER TABLE ONLY public.ventas_tienda
-    ADD CONSTRAINT ventas_tasca_id_cliente_tasca_foreign FOREIGN KEY (id_cliente_tasca) REFERENCES public.clientes_tienda(id) ON DELETE SET NULL;
+    ADD CONSTRAINT ventas_tasca_id_cliente_tasca_foreign FOREIGN KEY (id_cliente_tienda) REFERENCES public.clientes_tienda(id) ON DELETE SET NULL;
 
 
 --

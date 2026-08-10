@@ -13,7 +13,7 @@ export function UgaviBarClientes() {
   const [formData, setFormData] = useState({ id: null, nombre: "", cedula: "", telefono: "" });
 
   const fetchClientes = () => {
-    fetch("/api/tasca/clientes")
+    fetch("/api/tienda/clientes")
       .then(res => res.json())
       .then(data => {
         setForaneos(data.foraneos || []);
@@ -30,7 +30,7 @@ export function UgaviBarClientes() {
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     const isEditing = !!formData.id;
-    const url = isEditing ? `/api/tasca/clientes/${formData.id}` : `/api/tasca/clientes`;
+    const url = isEditing ? `/api/tienda/clientes/${formData.id}` : `/api/tienda/clientes`;
     const method = isEditing ? "PUT" : "POST";
 
     try {
@@ -51,7 +51,7 @@ export function UgaviBarClientes() {
   const handleDelete = async (id: number) => {
     if (!confirm("¿Eliminar este cliente foráneo?")) return;
     try {
-      const res = await fetch(`/api/tasca/clientes/${id}`, { method: "DELETE" });
+      const res = await fetch(`/api/tienda/clientes/${id}`, { method: "DELETE" });
       if (!res.ok) throw new Error("Error eliminando");
       toast.success("Cliente eliminado");
       fetchClientes();

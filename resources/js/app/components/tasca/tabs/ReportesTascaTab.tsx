@@ -19,7 +19,7 @@ export function ReportesTascaTab() {
     setError(null);
     try {
       const query = `?start_date=${startDate}&end_date=${endDate}`;
-      const res = await fetch(`/api/tasca/reportes/rendimiento${query}`);
+      const res = await fetch(`/api/tienda/reportes/rendimiento${query}`);
       if (!res.ok) {
         const text = await res.text();
         throw new Error(`HTTP Error ${res.status}: ${text.substring(0, 100)}`);

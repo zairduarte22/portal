@@ -51,7 +51,7 @@ export function MovimientosInsumoView({ insumoId, insumoNombre, onClose, onAdjus
   }, [data]);
 
   useEffect(() => {
-    fetch(`/api/tasca/insumos/${insumoId}/movimientos`)
+    fetch(`/api/tienda/insumos/${insumoId}/movimientos`)
       .then(res => res.json())
       .then(resData => {
         if (resData.message) {
@@ -72,7 +72,7 @@ export function MovimientosInsumoView({ insumoId, insumoNombre, onClose, onAdjus
     if (!ajusteForm.cantidad || !ajusteForm.motivo) return;
     
     setAjustando(true);
-    fetch(`/api/tasca/insumos/${insumoId}/ajustar`, {
+    fetch(`/api/tienda/insumos/${insumoId}/ajustar`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -372,7 +372,7 @@ const TicketModal = ({ ventaId, onClose }: { ventaId: number, onClose: () => voi
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch(`/api/tasca/ventas/${ventaId}`)
+    fetch(`/api/tienda/ventas/${ventaId}`)
       .then(res => res.json())
       .then(data => {
         setVenta(data);

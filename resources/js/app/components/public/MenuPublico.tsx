@@ -115,7 +115,7 @@ export function MenuPublico() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('/api/tasca/menu-publico')
+    fetch('/api/tienda/menu-publico')
       .then(res => res.json())
       .then(data => {
         setProductos(data.productos || []);
