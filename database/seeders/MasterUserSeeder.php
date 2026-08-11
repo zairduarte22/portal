@@ -18,7 +18,7 @@ class MasterUserSeeder extends Seeder
             'username' => 'zair',
             'password' => \Illuminate\Support\Facades\Hash::make('Luis*2108'),
             'is_master' => true,
-            'modules' => json_encode(['Dashboard', 'MembersList', 'PersonasList', 'Reports', 'PagosPanel', 'CarnetsPanel', 'LibrosPanel', 'ConciliacionPanel', 'ObligacionesPanel', 'VentasTascaPanel', 'GestionTascaPanel', 'ConfiguracionesPanel'])
+            'modules' => json_encode(['Dashboard', 'DashboardPagosPanel', 'MembersList', 'PersonasList', 'Reports', 'PagosPanel', 'CarnetsPanel', 'LibrosPanel', 'ConciliacionPanel', 'ObligacionesPanel', 'VentasTascaPanel', 'GestionTascaPanel', 'ConfiguracionesPanel'])
         ]);
     }
 }

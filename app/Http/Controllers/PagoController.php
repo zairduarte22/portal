@@ -504,4 +504,115 @@ class PagoController extends Controller
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }
+
+    public function getDashboardMetrics(Request $request)
+    {
+        $tasaHoy = \App\Models\Tasa::orderBy('fecha', 'desc')->first();
+        $tasaActual = $tasaHoy ? $tasaHoy->monto : 1;
+
+        // 1. Ingresos (Income)
+        $pagos = Pago::where('estado', '!=', 'Anulada')->get();
+        $ingresosTotalUsd = $pagos->sum('monto');
+        
+        $devaluacionIngresos = 0;
+        foreach ($pagos as $pago) {
+            if ($pago->monto_bs > 0) {
+                // Initial USD value was $pago->monto (which is already recorded)
+                // Current USD value is $pago->monto_bs / $tasaActual
+                // Devaluation offset is the difference between them
+                $currentUsdValue = $pago->monto_bs / $tasaActual;
+                $devaluation = $pago->monto - $currentUsdValue;
+                $devaluacionIngresos += $devaluation;
+            }
+        }
+
+        // 2. Cuentas por Cobrar (Accounts Receivable)
+        $cuentasCobrar = \App\Models\Obligacion::where('tipo_obligacion', 'COBRAR')
+            ->where('estado', '!=', 'PAGADA')
+            ->get();
+            
+        $cxcTotalDeudaBs = 0;
+        $cxcTotalAbonadoBs = 0;
+        $cxcTotalDeudaUsd = 0;
+        $cxcTotalAbonadoUsd = 0;
+        $devaluacionCxc = 0;
+        
+        foreach ($cuentasCobrar as $cxc) {
+            $restante = $cxc->monto_original - $cxc->monto_abonado;
+            if ($cxc->moneda === 'VES') {
+                $cxcTotalDeudaBs += $cxc->monto_original;
+                $cxcTotalAbonadoBs += $cxc->monto_abonado;
+                
+                // Get Tasa at the time of emission to know the original USD value of the remainder
+                $tasaEmision = \App\Models\Tasa::where('fecha', '<=', $cxc->fecha_emision)->orderBy('fecha', 'desc')->first();
+                $tasaEmisionMonto = $tasaEmision ? $tasaEmision->monto : $tasaActual;
+                
+                $originalUsdValue = $restante / $tasaEmisionMonto;
+                $currentUsdValue = $restante / $tasaActual;
+                
+                $devaluation = $originalUsdValue - $currentUsdValue;
+                $devaluacionCxc += $devaluation;
+                
+                $cxcTotalDeudaUsd += ($cxc->monto_original / $tasaEmisionMonto);
+                $cxcTotalAbonadoUsd += ($cxc->monto_abonado / $tasaEmisionMonto);
+            } else {
+                $cxcTotalDeudaUsd += $cxc->monto_original;
+                $cxcTotalAbonadoUsd += $cxc->monto_abonado;
+            }
+        }
+
+        // 3. Cuentas por Pagar (Accounts Payable)
+        $cuentasPagar = \App\Models\Obligacion::where('tipo_obligacion', 'PAGAR')
+            ->where('estado', '!=', 'PAGADA')
+            ->get();
+            
+        $cxpTotalDeudaBs = 0;
+        $cxpTotalAbonadoBs = 0;
+        $cxpTotalDeudaUsd = 0;
+        $cxpTotalAbonadoUsd = 0;
+        $devaluacionCxp = 0;
+        
+        foreach ($cuentasPagar as $cxp) {
+            $restante = $cxp->monto_original - $cxp->monto_abonado;
+            if ($cxp->moneda === 'VES') {
+                $cxpTotalDeudaBs += $cxp->monto_original;
+                $cxpTotalAbonadoBs += $cxp->monto_abonado;
+                
+                // Get Tasa at the time of emission
+                $tasaEmision = \App\Models\Tasa::where('fecha', '<=', $cxp->fecha_emision)->orderBy('fecha', 'desc')->first();
+                $tasaEmisionMonto = $tasaEmision ? $tasaEmision->monto : $tasaActual;
+                
+                $originalUsdValue = $restante / $tasaEmisionMonto;
+                $currentUsdValue = $restante / $tasaActual;
+                
+                $devaluation = $originalUsdValue - $currentUsdValue;
+                $devaluacionCxp += $devaluation;
+                
+                $cxpTotalDeudaUsd += ($cxp->monto_original / $tasaEmisionMonto);
+                $cxpTotalAbonadoUsd += ($cxp->monto_abonado / $tasaEmisionMonto);
+            } else {
+                $cxpTotalDeudaUsd += $cxp->monto_original;
+                $cxpTotalAbonadoUsd += $cxp->monto_abonado;
+            }
+        }
+
+        return response()->json([
+            'ingresos' => [
+                'total_usd' => $ingresosTotalUsd,
+                'devaluacion' => $devaluacionIngresos,
+            ],
+            'cuentas_por_cobrar' => [
+                'deuda_restante_usd' => $cxcTotalDeudaUsd - $cxcTotalAbonadoUsd,
+                'deuda_restante_bs' => $cxcTotalDeudaBs - $cxcTotalAbonadoBs,
+                'devaluacion' => $devaluacionCxc,
+            ],
+            'cuentas_por_pagar' => [
+                'deuda_restante_usd' => $cxpTotalDeudaUsd - $cxpTotalAbonadoUsd,
+                'deuda_restante_bs' => $cxpTotalDeudaBs - $cxpTotalAbonadoBs,
+                'devaluacion' => $devaluacionCxp,
+            ],
+            'tasa_actual' => $tasaActual,
+            'desfase_total' => $devaluacionIngresos + $devaluacionCxc - $devaluacionCxp
+        ]);
+    }
 }

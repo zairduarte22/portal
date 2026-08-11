@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { LayoutDashboard, Users, BarChart3, Settings, Leaf, ChevronRight, ChevronDown, Wallet, IdCard, BookOpen, Landmark, Store, Package, MessageCircle, GlassWater, CreditCard, ShoppingBag, Receipt, Users2 } from "lucide-react";
+import { LayoutDashboard, Users, BarChart3, Settings, Leaf, ChevronRight, ChevronDown, Wallet, IdCard, BookOpen, Landmark, Store, Package, MessageCircle, GlassWater, CreditCard, ShoppingBag, Receipt, Users2, Activity } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 
 interface SidebarProps {
@@ -47,6 +47,7 @@ const navGroups = [
   {
     title: "Administración",
     items: [
+      { id: "dashboard-pagos", label: "Dashboard de Pagos", icon: Activity, moduleId: "DashboardPagosPanel" },
       { id: "pagos", label: "Cuotas y Pagos", icon: Wallet, moduleId: "PagosPanel" },
       { id: "obligaciones", label: "Obligaciones", icon: Landmark, moduleId: "ObligacionesPanel" },
       { id: "conciliacion", label: "Conciliación Bancaria", icon: Landmark, moduleId: "ConciliacionPanel" },

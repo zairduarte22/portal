@@ -9,6 +9,7 @@ export function ConfiguracionesPanel({ currentUser }: { currentUser: any }) {
 
   const modulosDisponibles = [
     { id: 'Dashboard', nombre: 'Dashboard', route: 'dashboard' },
+    { id: 'DashboardPagosPanel', nombre: 'Dashboard de Pagos', route: 'dashboard-pagos' },
     { id: 'MembersList', nombre: 'Miembros', route: 'miembros' },
     { id: 'PersonasList', nombre: 'Personas', route: 'personas' },
     { id: 'Reports', nombre: 'Reportes', route: 'reportes' },

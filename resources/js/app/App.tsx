@@ -7,6 +7,7 @@ import { MembersList } from "./components/MembersList";
 import { PersonasList } from "./components/PersonasList";
 import { Reports } from "./components/Reports";
 import { PagosPanel } from "./components/PagosPanel";
+import { DashboardPagosPanel } from "./components/DashboardPagosPanel";
 import { CarnetsPanel } from "./components/carnets/CarnetsView";
 import { LibrosPanel } from "./components/LibrosPanel";
 import { ConciliacionPanel } from "./components/ConciliacionPanel";
@@ -275,6 +276,7 @@ export default function App() {
             </ProtectedRoute>
           } />
           <Route path="pagos" element={<ProtectedRoute moduleId="PagosPanel" user={user}><PagosPanel /></ProtectedRoute>} />
+          <Route path="dashboard-pagos" element={<ProtectedRoute moduleId="DashboardPagosPanel" user={user}><DashboardPagosPanel /></ProtectedRoute>} />
           <Route path="carnets" element={<ProtectedRoute moduleId="CarnetsPanel" user={user}><CarnetsPanel /></ProtectedRoute>} />
           <Route path="libros" element={<ProtectedRoute moduleId="LibrosPanel" user={user}><LibrosPanel /></ProtectedRoute>} />
           <Route path="obligaciones" element={<ProtectedRoute moduleId="ObligacionesPanel" user={user}><ObligacionesPanel /></ProtectedRoute>} />

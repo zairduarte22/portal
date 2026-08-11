@@ -94,6 +94,8 @@ Route::get('/relaciones-familiares', [RelacionesFamiliaresController::class, 'in
 
 
 Route::get('/pagos/init', [PagoController::class, 'init']);
+Route::get('/pagos/dashboard', [PagoController::class, 'getDashboardMetrics']);
+Route::get('/dashboard-pagos/completo', [\App\Http\Controllers\DashboardPagosController::class, 'getDashboardData']);
 Route::post('/pagos', [PagoController::class, 'store']);
 Route::put('/pagos/{id}', [PagoController::class, 'update']);
 Route::put('/pagos/{id}/imprimir', [PagoController::class, 'marcarImpreso']);
