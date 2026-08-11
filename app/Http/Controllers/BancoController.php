@@ -9,7 +9,7 @@ class BancoController extends Controller
 {
     public function index(Request $request)
     {
-        $query = \App\Models\Banco::with('tiendas');
+        $query = \App\Models\Banco::query();
         return response()->json($query->get());
     }
 
@@ -18,24 +18,16 @@ class BancoController extends Controller
         $request->validate([
             'nombre' => 'required|string',
             'titular' => 'required|string',
-            'divisa' => 'required|string',
-            'para_membresias' => 'boolean',
-            'tiendas' => 'array'
+            'divisa' => 'required|string'
         ]);
 
         $banco = \App\Models\Banco::create([
             'nombre' => $request->nombre,
             'titular' => $request->titular,
-            'divisa' => $request->divisa,
-            'propietario' => 'MIXTO', // maintained for backward compatibility
-            'para_membresias' => $request->para_membresias ?? false
+            'divisa' => $request->divisa
         ]);
 
-        if (isset($request->tiendas)) {
-            $banco->tiendas()->sync($request->tiendas);
-        }
-
-        return response()->json($banco->load('tiendas'), 201);
+        return response()->json($banco, 201);
     }
 
     public function update(Request $request, $id)
@@ -43,24 +35,17 @@ class BancoController extends Controller
         $request->validate([
             'nombre' => 'required|string',
             'titular' => 'required|string',
-            'divisa' => 'required|string',
-            'para_membresias' => 'boolean',
-            'tiendas' => 'array'
+            'divisa' => 'required|string'
         ]);
 
         $banco = \App\Models\Banco::findOrFail($id);
         $banco->update([
             'nombre' => $request->nombre,
             'titular' => $request->titular,
-            'divisa' => $request->divisa,
-            'para_membresias' => $request->para_membresias ?? false
+            'divisa' => $request->divisa
         ]);
 
-        if (isset($request->tiendas)) {
-            $banco->tiendas()->sync($request->tiendas);
-        }
-
-        return response()->json($banco->load('tiendas'));
+        return response()->json($banco);
     }
 
     public function destroy($id)

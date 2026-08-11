@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\InsumoTasca;
+use App\Models\InsumoTienda;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
@@ -14,8 +14,8 @@ class OptimizeImagesController extends Controller
         $limit = 5;
         $offset = (int) $request->get('offset', 0);
 
-        $totalImages = InsumoTasca::whereNotNull('imagen')->count();
-        $insumos = InsumoTasca::whereNotNull('imagen')
+        $totalImages = InsumoTienda::whereNotNull('imagen')->count();
+        $insumos = InsumoTienda::whereNotNull('imagen')
             ->orderBy('id')
             ->offset($offset)
             ->limit($limit)
@@ -142,7 +142,7 @@ class OptimizeImagesController extends Controller
 
     public function fixRotation()
     {
-        $insumos = InsumoTasca::whereNotNull('imagen')->get();
+        $insumos = InsumoTienda::whereNotNull('imagen')->get();
         
         $html = "<html><head><meta name='viewport' content='width=device-width, initial-scale=1'></head><body style='font-family:sans-serif; text-align:center; background:#f4f4f4;'>
             <h2 style='padding:20px;'>Reparador de Imágenes</h2>
@@ -176,7 +176,7 @@ class OptimizeImagesController extends Controller
 
     public function rotateImage($id)
     {
-        $insumo = InsumoTasca::findOrFail($id);
+        $insumo = InsumoTienda::findOrFail($id);
         if (!$insumo->imagen) return response()->json(['error' => 'No image'], 404);
         
         $path = storage_path('app/public/' . $insumo->imagen);
@@ -212,8 +212,8 @@ class OptimizeImagesController extends Controller
         $limit = 10;
         $offset = (int) $request->get('offset', 0);
 
-        $totalImages = InsumoTasca::whereNotNull('imagen')->count();
-        $insumos = InsumoTasca::whereNotNull('imagen')
+        $totalImages = InsumoTienda::whereNotNull('imagen')->count();
+        $insumos = InsumoTienda::whereNotNull('imagen')
             ->orderBy('id')
             ->offset($offset)
             ->limit($limit)

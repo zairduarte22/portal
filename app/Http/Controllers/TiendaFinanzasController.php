@@ -15,8 +15,6 @@ class TiendaFinanzasController extends Controller
             if (!$tiendaId) return response()->json(['error' => 'No hay tienda en contexto'], 400);
 
             $bancos = DB::table('bancos')
-                ->join('banco_tienda', 'bancos.id', '=', 'banco_tienda.banco_id')
-                ->where('banco_tienda.tienda_id', $tiendaId)
                 ->select('bancos.*')
                 ->get();
 
@@ -34,7 +32,6 @@ class TiendaFinanzasController extends Controller
 
             $query = DB::table('cuenta_banco')
                 ->join('bancos', 'cuenta_banco.id_banco', '=', 'bancos.id')
-                ->join('banco_tienda', 'bancos.id', '=', 'banco_tienda.banco_id')
                 ->leftJoin('categoria_fondos', 'cuenta_banco.categoria_id', '=', 'categoria_fondos.id')
                 ->leftJoin('beneficiarios_fondo', 'cuenta_banco.beneficiario_id', '=', 'beneficiarios_fondo.id')
                 ->select(
@@ -43,7 +40,7 @@ class TiendaFinanzasController extends Controller
                     'categoria_fondos.categoria as categoria_nombre',
                     'beneficiarios_fondo.nombre as beneficiario_nombre'
                 )
-                ->where('banco_tienda.tienda_id', $tiendaId);
+                ->where('cuenta_banco.tienda_id', $tiendaId);
 
             if ($request->query('desde')) {
                 $query->where('cuenta_banco.fecha', '>=', $request->query('desde'));
@@ -70,7 +67,6 @@ class TiendaFinanzasController extends Controller
 
             $query = DB::table('cuenta_moneda_extranjera')
                 ->join('bancos', 'cuenta_moneda_extranjera.id_banco', '=', 'bancos.id')
-                ->join('banco_tienda', 'bancos.id', '=', 'banco_tienda.banco_id')
                 ->leftJoin('categoria_fondos', 'cuenta_moneda_extranjera.categoria_id', '=', 'categoria_fondos.id')
                 ->leftJoin('beneficiarios_fondo', 'cuenta_moneda_extranjera.beneficiario_id', '=', 'beneficiarios_fondo.id')
                 ->select(
@@ -79,7 +75,7 @@ class TiendaFinanzasController extends Controller
                     'categoria_fondos.categoria as categoria_nombre',
                     'beneficiarios_fondo.nombre as beneficiario_nombre'
                 )
-                ->where('banco_tienda.tienda_id', $tiendaId);
+                ->where('cuenta_moneda_extranjera.tienda_id', $tiendaId);
 
             if ($request->query('desde')) {
                 $query->where('cuenta_moneda_extranjera.fecha', '>=', $request->query('desde'));
@@ -102,18 +98,10 @@ class TiendaFinanzasController extends Controller
     {
         $table = $tipo === 'ves' ? 'cuenta_banco' : 'cuenta_moneda_extranjera';
         try {
-            // Verificar si el banco pertenece a la tienda
             $tiendaId = app(TiendaContext::class)->getTiendaId();
             $data = $request->except(['id', 'banco_nombre', 'categoria_nombre', 'beneficiario_nombre']);
             
-            $bancoEnTienda = DB::table('banco_tienda')
-                ->where('banco_id', $data['id_banco'])
-                ->where('tienda_id', $tiendaId)
-                ->exists();
-                
-            if (!$bancoEnTienda) {
-                return response()->json(['error' => 'El banco seleccionado no pertenece a esta tienda'], 403);
-            }
+            $data['tienda_id'] = $tiendaId;
 
             foreach ($data as $key => $value) {
                 if ($value === '') {
@@ -136,16 +124,7 @@ class TiendaFinanzasController extends Controller
             $tiendaId = app(TiendaContext::class)->getTiendaId();
             $data = $request->except(['id', 'created_at', 'updated_at', 'banco_nombre', 'categoria_nombre', 'beneficiario_nombre']);
             
-            if (isset($data['id_banco'])) {
-                $bancoEnTienda = DB::table('banco_tienda')
-                    ->where('banco_id', $data['id_banco'])
-                    ->where('tienda_id', $tiendaId)
-                    ->exists();
-                    
-                if (!$bancoEnTienda) {
-                    return response()->json(['error' => 'El banco seleccionado no pertenece a esta tienda'], 403);
-                }
-            }
+            $data['tienda_id'] = $tiendaId;
 
             foreach ($data as $key => $value) {
                 if ($value === '') {

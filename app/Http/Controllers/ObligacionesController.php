@@ -18,9 +18,7 @@ class ObligacionesController extends Controller
         }
         
         $bancos = DB::table('bancos')->select('*', 'divisa as moneda')->get();
-        $metodosPago = \App\Models\MetodoPago::whereHas('banco', function($q) {
-            $q->where('para_membresias', true);
-        })->orWhereNull('id_banco')->get();
+        $metodosPago = \App\Models\MetodoPago::all();
         
         return response()->json([
             'categorias' => $config['categorias'] ?? [],
@@ -114,7 +112,8 @@ class ObligacionesController extends Controller
                     'beneficiario' => $beneficiario,
                     'debe' => $debe,
                     'haber' => $haber,
-                    'id_obligacion' => $obligacion->id
+                    'id_obligacion' => $obligacion->id,
+                    'tienda_id' => 0
                 ]);
             }
 
@@ -194,7 +193,8 @@ class ObligacionesController extends Controller
                     'beneficiario' => $beneficiario,
                     'debe' => $debe,
                     'haber' => $haber,
-                    'id_abono_obligacion' => $abono->id
+                    'id_abono_obligacion' => $abono->id,
+                    'tienda_id' => 0
                 ]);
             }
 
@@ -271,7 +271,8 @@ class ObligacionesController extends Controller
                     'beneficiario' => $beneficiario,
                     'debe' => $debe,
                     'haber' => $haber,
-                    'id_obligacion' => $obligacion->id
+                    'id_obligacion' => $obligacion->id,
+                    'tienda_id' => 0
                 ]);
             }
 
@@ -366,7 +367,8 @@ class ObligacionesController extends Controller
                 'beneficiario' => $beneficiario,
                 'debe' => $debe,
                 'haber' => $haber,
-                'id_abono_obligacion' => $abono->id
+                'id_abono_obligacion' => $abono->id,
+                'tienda_id' => 0
             ]);
 
             DB::commit();

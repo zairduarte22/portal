@@ -60,7 +60,10 @@ class FinanzasController extends Controller
                     'categoria_fondos.categoria as categoria_nombre',
                     'beneficiarios_fondo.nombre as beneficiario_nombre'
                 )
-                ->where('bancos.para_membresias', true);
+                ->where(function($q) {
+                    $q->whereNull('cuenta_banco.tienda_id')
+                      ->orWhere('cuenta_banco.tienda_id', 0);
+                });
 
             if ($request->query('desde')) {
                 $query->where('cuenta_banco.fecha', '>=', $request->query('desde'));
@@ -92,7 +95,10 @@ class FinanzasController extends Controller
                     'categoria_fondos.categoria as categoria_nombre',
                     'beneficiarios_fondo.nombre as beneficiario_nombre'
                 )
-                ->where('bancos.para_membresias', true);
+                ->where(function($q) {
+                    $q->whereNull('cuenta_moneda_extranjera.tienda_id')
+                      ->orWhere('cuenta_moneda_extranjera.tienda_id', 0);
+                });
 
             if ($request->query('desde')) {
                 $query->where('cuenta_moneda_extranjera.fecha', '>=', $request->query('desde'));
@@ -162,6 +168,7 @@ class FinanzasController extends Controller
                         'categoria_id' => $categoriaBanco,
                         'id_venta' => ($tipo === 'ventas') ? $idLibro : null,
                         'id_compra' => ($tipo === 'compras') ? $idLibro : null,
+                        'tienda_id' => 0,
                     ];
                     
                     DB::table($tablaBanco)->insert($bancoData);
@@ -219,6 +226,8 @@ class FinanzasController extends Controller
                 }
             }
             
+            $data['tienda_id'] = 0;
+            
             DB::table($table)->insert($data);
             return response()->json(['message' => 'Movimiento creado exitosamente'], 201);
         } catch (\Exception $e) {
@@ -237,6 +246,9 @@ class FinanzasController extends Controller
                     $data[$key] = null;
                 }
             }
+            
+            $data['tienda_id'] = 0;
+            
             DB::table($table)->where('id', $id)->update($data);
             return response()->json(['message' => 'Registro actualizado exitosamente']);
         } catch (\Exception $e) {

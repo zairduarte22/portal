@@ -11,12 +11,6 @@ class TiendaConfigController extends Controller
     public function index()
     {
         $tiendas = DB::table('tiendas')->get();
-        foreach ($tiendas as $tienda) {
-            $tienda->bancos = DB::table('banco_tienda')
-                                ->where('tienda_id', $tienda->id)
-                                ->pluck('banco_id')
-                                ->toArray();
-        }
         return response()->json($tiendas);
     }
 
@@ -26,8 +20,7 @@ class TiendaConfigController extends Controller
             'nombre' => 'required|string|max:255',
             'slug' => 'required|string|max:255|unique:tiendas,slug',
             'tipo_negocio' => 'required|in:restaurante_bar,tienda_general',
-            'activa' => 'required|boolean',
-            'bancos' => 'array'
+            'activa' => 'required|boolean'
         ]);
 
         $id = DB::table('tiendas')->insertGetId([
@@ -39,17 +32,6 @@ class TiendaConfigController extends Controller
             'updated_at' => Carbon::now(),
         ]);
 
-        if ($request->has('bancos') && is_array($request->bancos)) {
-            foreach ($request->bancos as $bancoId) {
-                DB::table('banco_tienda')->insert([
-                    'banco_id' => $bancoId,
-                    'tienda_id' => $id,
-                    'created_at' => Carbon::now(),
-                    'updated_at' => Carbon::now(),
-                ]);
-            }
-        }
-
         return response()->json(['message' => 'Tienda creada exitosamente'], 201);
     }
 
@@ -59,8 +41,7 @@ class TiendaConfigController extends Controller
             'nombre' => 'required|string|max:255',
             'slug' => 'required|string|max:255|unique:tiendas,slug,'.$id,
             'tipo_negocio' => 'required|in:restaurante_bar,tienda_general',
-            'activa' => 'required|boolean',
-            'bancos' => 'array'
+            'activa' => 'required|boolean'
         ]);
 
         DB::table('tiendas')->where('id', $id)->update([
@@ -70,18 +51,6 @@ class TiendaConfigController extends Controller
             'activa' => $request->activa,
             'updated_at' => Carbon::now(),
         ]);
-
-        if ($request->has('bancos') && is_array($request->bancos)) {
-            DB::table('banco_tienda')->where('tienda_id', $id)->delete();
-            foreach ($request->bancos as $bancoId) {
-                DB::table('banco_tienda')->insert([
-                    'banco_id' => $bancoId,
-                    'tienda_id' => $id,
-                    'created_at' => Carbon::now(),
-                    'updated_at' => Carbon::now(),
-                ]);
-            }
-        }
 
         return response()->json(['message' => 'Tienda actualizada exitosamente']);
     }

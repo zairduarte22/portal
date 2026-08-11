@@ -437,7 +437,7 @@ class TiendaController extends Controller
                     $montoIngreso = $isBs ? ($pagoData['monto_bs'] ?? 0) : $pagoData['monto_usd'];
                     
                     if ($montoIngreso > 0) {
-                        $clienteNombre = $venta->cliente_foraneo ? $venta->cliente_foraneo->nombre : ($venta->miembro ? $venta->miembro->razon_social : 'Cliente Desconocido');
+                        $clienteNombre = $venta->clienteForaneo ? $venta->clienteForaneo->nombre : ($venta->miembro ? $venta->miembro->razon_social : 'Cliente Desconocido');
                         
                         // Buscar categoría "Ventas POS"
                         $categoria = DB::table('categoria_fondos')->where('categoria', 'Ventas POS')->first();
@@ -461,7 +461,8 @@ class TiendaController extends Controller
                             'categoria_id' => $catId,
                             'id_pago_tienda' => $nuevoPago->id,
                             'created_at' => now(),
-                            'updated_at' => now()
+                            'updated_at' => now(),
+                            'tienda_id' => $request->header('X-Tienda-Id', 1)
                         ]);
                     }
                 }

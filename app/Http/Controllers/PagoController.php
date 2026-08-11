@@ -40,10 +40,7 @@ class PagoController extends Controller
         $tasaHoy = Tasa::orderBy('fecha', 'desc')->first();
         $costoCarnet = env('PRECIO_POR_CREDITO_USD', 25);
 
-        // Fetch dynamic payment methods that are for Memberships or have no bank associated (like cash)
-        $metodosPago = \App\Models\MetodoPago::whereHas('banco', function($q) {
-            $q->where('para_membresias', true);
-        })->orWhereNull('id_banco')->get();
+        $metodosPago = \App\Models\MetodoPago::all();
 
         return response()->json([
             'miembros' => $miembros,
@@ -229,7 +226,8 @@ class PagoController extends Controller
                                 'descripcion' => "FACT#" . $facturaFondo,
                                 'beneficiario' => 'Ingreso Particular',
                                 'debe' => $montoToSum,
-                                'haber' => 0
+                                'haber' => 0,
+                                'tienda_id' => 0
                             ]);
                         }
                     }
@@ -398,7 +396,8 @@ class PagoController extends Controller
                                         'descripcion' => "FACT#" . str_replace("00-", "", $libroVenta->numero_control),
                                         'beneficiario' => 'Ingreso Particular',
                                         'debe' => $newMapping['montoToSum'],
-                                        'haber' => 0
+                                        'haber' => 0,
+                                        'tienda_id' => 0
                                     ]);
                                 }
                             }
