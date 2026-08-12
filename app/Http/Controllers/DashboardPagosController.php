@@ -120,13 +120,38 @@ class DashboardPagosController extends Controller
                 $fechaApi = Carbon::parse($cxc->fecha_emision)->format('Y/m/d');
                 $fechaIso = Carbon::parse($cxc->fecha_emision)->format('Y-m-d');
                 
-                $tasaEmisionMonto = \Illuminate\Support\Facades\Cache::remember("tasa_dolarapi_{$fechaIso}", 86400, function() use ($fechaApi, $fechaIso, $tasaActual) {
+                $tasaEmisionMonto = \Illuminate\Support\Facades\Cache::remember("tasa_dolarapi_v2_{$fechaIso}", 86400, function() use ($fechaIso, $tasaActual) {
                     try {
-                        $response = \Illuminate\Support\Facades\Http::timeout(5)->get("https://ve.dolarapi.com/v1/historicos/dolares/oficial/{$fechaApi}");
-                        if ($response->successful() && isset($response->json()['promedio'])) {
-                            return $response->json()['promedio'];
+                        $historico = \Illuminate\Support\Facades\Cache::remember("historico_dolarapi_full_v2", 86400, function() {
+                            $response = \Illuminate\Support\Facades\Http::timeout(10)->get("https://ve.dolarapi.com/v1/historicos/dolares/oficial");
+                            if ($response->successful()) {
+                                $data = $response->json();
+                                $formatted = [];
+                                foreach ($data as $item) {
+                                    if (isset($item['fecha']) && isset($item['promedio'])) {
+                                        $datePart = substr($item['fecha'], 0, 10);
+                                        $formatted[$datePart] = $item['promedio'];
+                                    }
+                                }
+                                return $formatted;
+                            }
+                            return [];
+                        });
+                        
+                        if (!empty($historico)) {
+                            if (isset($historico[$fechaIso])) {
+                                return $historico[$fechaIso];
+                            }
+                            // Fallback a la fecha más cercana anterior
+                            $fechas = array_keys($historico);
+                            rsort($fechas);
+                            foreach ($fechas as $f) {
+                                if ($f <= $fechaIso) return $historico[$f];
+                            }
                         }
-                    } catch (\Exception $e) {}
+                    } catch (\Exception $e) {
+                        \Illuminate\Support\Facades\Log::error("API Dolar error: " . $e->getMessage());
+                    }
                     
                     // Fallback to local DB if API fails
                     $tasaLocal = Tasa::where('fecha', '<=', $fechaIso)->orderBy('fecha', 'desc')->first();
@@ -240,13 +265,34 @@ class DashboardPagosController extends Controller
                 $fechaApi = Carbon::parse($cxp->fecha_emision)->format('Y/m/d');
                 $fechaIso = Carbon::parse($cxp->fecha_emision)->format('Y-m-d');
                 
-                $tasaEmisionMonto = \Illuminate\Support\Facades\Cache::remember("tasa_dolarapi_{$fechaIso}", 86400, function() use ($fechaApi, $fechaIso, $tasaActual) {
+                $tasaEmisionMonto = \Illuminate\Support\Facades\Cache::remember("tasa_dolarapi_v2_{$fechaIso}", 86400, function() use ($fechaIso, $tasaActual) {
                     try {
-                        $url = "https://ve.dolarapi.com/v1/historicos/dolares/oficial/{$fechaApi}";
-                        $response = \Illuminate\Support\Facades\Http::timeout(5)->get($url);
+                        $historico = \Illuminate\Support\Facades\Cache::remember("historico_dolarapi_full_v2", 86400, function() {
+                            $response = \Illuminate\Support\Facades\Http::timeout(10)->get("https://ve.dolarapi.com/v1/historicos/dolares/oficial");
+                            if ($response->successful()) {
+                                $data = $response->json();
+                                $formatted = [];
+                                foreach ($data as $item) {
+                                    if (isset($item['fecha']) && isset($item['promedio'])) {
+                                        $datePart = substr($item['fecha'], 0, 10);
+                                        $formatted[$datePart] = $item['promedio'];
+                                    }
+                                }
+                                return $formatted;
+                            }
+                            return [];
+                        });
                         
-                        if ($response->successful() && isset($response->json()['promedio'])) {
-                            return $response->json()['promedio'];
+                        if (!empty($historico)) {
+                            if (isset($historico[$fechaIso])) {
+                                return $historico[$fechaIso];
+                            }
+                            // Fallback a la fecha más cercana anterior
+                            $fechas = array_keys($historico);
+                            rsort($fechas);
+                            foreach ($fechas as $f) {
+                                if ($f <= $fechaIso) return $historico[$f];
+                            }
                         }
                     } catch (\Exception $e) {
                         \Illuminate\Support\Facades\Log::error("API Dolar error: " . $e->getMessage());
