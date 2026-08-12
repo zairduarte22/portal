@@ -7,6 +7,7 @@ use App\Models\Pago;
 use App\Models\Obligacion;
 use App\Models\Tasa;
 use App\Models\Miembro;
+use App\Models\Banco;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
@@ -75,6 +76,17 @@ class DashboardPagosController extends Controller
             ['name' => '3-6 Meses', 'value' => $mora3a6, 'color' => '#f97316'],
             ['name' => '> 6 Meses', 'value' => $moraMas6, 'color' => '#ef4444']
         ];
+        
+        // 2. Saldos de Bancos
+        $bancos = Banco::where('propietario', 'FONDO')->get();
+        $saldosBancos = [];
+        foreach ($bancos as $banco) {
+            $saldosBancos[] = [
+                'banco' => $banco->nombre,
+                'moneda' => $banco->moneda,
+                'saldo' => $banco->saldo
+            ];
+        }
 
         // 3. Activos en Cuentas por Cobrar (Distribución)
         $cuentasCobrar = Obligacion::where('tipo_obligacion', 'COBRAR')
@@ -125,8 +137,9 @@ class DashboardPagosController extends Controller
             $distribucionCxcRaw[$categoria] += $valorUsd;
         }
 
+        arsort($distribucionCxcRaw);
         $distribucionCxc = [];
-        $colors = ['#3b82f6', '#8b5cf6', '#ec4899', '#f43f5e', '#14b8a6'];
+        $colors = ['#4f46e5', '#3b82f6', '#0ea5e9', '#06b6d4', '#14b8a6', '#10b981', '#22c55e', '#84cc16'];
         $i = 0;
         foreach ($distribucionCxcRaw as $cat => $val) {
             if ($val > 0) {
@@ -141,12 +154,14 @@ class DashboardPagosController extends Controller
 
         // 4. Ingresos por Mes (Gráfico de Barras)
         $ingresosPorMesRaw = [];
-        $pagosValidos = Pago::where('estado', '!=', 'ANULADO')->get();
+        $miembrosPorMesRaw = [];
+        $pagosValidos = Pago::with('facturas')->where('estado', '!=', 'ANULADO')->get();
         
         foreach ($pagosValidos as $pago) {
             $mesKey = Carbon::parse($pago->fecha)->format('Y-m');
             if (!isset($ingresosPorMesRaw[$mesKey])) {
                 $ingresosPorMesRaw[$mesKey] = 0;
+                $miembrosPorMesRaw[$mesKey] = [];
             }
             
             // Valor USD del pago
@@ -157,6 +172,12 @@ class DashboardPagosController extends Controller
                 $valorUsd = $pago->monto; // Asumimos que si no hay tasa, el monto es en divisa o se maneja así
             }
             $ingresosPorMesRaw[$mesKey] += $valorUsd;
+
+            foreach ($pago->facturas as $factura) {
+                if ($factura->id_miembro) {
+                    $miembrosPorMesRaw[$mesKey][] = $factura->id_miembro;
+                }
+            }
         }
 
         // Agregar ingresos históricos (de meses anteriores al sistema)
@@ -165,6 +186,7 @@ class DashboardPagosController extends Controller
             $mesKey = Carbon::parse($ingreso->fecha)->format('Y-m');
             if (!isset($ingresosPorMesRaw[$mesKey])) {
                 $ingresosPorMesRaw[$mesKey] = 0;
+                $miembrosPorMesRaw[$mesKey] = [];
             }
             $ingresosPorMesRaw[$mesKey] += $ingreso->monto;
         }
@@ -174,9 +196,11 @@ class DashboardPagosController extends Controller
         $ingresosMensuales = [];
         foreach ($ingresosPorMesRaw as $mesKey => $val) {
             $date = Carbon::createFromFormat('Y-m', $mesKey);
+            $uniqueMembersCount = isset($miembrosPorMesRaw[$mesKey]) ? count(array_unique($miembrosPorMesRaw[$mesKey])) : 0;
             $ingresosMensuales[] = [
                 'name' => $date->format('M Y'),
-                'ingresos' => round($val, 2)
+                'ingresos' => round($val, 2),
+                'personas' => $uniqueMembersCount
             ];
         }
 

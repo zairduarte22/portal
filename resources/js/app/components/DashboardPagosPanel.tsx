@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { TrendingUp, TrendingDown, DollarSign, Activity, Users, Wallet, Loader2, Target, AlertTriangle } from "lucide-react";
-import { BarChart, Bar, PieChart, Pie, Cell, Tooltip as RechartsTooltip, Legend, ResponsiveContainer, XAxis, YAxis, CartesianGrid } from 'recharts';
+import { BarChart, Bar, PieChart, Pie, Cell, Tooltip as RechartsTooltip, Legend, ResponsiveContainer, XAxis, YAxis, CartesianGrid, ComposedChart, Line } from 'recharts';
 
 export function DashboardPagosPanel() {
   const [metrics, setMetrics] = useState<any>(null);
@@ -95,13 +95,19 @@ export function DashboardPagosPanel() {
             </div>
             Saldos Movilizados
           </div>
-          <h2 className="text-3xl font-black tracking-tight" style={{ color: "var(--foreground)" }}>
-            Bs. {Number(metrics.flujo_caja.saldos_bancos.bs).toLocaleString('es-VE', {minimumFractionDigits: 2})}
-          </h2>
-          <div className="mt-4 border-t pt-4" style={{ borderColor: "var(--border)" }}>
-            <p className="text-sm text-gray-500 font-medium">
-              Movilizado en Divisas: <span className="text-blue-600 font-bold">${Number(metrics.flujo_caja.saldos_bancos.divisas).toLocaleString('en-US', {minimumFractionDigits: 2})}</span>
-            </p>
+          <div className="flex flex-col gap-3">
+            {metrics.flujo_caja.saldos_bancos && metrics.flujo_caja.saldos_bancos.length > 0 ? (
+                metrics.flujo_caja.saldos_bancos.map((banco: any, index: number) => (
+                    <div key={index} className="flex justify-between items-center border-b pb-2 last:border-0 last:pb-0" style={{ borderColor: "var(--border)" }}>
+                        <span className="text-sm font-medium" style={{ color: "var(--foreground)" }}>{banco.banco}</span>
+                        <span className="text-lg font-black" style={{ color: banco.moneda === 'VES' ? '#3b82f6' : '#10b981' }}>
+                            {banco.moneda === 'VES' ? 'Bs.' : '$'} {Number(banco.saldo).toLocaleString('en-US', {minimumFractionDigits: 2})}
+                        </span>
+                    </div>
+                ))
+            ) : (
+                <div className="text-sm text-gray-400">No hay bancos registrados</div>
+            )}
           </div>
         </div>
 
@@ -213,13 +219,22 @@ export function DashboardPagosPanel() {
           <div className="w-full h-[250px]">
             {metrics.ingresos_mensuales.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={metrics.ingresos_mensuales}>
+                <ComposedChart data={metrics.ingresos_mensuales}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} />
                   <XAxis dataKey="name" fontSize={12} tickLine={false} axisLine={false} />
-                  <YAxis fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `$${value}`} />
-                  <RechartsTooltip formatter={(value: number) => `$${value.toLocaleString('en-US', {minimumFractionDigits:2})}`} />
-                  <Bar dataKey="ingresos" fill="#3b82f6" radius={[4, 4, 0, 0]} />
-                </BarChart>
+                  <YAxis yAxisId="left" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `$${value}`} />
+                  <YAxis yAxisId="right" orientation="right" fontSize={12} tickLine={false} axisLine={false} />
+                  <RechartsTooltip 
+                    formatter={(value: number, name: string) => {
+                      if (name === 'ingresos') return [`$${value.toLocaleString('en-US', {minimumFractionDigits:2})}`, 'Ingresos USD'];
+                      if (name === 'personas') return [value, 'Personas'];
+                      return [value, name];
+                    }} 
+                  />
+                  <Legend />
+                  <Line yAxisId="left" type="monotone" dataKey="ingresos" name="Ingresos" stroke="#3b82f6" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
+                  <Line yAxisId="right" type="monotone" dataKey="personas" name="Personas" stroke="#10b981" strokeWidth={3} dot={{ r: 4 }} />
+                </ComposedChart>
               </ResponsiveContainer>
             ) : (
               <div className="w-full h-full flex items-center justify-center text-gray-400">No hay pagos registrados</div>
