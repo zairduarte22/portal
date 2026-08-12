@@ -1,0 +1,25 @@
+{
+    "categorias": [
+        "Préstamo",
+        "Impuesto",
+        "Multa",
+        "Tasa",
+        "Servicios",
+        "Proveedor",
+        "Otro",
+        null
+    ],
+    "terceros": [
+        "SENIAT",
+        "Alcaldía",
+        "Corpoelec",
+        "Cantv",
+        "Hidrocapital",
+        "Empleado",
+        "Socio",
+        "Proveedor General",
+        "Otro",
+        "UGAVI",
+        null
+    ]
+}
