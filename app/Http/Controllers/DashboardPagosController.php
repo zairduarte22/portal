@@ -140,13 +140,13 @@ class DashboardPagosController extends Controller
         }
 
         // 4. Ingresos por Mes (Gráfico de Barras)
-        $ingresosPorMes = [];
+        $ingresosPorMesRaw = [];
         $pagosValidos = Pago::where('estado', '!=', 'ANULADO')->get();
         
         foreach ($pagosValidos as $pago) {
-            $mes = Carbon::parse($pago->fecha)->format('M Y');
-            if (!isset($ingresosPorMes[$mes])) {
-                $ingresosPorMes[$mes] = 0;
+            $mesKey = Carbon::parse($pago->fecha)->format('Y-m');
+            if (!isset($ingresosPorMesRaw[$mesKey])) {
+                $ingresosPorMesRaw[$mesKey] = 0;
             }
             
             // Valor USD del pago
@@ -156,23 +156,26 @@ class DashboardPagosController extends Controller
             } else {
                 $valorUsd = $pago->monto; // Asumimos que si no hay tasa, el monto es en divisa o se maneja así
             }
-            $ingresosPorMes[$mes] += $valorUsd;
+            $ingresosPorMesRaw[$mesKey] += $valorUsd;
         }
 
         // Agregar ingresos históricos (de meses anteriores al sistema)
         $ingresosHistoricos = \App\Models\IngresoHistorico::all();
         foreach ($ingresosHistoricos as $ingreso) {
-            $mes = Carbon::parse($ingreso->fecha)->format('M Y');
-            if (!isset($ingresosPorMes[$mes])) {
-                $ingresosPorMes[$mes] = 0;
+            $mesKey = Carbon::parse($ingreso->fecha)->format('Y-m');
+            if (!isset($ingresosPorMesRaw[$mesKey])) {
+                $ingresosPorMesRaw[$mesKey] = 0;
             }
-            $ingresosPorMes[$mes] += $ingreso->monto;
+            $ingresosPorMesRaw[$mesKey] += $ingreso->monto;
         }
 
+        ksort($ingresosPorMesRaw);
+
         $ingresosMensuales = [];
-        foreach ($ingresosPorMes as $mes => $val) {
+        foreach ($ingresosPorMesRaw as $mesKey => $val) {
+            $date = Carbon::createFromFormat('Y-m', $mesKey);
             $ingresosMensuales[] = [
-                'name' => $mes,
+                'name' => $date->format('M Y'),
                 'ingresos' => round($val, 2)
             ];
         }
