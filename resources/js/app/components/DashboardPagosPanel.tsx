@@ -124,12 +124,12 @@ export function DashboardPagosPanel() {
             </div>
             Saldos Movilizados
           </div>
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-3 mt-4">
             {metrics.flujo_caja.saldos_bancos && metrics.flujo_caja.saldos_bancos.length > 0 ? (
                 metrics.flujo_caja.saldos_bancos.map((banco: any, index: number) => (
-                    <div key={index} className="flex justify-between items-center border-b pb-2 last:border-0 last:pb-0" style={{ borderColor: "var(--border)" }}>
-                        <span className="text-sm font-medium" style={{ color: "var(--foreground)" }}>{banco.banco}</span>
-                        <span className="text-lg font-black" style={{ color: banco.moneda === 'VES' ? '#3b82f6' : '#10b981' }}>
+                    <div key={index} className="flex flex-col border-b pb-3 last:border-0 last:pb-0" style={{ borderColor: "var(--border)" }}>
+                        <span className="text-sm font-medium text-gray-500 mb-1">{banco.banco}</span>
+                        <span className="text-2xl font-black tracking-tight" style={{ color: banco.moneda === 'VES' ? '#3b82f6' : '#10b981' }}>
                             {banco.moneda === 'VES' ? 'Bs.' : '$'} {Number(banco.saldo).toLocaleString('en-US', {minimumFractionDigits: 2})}
                         </span>
                     </div>
