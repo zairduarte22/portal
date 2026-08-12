@@ -81,10 +81,17 @@ class DashboardPagosController extends Controller
         $bancos = Banco::where('propietario', 'FONDO')->get();
         $saldosBancos = [];
         foreach ($bancos as $banco) {
+            $tablaBanco = ($banco->divisa === 'USD') ? 'cuenta_moneda_extranjera' : 'cuenta_banco';
+            
+            $saldo = DB::table($tablaBanco)
+                ->where('id_banco', $banco->id)
+                ->selectRaw('COALESCE(SUM(debe), 0) - COALESCE(SUM(haber), 0) as saldo')
+                ->value('saldo');
+
             $saldosBancos[] = [
                 'banco' => $banco->nombre,
-                'moneda' => $banco->moneda,
-                'saldo' => $banco->saldo
+                'moneda' => $banco->divisa,
+                'saldo' => $saldo
             ];
         }
 
@@ -155,7 +162,7 @@ class DashboardPagosController extends Controller
         // 4. Ingresos por Mes (Gráfico de Barras)
         $ingresosPorMesRaw = [];
         $miembrosPorMesRaw = [];
-        $pagosValidos = Pago::with('facturas')->where('estado', '!=', 'ANULADO')->get();
+        $pagosValidos = Pago::with('facturas')->where('estado', '!=', 'Anulada')->get();
         
         foreach ($pagosValidos as $pago) {
             $mesKey = Carbon::parse($pago->fecha)->format('Y-m');
@@ -163,14 +170,9 @@ class DashboardPagosController extends Controller
                 $ingresosPorMesRaw[$mesKey] = 0;
                 $miembrosPorMesRaw[$mesKey] = [];
             }
+            // Valor USD del pago (el campo 'monto' siempre almacena el valor en USD del pago, sea en bs o divisa)
+            $valorUsd = $pago->monto;
             
-            // Valor USD del pago
-            $valorUsd = 0;
-            if ($pago->tasa_cambio && $pago->tasa_cambio > 0) {
-                $valorUsd = $pago->monto_bs / $pago->tasa_cambio;
-            } else {
-                $valorUsd = $pago->monto; // Asumimos que si no hay tasa, el monto es en divisa o se maneja así
-            }
             $ingresosPorMesRaw[$mesKey] += $valorUsd;
 
             foreach ($pago->facturas as $factura) {
