@@ -91,11 +91,12 @@ class DashboardPagosController extends Controller
             
             $valorUsd = 0;
             if ($cxc->moneda === 'VES') {
+                $fechaApi = Carbon::parse($cxc->fecha_emision)->format('Y/m/d');
                 $fechaIso = Carbon::parse($cxc->fecha_emision)->format('Y-m-d');
                 
-                $tasaEmisionMonto = \Illuminate\Support\Facades\Cache::remember("tasa_dolarapi_{$fechaIso}", 86400, function() use ($fechaIso, $tasaActual) {
+                $tasaEmisionMonto = \Illuminate\Support\Facades\Cache::remember("tasa_dolarapi_{$fechaIso}", 86400, function() use ($fechaApi, $fechaIso, $tasaActual) {
                     try {
-                        $response = \Illuminate\Support\Facades\Http::timeout(5)->get("https://ve.dolarapi.com/v1/historicos/dolares/oficial/{$fechaIso}");
+                        $response = \Illuminate\Support\Facades\Http::timeout(5)->get("https://ve.dolarapi.com/v1/historicos/dolares/oficial/{$fechaApi}");
                         if ($response->successful() && isset($response->json()['promedio'])) {
                             return $response->json()['promedio'];
                         }
@@ -175,21 +176,22 @@ class DashboardPagosController extends Controller
             $currentUsdValue = $restante;
             
             if ($cxp->moneda === 'VES') {
-                // Obtener tasa histórica desde dolarapi.com cacheada
-                $fechaApi = Carbon::parse($cxp->fecha_emision)->format('d-m-Y'); // dolarapi often uses DD-MM-YYYY or we can check
-                // Let's use Y-m-d as default for standard APIs, wait dolarapi historical uses Y-m-d or d-m-Y? 
-                // Wait, their docs say /dolares/oficial or /historicos/dolares/oficial/{fecha} (usually Y-m-d)
+                $fechaApi = Carbon::parse($cxp->fecha_emision)->format('Y/m/d');
                 $fechaIso = Carbon::parse($cxp->fecha_emision)->format('Y-m-d');
                 
-                $tasaEmisionMonto = \Illuminate\Support\Facades\Cache::remember("tasa_dolarapi_{$fechaIso}", 86400, function() use ($fechaIso, $tasaActual) {
+                $tasaEmisionMonto = \Illuminate\Support\Facades\Cache::remember("tasa_dolarapi_{$fechaIso}", 86400, function() use ($fechaApi, $fechaIso, $tasaActual) {
                     try {
-                        $response = \Illuminate\Support\Facades\Http::timeout(5)->get("https://ve.dolarapi.com/v1/historicos/dolares/oficial/{$fechaIso}");
+                        $url = "https://ve.dolarapi.com/v1/historicos/dolares/oficial/{$fechaApi}";
+                        $response = \Illuminate\Support\Facades\Http::timeout(5)->get($url);
+                        
                         if ($response->successful() && isset($response->json()['promedio'])) {
                             return $response->json()['promedio'];
                         }
-                    } catch (\Exception $e) {}
+                    } catch (\Exception $e) {
+                        \Illuminate\Support\Facades\Log::error("API Dolar error: " . $e->getMessage());
+                    }
                     
-                    // Fallback to local DB if API fails
+                    // Fallback
                     $tasaLocal = Tasa::where('fecha', '<=', $fechaIso)->orderBy('fecha', 'desc')->first();
                     return $tasaLocal ? $tasaLocal->monto : $tasaActual;
                 });
