@@ -10,9 +10,10 @@ interface PagoModalProps {
   tasaDia: number | "";
   mode?: "create" | "edit" | "view";
   pagoToEdit?: any;
+  metodosPago?: any[];
 }
 
-export function PagoModal({ isOpen, onClose, onSuccess, miembros, facturas, tasaDia, mode = "create", pagoToEdit }: PagoModalProps) {
+export function PagoModal({ isOpen, onClose, onSuccess, miembros, facturas, tasaDia, mode = "create", pagoToEdit, metodosPago = [] }: PagoModalProps) {
   const isCreating = mode === "create";
   const isViewing = mode === "view";
   const isEditing = mode === "edit";
@@ -699,9 +700,10 @@ export function PagoModal({ isOpen, onClose, onSuccess, miembros, facturas, tasa
                         disabled={isViewing}
                         onChange={(e) => setMetodoPago(e.target.value)}
                       >
-                        <option value="Pago Movil/Transferencia">Pago Móvil / Transferencia</option>
-                        <option value="Zelle">Zelle</option>
-                        <option value="Efectivo Divisas">Efectivo Divisas</option>
+                        <option value="">Seleccione un método</option>
+                        {metodosPago.map((mp: any) => (
+                          <option key={mp.id} value={mp.nombre}>{mp.nombre}</option>
+                        ))}
                         <option value="Cruces">Cruces</option>
                       </select>
                     </div>
@@ -710,7 +712,7 @@ export function PagoModal({ isOpen, onClose, onSuccess, miembros, facturas, tasa
                       <label className="text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--muted-foreground)" }}>Referencia Bancaria</label>
                       <input
                         type="text"
-                        required={metodoPago !== 'Cruces'}
+                        required={metodoPago !== 'Cruces' && !metodoPago.toLowerCase().includes('efectivo')}
                         disabled={isViewing || metodoPago === 'Cruces'}
                         placeholder={metodoPago === 'Cruces' ? "No aplica para cruces" : "Nro. de referencia o recibo"}
                         className="w-full px-3.5 py-2.5 rounded-xl text-sm border outline-none transition-all focus:ring-2 focus:ring-green-200 disabled:opacity-70"

@@ -96,6 +96,8 @@ class ObligacionesController extends Controller
                 $descPrefix = $obligacion->tipo_obligacion === 'COBRAR' ? "otorgado a" : "recibido de";
                 $beneficiario = $obligacion->tipo_obligacion === 'COBRAR' ? $obligacion->tercero : 'Ingreso Particular';
 
+                $categoriaFondo = \App\Models\CategoriaFondo::firstOrCreate(['categoria' => $obligacion->categoria]);
+
                 DB::table($tablaBanco)->insert([
                     'id_banco' => $banco->id,
                     'fecha' => $obligacion->fecha_emision,
@@ -105,7 +107,8 @@ class ObligacionesController extends Controller
                     'beneficiario' => $beneficiario,
                     'debe' => $debe,
                     'haber' => $haber,
-                    'id_obligacion' => $obligacion->id
+                    'id_obligacion' => $obligacion->id,
+                    'categoria_id' => $categoriaFondo->id
                 ]);
             }
 
@@ -171,6 +174,8 @@ class ObligacionesController extends Controller
                 $descSuffix = $obligacion->descripcion ? " - {$obligacion->descripcion}" : "";
                 $beneficiario = $obligacion->tipo_obligacion === 'COBRAR' ? 'Ingreso Particular' : $obligacion->tercero;
 
+                $categoriaFondo = \App\Models\CategoriaFondo::firstOrCreate(['categoria' => $obligacion->categoria]);
+
                 DB::table($tablaBanco)->insert([
                     'id_banco' => $banco->id,
                     'fecha' => $abono->fecha,
@@ -180,7 +185,8 @@ class ObligacionesController extends Controller
                     'beneficiario' => $beneficiario,
                     'debe' => $debe,
                     'haber' => $haber,
-                    'id_abono_obligacion' => $abono->id
+                    'id_abono_obligacion' => $abono->id,
+                    'categoria_id' => $categoriaFondo->id
                 ]);
             }
 
@@ -243,6 +249,8 @@ class ObligacionesController extends Controller
                 $descPrefix = $obligacion->tipo_obligacion === 'COBRAR' ? "otorgado a" : "recibido de";
                 $beneficiario = $obligacion->tipo_obligacion === 'COBRAR' ? $obligacion->tercero : 'Ingreso Particular';
 
+                $categoriaFondo = \App\Models\CategoriaFondo::firstOrCreate(['categoria' => $obligacion->categoria]);
+
                 DB::table($tablaBanco)->insert([
                     'id_banco' => $banco->id,
                     'fecha' => $obligacion->fecha_emision,
@@ -252,7 +260,8 @@ class ObligacionesController extends Controller
                     'beneficiario' => $beneficiario,
                     'debe' => $debe,
                     'haber' => $haber,
-                    'id_obligacion' => $obligacion->id
+                    'id_obligacion' => $obligacion->id,
+                    'categoria_id' => $categoriaFondo->id
                 ]);
             }
 

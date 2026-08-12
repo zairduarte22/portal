@@ -37,7 +37,7 @@ export function ConfiguracionesPanel({ currentUser }: { currentUser: any }) {
     default_route: ""
   });
 
-  const [activeTab, setActiveTab] = useState<'usuarios' | 'parametros'>('usuarios');
+  const [activeTab, setActiveTab] = useState<'usuarios' | 'parametros' | 'bancos'>('usuarios');
   const [generalConfigs, setGeneralConfigs] = useState({
     firma_secretario_nombre: '',
     firma_secretario_cedula: '',

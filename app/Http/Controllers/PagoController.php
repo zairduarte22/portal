@@ -45,7 +45,8 @@ class PagoController extends Controller
             'facturas' => $facturas,
             'pagos' => $pagos,
             'tasa_dia' => $tasaHoy ? $tasaHoy->monto : null,
-            'costo_carnet' => $costoCarnet
+            'costo_carnet' => $costoCarnet,
+            'metodos_pago' => \App\Models\MetodoPago::with('banco')->get()
         ]);
     }
 
@@ -94,13 +95,24 @@ class PagoController extends Controller
                 $facturaFondo = DB::selectOne("SELECT nextval('seq_factura_fondo') AS val")->val;
             }
 
+            // Mapear al ENUM legado para guardar en pagos y libro_ventas
+            $legacyMetodo = 'Pago Movil/Transferencia';
+            $mpLower = strtolower($request->metodo_pago);
+            if (strpos($mpLower, 'zelle') !== false) {
+                $legacyMetodo = 'Zelle';
+            } elseif (strpos($mpLower, 'efectivo') !== false) {
+                $legacyMetodo = 'Efectivo Divisas';
+            } elseif (strpos($mpLower, 'cruce') !== false) {
+                $legacyMetodo = 'Cruces';
+            }
+
             // Crear el Pago
             $pago = Pago::create([
                 'fecha' => $request->fecha,
                 'monto' => $request->monto,
                 'monto_bs' => $request->monto_bs,
                 'tasa_cambio' => $request->tasa_cambio,
-                'metodo_pago' => $request->metodo_pago,
+                'metodo_pago' => $legacyMetodo,
                 'referencia' => $request->referencia ?? 'CRUCE',
                 'factura_ugavi' => $facturaUgavi,
                 'factura_fondo' => $facturaFondo
@@ -137,7 +149,7 @@ class PagoController extends Controller
                 'id_miembro' => $miembroId,
                 'fecha' => $request->fecha,
                 'tipo' => 'Ingreso',
-                'metodo_pago' => $request->metodo_pago,
+                'metodo_pago' => $legacyMetodo,
                 'monto' => $pago->monto * 0.20,
                 'monto_bs' => $pago->monto_bs * 0.20,
                 'referencia' => $pago->referencia,
@@ -150,28 +162,41 @@ class PagoController extends Controller
             $tableToUpdate = null;
             $montoToSum = 0;
             $bancoId = null;
-            $tipoOperacion = '';
+            $tipoOperacion = 'TRANSF';
+            $metodoObj = \App\Models\MetodoPago::with('banco')->where('nombre', $mp)->first();
             
-            if ($mp === 'Pago Movil/Transferencia') {
-                $tableToUpdate = 'cuenta_banco';
-                $montoToSum = $pago->monto_bs;
-                $bancoId = DB::table('bancos')->where('nombre', 'BNC (Banco Nacional de Credito)')->value('id');
-                $tipoOperacion = 'TRANSF';
-            } elseif ($mp === 'Zelle') {
-                $tableToUpdate = 'cuenta_moneda_extranjera';
-                $montoToSum = $pago->monto;
-                $bancoId = DB::table('bancos')->where('nombre', 'Zelle')->value('id');
-                $tipoOperacion = 'TRANSF';
-            } elseif ($mp === 'Efectivo Divisas') {
-                $tableToUpdate = 'cuenta_moneda_extranjera';
-                $montoToSum = $pago->monto;
-                $bancoId = DB::table('bancos')->where('nombre', 'Efectivo Divisas')->value('id');
-                $tipoOperacion = 'TRANSF';
-            } elseif ($mp === 'Cruces') {
+            if ($mp === 'Cruces') {
                 $tableToUpdate = 'cruces';
                 $montoToSum = $pago->monto;
                 $bancoId = null;
                 $tipoOperacion = '';
+            } else if ($metodoObj && $metodoObj->banco) {
+                $banco = $metodoObj->banco;
+                $bancoId = $banco->id;
+                
+                if ($banco->divisa === 'VES') {
+                    $tableToUpdate = 'cuenta_banco';
+                    $montoToSum = $pago->monto_bs;
+                } else {
+                    $tableToUpdate = 'cuenta_moneda_extranjera';
+                    $montoToSum = $pago->monto;
+                }
+            } else if (strpos(strtolower($mp), 'efectivo') !== false) {
+                // Fallback para efectivo si no está configurado en metodos_pago con banco
+                $tableToUpdate = 'cuenta_moneda_extranjera';
+                $montoToSum = $pago->monto;
+                $bancoId = DB::table('bancos')->where('nombre', 'Efectivo Divisas')->value('id');
+            } else {
+                // Fallback legado si no hay config en DB
+                if ($mp === 'Pago Movil/Transferencia') {
+                    $tableToUpdate = 'cuenta_banco';
+                    $montoToSum = $pago->monto_bs;
+                    $bancoId = DB::table('bancos')->where('nombre', 'BNC (Banco Nacional de Credito)')->value('id');
+                } elseif ($mp === 'Zelle') {
+                    $tableToUpdate = 'cuenta_moneda_extranjera';
+                    $montoToSum = $pago->monto;
+                    $bancoId = DB::table('bancos')->where('nombre', 'Zelle')->value('id');
+                }
             }
 
             if ($tableToUpdate) {
@@ -179,6 +204,9 @@ class PagoController extends Controller
                     ->where('referencia', $pago->referencia)
                     ->where('fecha', $request->fecha)
                     ->first();
+
+                // Get or create CategoriaFondo for "Cuotas de Miembro"
+                $categoriaFondo = \App\Models\CategoriaFondo::firstOrCreate(['categoria' => 'Cuotas de Miembro']);
 
                 if ($existing) {
                     // Update existing
@@ -190,7 +218,8 @@ class PagoController extends Controller
                     } else {
                         DB::table($tableToUpdate)->where('id', $existing->id)->update([
                             'debe' => $existing->debe + $montoToSum,
-                            'descripcion' => $existing->descripcion . " / FACT#" . $facturaFondo
+                            'descripcion' => $existing->descripcion . " / FACT#" . $facturaFondo,
+                            'categoria_id' => $categoriaFondo->id
                         ]);
                     }
                 } else {
@@ -215,7 +244,8 @@ class PagoController extends Controller
                                 'descripcion' => "FACT#" . $facturaFondo,
                                 'beneficiario' => 'Ingreso Particular',
                                 'debe' => $montoToSum,
-                                'haber' => 0
+                                'haber' => 0,
+                                'categoria_id' => $categoriaFondo->id
                             ]);
                         }
                     }
