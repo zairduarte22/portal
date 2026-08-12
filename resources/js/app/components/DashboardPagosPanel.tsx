@@ -5,11 +5,17 @@ import { BarChart, Bar, PieChart, Pie, Cell, Tooltip as RechartsTooltip, Legend,
 export function DashboardPagosPanel() {
   const [metrics, setMetrics] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
 
   const fetchData = async () => {
     try {
       setLoading(true);
-      const res = await fetch('/api/dashboard-pagos/completo');
+      const params = new URLSearchParams();
+      if (startDate) params.append('desde', startDate);
+      if (endDate) params.append('hasta', endDate);
+      
+      const res = await fetch(`/api/dashboard-pagos/completo?${params.toString()}`);
       if (res.ok) {
         const json = await res.json();
         setMetrics(json);
@@ -23,7 +29,7 @@ export function DashboardPagosPanel() {
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [startDate, endDate]);
 
   if (!metrics && loading) {
     return (
@@ -39,7 +45,7 @@ export function DashboardPagosPanel() {
   return (
     <div className="space-y-6 w-full mx-auto max-w-full">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-card p-6 rounded-2xl border shadow-sm" style={{ borderColor: "var(--border)" }}>
+      <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4 bg-card p-6 rounded-2xl border shadow-sm" style={{ borderColor: "var(--border)" }}>
         <div>
           <h1 className="text-3xl font-bold flex items-center gap-3" style={{ color: "var(--foreground)" }}>
             <Activity size={32} style={{ color: "#3b82f6" }} />
@@ -50,15 +56,38 @@ export function DashboardPagosPanel() {
             Informe de Gestión Financiera. Visualiza ingresos, mora, activos y el impacto de la devaluación.
           </p>
         </div>
-        <button
-            onClick={fetchData}
-            disabled={loading}
-            className="flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold border transition-colors hover:bg-blue-50 hover:text-blue-600 disabled:opacity-50"
-            style={{ borderColor: "var(--border)", color: "var(--foreground)" }}
-        >
-            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Activity className="w-4 h-4" />}
-            Actualizar Datos
-        </button>
+        
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium text-gray-500">Desde:</span>
+            <input 
+              type="date" 
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              className="border rounded-lg px-3 py-2 text-sm bg-background" 
+              style={{ borderColor: "var(--border)", color: "var(--foreground)" }}
+            />
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium text-gray-500">Hasta:</span>
+            <input 
+              type="date" 
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+              className="border rounded-lg px-3 py-2 text-sm bg-background" 
+              style={{ borderColor: "var(--border)", color: "var(--foreground)" }}
+            />
+          </div>
+          <button
+              onClick={fetchData}
+              disabled={loading}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold border transition-colors hover:bg-blue-50 hover:text-blue-600 disabled:opacity-50"
+              style={{ borderColor: "var(--border)", color: "var(--foreground)" }}
+          >
+              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Activity className="w-4 h-4" />}
+              Refrescar
+          </button>
+        </div>
       </div>
 
       {/* Fila 1: KPIs Principales */}

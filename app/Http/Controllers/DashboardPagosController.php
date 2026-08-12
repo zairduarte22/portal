@@ -15,11 +15,18 @@ class DashboardPagosController extends Controller
 {
     public function getDashboardData(Request $request)
     {
+        $desde = $request->query('desde');
+        $hasta = $request->query('hasta');
+
         $tasaHoy = Tasa::orderBy('fecha', 'desc')->first();
         $tasaActual = $tasaHoy ? $tasaHoy->monto : 1;
 
         // 1. Ingresos y Flujo de Caja
-        $pagos = Pago::where('estado', '!=', 'Anulada')->get();
+        $pagosQuery = Pago::where('estado', '!=', 'Anulada');
+        if ($desde) $pagosQuery->whereDate('fecha', '>=', $desde);
+        if ($hasta) $pagosQuery->whereDate('fecha', '<=', $hasta);
+        $pagos = $pagosQuery->get();
+
         $ingresosTotalUsd = $pagos->sum('monto');
         $ingresos20 = $ingresosTotalUsd * 0.20;
 
@@ -162,7 +169,11 @@ class DashboardPagosController extends Controller
         // 4. Ingresos por Mes (Gráfico de Barras)
         $ingresosPorMesRaw = [];
         $miembrosPorMesRaw = [];
-        $pagosValidos = Pago::with('facturas')->where('estado', '!=', 'Anulada')->get();
+        
+        $pagosValidosQuery = Pago::with('facturas')->where('estado', '!=', 'Anulada');
+        if ($desde) $pagosValidosQuery->whereDate('fecha', '>=', $desde);
+        if ($hasta) $pagosValidosQuery->whereDate('fecha', '<=', $hasta);
+        $pagosValidos = $pagosValidosQuery->get();
         
         foreach ($pagosValidos as $pago) {
             $mesKey = Carbon::parse($pago->fecha)->format('Y-m');
@@ -183,7 +194,11 @@ class DashboardPagosController extends Controller
         }
 
         // Agregar ingresos históricos (de meses anteriores al sistema)
-        $ingresosHistoricos = \App\Models\IngresoHistorico::all();
+        $historicoQuery = \App\Models\IngresoHistorico::query();
+        if ($desde) $historicoQuery->whereDate('fecha', '>=', $desde);
+        if ($hasta) $historicoQuery->whereDate('fecha', '<=', $hasta);
+        $ingresosHistoricos = $historicoQuery->get();
+
         foreach ($ingresosHistoricos as $ingreso) {
             $mesKey = Carbon::parse($ingreso->fecha)->format('Y-m');
             if (!isset($ingresosPorMesRaw[$mesKey])) {
