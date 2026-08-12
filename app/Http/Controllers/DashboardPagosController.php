@@ -139,23 +139,40 @@ class DashboardPagosController extends Controller
             }
         }
 
-        // 4. Ingresos por Mes (Gráfico de barras)
-        $ingresosPorMesRaw = [];
-        foreach ($pagos as $pago) {
-            $mes = substr($pago->fecha, 0, 7); // YYYY-MM
-            if (!isset($ingresosPorMesRaw[$mes])) {
-                $ingresosPorMesRaw[$mes] = 0;
-            }
-            $ingresosPorMesRaw[$mes] += $pago->monto;
-        }
-        
-        ksort($ingresosPorMesRaw);
-        
+        // 4. Ingresos por Mes (Gráfico de Barras)
         $ingresosPorMes = [];
-        foreach ($ingresosPorMesRaw as $mes => $val) {
-            $date = Carbon::createFromFormat('Y-m', $mes);
-            $ingresosPorMes[] = [
-                'name' => $date->format('M Y'),
+        $pagosValidos = Pago::where('estado', '!=', 'ANULADO')->get();
+        
+        foreach ($pagosValidos as $pago) {
+            $mes = Carbon::parse($pago->fecha)->format('M Y');
+            if (!isset($ingresosPorMes[$mes])) {
+                $ingresosPorMes[$mes] = 0;
+            }
+            
+            // Valor USD del pago
+            $valorUsd = 0;
+            if ($pago->tasa_cambio && $pago->tasa_cambio > 0) {
+                $valorUsd = $pago->monto_bs / $pago->tasa_cambio;
+            } else {
+                $valorUsd = $pago->monto; // Asumimos que si no hay tasa, el monto es en divisa o se maneja así
+            }
+            $ingresosPorMes[$mes] += $valorUsd;
+        }
+
+        // Agregar ingresos históricos (de meses anteriores al sistema)
+        $ingresosHistoricos = \App\Models\IngresoHistorico::all();
+        foreach ($ingresosHistoricos as $ingreso) {
+            $mes = Carbon::parse($ingreso->fecha)->format('M Y');
+            if (!isset($ingresosPorMes[$mes])) {
+                $ingresosPorMes[$mes] = 0;
+            }
+            $ingresosPorMes[$mes] += $ingreso->monto;
+        }
+
+        $ingresosMensuales = [];
+        foreach ($ingresosPorMes as $mes => $val) {
+            $ingresosMensuales[] = [
+                'name' => $mes,
                 'ingresos' => round($val, 2)
             ];
         }
@@ -236,7 +253,7 @@ class DashboardPagosController extends Controller
                 'devaluacion' => $devaluacionCxc,
                 'distribucion' => $distribucionCxc
             ],
-            'ingresos_mensuales' => $ingresosPorMes,
+            'ingresos_mensuales' => $ingresosMensuales,
             'cuentas_por_pagar' => [
                 'total_usd' => $cxpTotalDeudaUsd,
                 'devaluacion' => $devaluacionCxp,
