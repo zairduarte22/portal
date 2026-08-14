@@ -11,7 +11,7 @@ Artisan::command('inspire', function () {
 // Programar la actualización de la tasa de cambio del dólar (DolarAPI)
 Schedule::call(function () {
     Artisan::call('app:fetch-tasa');
-})->dailyAt('00:00');
+})->dailyAt('00:10');
 
 // Programar la generacion masiva de facturas mensuales (el dia 1 de cada mes a la 1:00 AM)
 Schedule::call(function () {
