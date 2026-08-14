@@ -1,0 +1,3110 @@
+[
+    {
+        "table_name": "abonos_obligaciones",
+        "column_name": "id",
+        "data_type": "bigint",
+        "character_maximum_length": null,
+        "column_default": "nextval('abonos_obligaciones_id_seq'::regclass)"
+    },
+    {
+        "table_name": "abonos_obligaciones",
+        "column_name": "obligacion_id",
+        "data_type": "bigint",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "abonos_obligaciones",
+        "column_name": "fecha",
+        "data_type": "date",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "abonos_obligaciones",
+        "column_name": "monto_abonado",
+        "data_type": "numeric",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "abonos_obligaciones",
+        "column_name": "monto_banco",
+        "data_type": "numeric",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "abonos_obligaciones",
+        "column_name": "moneda_pago",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "column_default": null
+    },
+    {
+        "table_name": "abonos_obligaciones",
+        "column_name": "tasa_cambio",
+        "data_type": "numeric",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "abonos_obligaciones",
+        "column_name": "banco_id",
+        "data_type": "bigint",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "abonos_obligaciones",
+        "column_name": "referencia",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "column_default": null
+    },
+    {
+        "table_name": "abonos_obligaciones",
+        "column_name": "created_at",
+        "data_type": "timestamp without time zone",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "abonos_obligaciones",
+        "column_name": "updated_at",
+        "data_type": "timestamp without time zone",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "abonos_obligaciones",
+        "column_name": "metodo_pago",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "column_default": null
+    },
+    {
+        "table_name": "banco_tienda",
+        "column_name": "id",
+        "data_type": "bigint",
+        "character_maximum_length": null,
+        "column_default": "nextval('banco_tienda_id_seq'::regclass)"
+    },
+    {
+        "table_name": "banco_tienda",
+        "column_name": "banco_id",
+        "data_type": "bigint",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "banco_tienda",
+        "column_name": "tienda_id",
+        "data_type": "bigint",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "banco_tienda",
+        "column_name": "created_at",
+        "data_type": "timestamp without time zone",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "banco_tienda",
+        "column_name": "updated_at",
+        "data_type": "timestamp without time zone",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "bancos",
+        "column_name": "id",
+        "data_type": "integer",
+        "character_maximum_length": null,
+        "column_default": "nextval('bancos_id_seq'::regclass)"
+    },
+    {
+        "table_name": "bancos",
+        "column_name": "nombre",
+        "data_type": "character varying",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "bancos",
+        "column_name": "titular",
+        "data_type": "character varying",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "bancos",
+        "column_name": "divisa",
+        "data_type": "USER-DEFINED",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "bancos",
+        "column_name": "propietario",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "column_default": "'FONDO'::character varying"
+    },
+    {
+        "table_name": "bancos",
+        "column_name": "para_membresias",
+        "data_type": "boolean",
+        "character_maximum_length": null,
+        "column_default": "false"
+    },
+    {
+        "table_name": "beneficiarios_fondo",
+        "column_name": "id",
+        "data_type": "bigint",
+        "character_maximum_length": null,
+        "column_default": "nextval('beneficiarios_fondo_id_seq'::regclass)"
+    },
+    {
+        "table_name": "beneficiarios_fondo",
+        "column_name": "nombre",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "column_default": null
+    },
+    {
+        "table_name": "beneficiarios_fondo",
+        "column_name": "created_at",
+        "data_type": "timestamp without time zone",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "beneficiarios_fondo",
+        "column_name": "updated_at",
+        "data_type": "timestamp without time zone",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "cache",
+        "column_name": "key",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "column_default": null
+    },
+    {
+        "table_name": "cache",
+        "column_name": "value",
+        "data_type": "text",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "cache",
+        "column_name": "expiration",
+        "data_type": "bigint",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "cache_locks",
+        "column_name": "key",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "column_default": null
+    },
+    {
+        "table_name": "cache_locks",
+        "column_name": "owner",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "column_default": null
+    },
+    {
+        "table_name": "cache_locks",
+        "column_name": "expiration",
+        "data_type": "bigint",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "carnets_emitidos",
+        "column_name": "id_persona",
+        "data_type": "bigint",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "carnets_emitidos",
+        "column_name": "id_miembro",
+        "data_type": "bigint",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "carnets_emitidos",
+        "column_name": "fecha_emision",
+        "data_type": "date",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "carnets_emitidos",
+        "column_name": "fecha_vencimiento",
+        "data_type": "date",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "carnets_emitidos",
+        "column_name": "estado",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "column_default": "'Activo'::character varying"
+    },
+    {
+        "table_name": "carnets_emitidos",
+        "column_name": "created_at",
+        "data_type": "timestamp without time zone",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "carnets_emitidos",
+        "column_name": "updated_at",
+        "data_type": "timestamp without time zone",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "carnets_emitidos",
+        "column_name": "id",
+        "data_type": "bigint",
+        "character_maximum_length": null,
+        "column_default": "nextval('carnets_emitidos_id_seq'::regclass)"
+    },
+    {
+        "table_name": "categoria_fondos",
+        "column_name": "id",
+        "data_type": "bigint",
+        "character_maximum_length": null,
+        "column_default": "nextval('categoria_fondos_id_seq'::regclass)"
+    },
+    {
+        "table_name": "categoria_fondos",
+        "column_name": "categoria",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "column_default": null
+    },
+    {
+        "table_name": "categoria_fondos",
+        "column_name": "created_at",
+        "data_type": "timestamp without time zone",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "categoria_fondos",
+        "column_name": "updated_at",
+        "data_type": "timestamp without time zone",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "clientes_tienda",
+        "column_name": "id",
+        "data_type": "bigint",
+        "character_maximum_length": null,
+        "column_default": "nextval('clientes_tasca_id_seq'::regclass)"
+    },
+    {
+        "table_name": "clientes_tienda",
+        "column_name": "nombre",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "column_default": null
+    },
+    {
+        "table_name": "clientes_tienda",
+        "column_name": "cedula",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "column_default": null
+    },
+    {
+        "table_name": "clientes_tienda",
+        "column_name": "telefono",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "column_default": null
+    },
+    {
+        "table_name": "clientes_tienda",
+        "column_name": "created_at",
+        "data_type": "timestamp without time zone",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "clientes_tienda",
+        "column_name": "updated_at",
+        "data_type": "timestamp without time zone",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "clientes_tienda",
+        "column_name": "tienda_id",
+        "data_type": "bigint",
+        "character_maximum_length": null,
+        "column_default": "'1'::bigint"
+    },
+    {
+        "table_name": "compras_tienda",
+        "column_name": "id",
+        "data_type": "bigint",
+        "character_maximum_length": null,
+        "column_default": "nextval('compras_tasca_id_seq'::regclass)"
+    },
+    {
+        "table_name": "compras_tienda",
+        "column_name": "fecha_compra",
+        "data_type": "date",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "compras_tienda",
+        "column_name": "referencia_factura",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "column_default": null
+    },
+    {
+        "table_name": "compras_tienda",
+        "column_name": "total_usd",
+        "data_type": "numeric",
+        "character_maximum_length": null,
+        "column_default": "'0'::numeric"
+    },
+    {
+        "table_name": "compras_tienda",
+        "column_name": "estado",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "column_default": "'Procesada'::character varying"
+    },
+    {
+        "table_name": "compras_tienda",
+        "column_name": "created_at",
+        "data_type": "timestamp without time zone",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "compras_tienda",
+        "column_name": "updated_at",
+        "data_type": "timestamp without time zone",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "compras_tienda",
+        "column_name": "proveedor_id",
+        "data_type": "bigint",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "compras_tienda",
+        "column_name": "abono_usd",
+        "data_type": "numeric",
+        "character_maximum_length": null,
+        "column_default": "'0'::numeric"
+    },
+    {
+        "table_name": "compras_tienda",
+        "column_name": "tienda_id",
+        "data_type": "bigint",
+        "character_maximum_length": null,
+        "column_default": "'1'::bigint"
+    },
+    {
+        "table_name": "configuraciones",
+        "column_name": "id",
+        "data_type": "bigint",
+        "character_maximum_length": null,
+        "column_default": "nextval('configuraciones_id_seq'::regclass)"
+    },
+    {
+        "table_name": "configuraciones",
+        "column_name": "clave",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "column_default": null
+    },
+    {
+        "table_name": "configuraciones",
+        "column_name": "valor",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "column_default": null
+    },
+    {
+        "table_name": "configuraciones",
+        "column_name": "created_at",
+        "data_type": "timestamp without time zone",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "configuraciones",
+        "column_name": "updated_at",
+        "data_type": "timestamp without time zone",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "cruces",
+        "column_name": "id",
+        "data_type": "integer",
+        "character_maximum_length": null,
+        "column_default": "nextval('cruces_id_seq'::regclass)"
+    },
+    {
+        "table_name": "cruces",
+        "column_name": "id_venta",
+        "data_type": "integer",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "cruces",
+        "column_name": "id_banco",
+        "data_type": "integer",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "cruces",
+        "column_name": "fecha",
+        "data_type": "date",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "cruces",
+        "column_name": "referencia",
+        "data_type": "character varying",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "cruces",
+        "column_name": "descripcion",
+        "data_type": "character varying",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "cruces",
+        "column_name": "haber",
+        "data_type": "numeric",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "cuenta_banco",
+        "column_name": "id",
+        "data_type": "integer",
+        "character_maximum_length": null,
+        "column_default": "nextval('cuenta_banco_id_seq'::regclass)"
+    },
+    {
+        "table_name": "cuenta_banco",
+        "column_name": "id_banco",
+        "data_type": "integer",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "cuenta_banco",
+        "column_name": "id_venta",
+        "data_type": "integer",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "cuenta_banco",
+        "column_name": "id_compra",
+        "data_type": "integer",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "cuenta_banco",
+        "column_name": "fecha",
+        "data_type": "date",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "cuenta_banco",
+        "column_name": "tipo_operacion",
+        "data_type": "character varying",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "cuenta_banco",
+        "column_name": "referencia",
+        "data_type": "character varying",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "cuenta_banco",
+        "column_name": "beneficiario",
+        "data_type": "character varying",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "cuenta_banco",
+        "column_name": "descripcion",
+        "data_type": "character varying",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "cuenta_banco",
+        "column_name": "debe",
+        "data_type": "numeric",
+        "character_maximum_length": null,
+        "column_default": "0"
+    },
+    {
+        "table_name": "cuenta_banco",
+        "column_name": "haber",
+        "data_type": "numeric",
+        "character_maximum_length": null,
+        "column_default": "0"
+    },
+    {
+        "table_name": "cuenta_banco",
+        "column_name": "categoria_id",
+        "data_type": "bigint",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "cuenta_banco",
+        "column_name": "beneficiario_id",
+        "data_type": "bigint",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "cuenta_banco",
+        "column_name": "id_pago_tienda",
+        "data_type": "bigint",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "cuenta_banco",
+        "column_name": "id_obligacion",
+        "data_type": "bigint",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "cuenta_banco",
+        "column_name": "id_abono_obligacion",
+        "data_type": "bigint",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "cuenta_corriente_ugavi",
+        "column_name": "id",
+        "data_type": "integer",
+        "character_maximum_length": null,
+        "column_default": "nextval('cuenta_corriente_ugavi_id_seq'::regclass)"
+    },
+    {
+        "table_name": "cuenta_corriente_ugavi",
+        "column_name": "fecha",
+        "data_type": "date",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "cuenta_corriente_ugavi",
+        "column_name": "tipo_operacion",
+        "data_type": "USER-DEFINED",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "cuenta_corriente_ugavi",
+        "column_name": "id_banco",
+        "data_type": "integer",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "cuenta_corriente_ugavi",
+        "column_name": "monto",
+        "data_type": "numeric",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "cuenta_corriente_ugavi",
+        "column_name": "monto_bs",
+        "data_type": "numeric",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "cuenta_corriente_ugavi",
+        "column_name": "tasa_cambio",
+        "data_type": "numeric",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "cuenta_corriente_ugavi",
+        "column_name": "referencia",
+        "data_type": "character varying",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "cuenta_corriente_ugavi",
+        "column_name": "descripcion",
+        "data_type": "character varying",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "cuenta_moneda_extranjera",
+        "column_name": "id",
+        "data_type": "integer",
+        "character_maximum_length": null,
+        "column_default": "nextval('cuenta_moneda_extranjera_id_seq'::regclass)"
+    },
+    {
+        "table_name": "cuenta_moneda_extranjera",
+        "column_name": "id_banco",
+        "data_type": "integer",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "cuenta_moneda_extranjera",
+        "column_name": "id_venta",
+        "data_type": "integer",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "cuenta_moneda_extranjera",
+        "column_name": "id_compra",
+        "data_type": "integer",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "cuenta_moneda_extranjera",
+        "column_name": "fecha",
+        "data_type": "date",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "cuenta_moneda_extranjera",
+        "column_name": "tipo_operacion",
+        "data_type": "character varying",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "cuenta_moneda_extranjera",
+        "column_name": "referencia",
+        "data_type": "character varying",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "cuenta_moneda_extranjera",
+        "column_name": "beneficiario",
+        "data_type": "character varying",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "cuenta_moneda_extranjera",
+        "column_name": "descripcion",
+        "data_type": "character varying",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "cuenta_moneda_extranjera",
+        "column_name": "debe",
+        "data_type": "numeric",
+        "character_maximum_length": null,
+        "column_default": "0"
+    },
+    {
+        "table_name": "cuenta_moneda_extranjera",
+        "column_name": "haber",
+        "data_type": "numeric",
+        "character_maximum_length": null,
+        "column_default": "0"
+    },
+    {
+        "table_name": "cuenta_moneda_extranjera",
+        "column_name": "categoria_id",
+        "data_type": "bigint",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "cuenta_moneda_extranjera",
+        "column_name": "beneficiario_id",
+        "data_type": "bigint",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "cuenta_moneda_extranjera",
+        "column_name": "id_pago_tienda",
+        "data_type": "bigint",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "cuenta_moneda_extranjera",
+        "column_name": "id_obligacion",
+        "data_type": "bigint",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "cuenta_moneda_extranjera",
+        "column_name": "id_abono_obligacion",
+        "data_type": "bigint",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "documento_miembros",
+        "column_name": "id",
+        "data_type": "bigint",
+        "character_maximum_length": null,
+        "column_default": "nextval('documento_miembros_id_seq'::regclass)"
+    },
+    {
+        "table_name": "documento_miembros",
+        "column_name": "id_miembro",
+        "data_type": "bigint",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "documento_miembros",
+        "column_name": "tipo",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "column_default": null
+    },
+    {
+        "table_name": "documento_miembros",
+        "column_name": "ruta_archivo",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "column_default": null
+    },
+    {
+        "table_name": "documento_miembros",
+        "column_name": "created_at",
+        "data_type": "timestamp without time zone",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "documento_miembros",
+        "column_name": "updated_at",
+        "data_type": "timestamp without time zone",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "facturas",
+        "column_name": "id",
+        "data_type": "integer",
+        "character_maximum_length": null,
+        "column_default": "nextval('facturas_id_seq'::regclass)"
+    },
+    {
+        "table_name": "facturas",
+        "column_name": "id_miembro",
+        "data_type": "integer",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "facturas",
+        "column_name": "fecha",
+        "data_type": "date",
+        "character_maximum_length": null,
+        "column_default": "CURRENT_DATE"
+    },
+    {
+        "table_name": "facturas",
+        "column_name": "mes_cuota",
+        "data_type": "date",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "facturas",
+        "column_name": "pendiente",
+        "data_type": "numeric",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "facturas",
+        "column_name": "monto",
+        "data_type": "numeric",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "failed_jobs",
+        "column_name": "id",
+        "data_type": "bigint",
+        "character_maximum_length": null,
+        "column_default": "nextval('failed_jobs_id_seq'::regclass)"
+    },
+    {
+        "table_name": "failed_jobs",
+        "column_name": "uuid",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "column_default": null
+    },
+    {
+        "table_name": "failed_jobs",
+        "column_name": "connection",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "column_default": null
+    },
+    {
+        "table_name": "failed_jobs",
+        "column_name": "queue",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "column_default": null
+    },
+    {
+        "table_name": "failed_jobs",
+        "column_name": "payload",
+        "data_type": "text",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "failed_jobs",
+        "column_name": "exception",
+        "data_type": "text",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "failed_jobs",
+        "column_name": "failed_at",
+        "data_type": "timestamp without time zone",
+        "character_maximum_length": null,
+        "column_default": "CURRENT_TIMESTAMP"
+    },
+    {
+        "table_name": "ganado",
+        "column_name": "id_miembro",
+        "data_type": "integer",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "ganado",
+        "column_name": "equino",
+        "data_type": "boolean",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "ganado",
+        "column_name": "vacuno",
+        "data_type": "boolean",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "ganado",
+        "column_name": "bufalino",
+        "data_type": "boolean",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "ganado",
+        "column_name": "caprino",
+        "data_type": "boolean",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "ganado",
+        "column_name": "porcino",
+        "data_type": "boolean",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "gastos_tienda",
+        "column_name": "id",
+        "data_type": "bigint",
+        "character_maximum_length": null,
+        "column_default": "nextval('gastos_tasca_id_seq'::regclass)"
+    },
+    {
+        "table_name": "gastos_tienda",
+        "column_name": "categoria",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "column_default": null
+    },
+    {
+        "table_name": "gastos_tienda",
+        "column_name": "descripcion",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "column_default": null
+    },
+    {
+        "table_name": "gastos_tienda",
+        "column_name": "monto_usd",
+        "data_type": "numeric",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "gastos_tienda",
+        "column_name": "monto_bs",
+        "data_type": "numeric",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "gastos_tienda",
+        "column_name": "metodo_pago",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "column_default": null
+    },
+    {
+        "table_name": "gastos_tienda",
+        "column_name": "fecha",
+        "data_type": "date",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "gastos_tienda",
+        "column_name": "proveedor_id",
+        "data_type": "bigint",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "gastos_tienda",
+        "column_name": "compra_id",
+        "data_type": "bigint",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "gastos_tienda",
+        "column_name": "created_at",
+        "data_type": "timestamp without time zone",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "gastos_tienda",
+        "column_name": "updated_at",
+        "data_type": "timestamp without time zone",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "gastos_tienda",
+        "column_name": "referencia_pago",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "column_default": null
+    },
+    {
+        "table_name": "gastos_tienda",
+        "column_name": "tienda_id",
+        "data_type": "bigint",
+        "character_maximum_length": null,
+        "column_default": "'1'::bigint"
+    },
+    {
+        "table_name": "ingresos_historicos",
+        "column_name": "id",
+        "data_type": "bigint",
+        "character_maximum_length": null,
+        "column_default": "nextval('ingresos_historicos_id_seq'::regclass)"
+    },
+    {
+        "table_name": "ingresos_historicos",
+        "column_name": "fecha",
+        "data_type": "date",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "ingresos_historicos",
+        "column_name": "monto",
+        "data_type": "numeric",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "ingresos_historicos",
+        "column_name": "descripcion",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "column_default": null
+    },
+    {
+        "table_name": "ingresos_historicos",
+        "column_name": "created_at",
+        "data_type": "timestamp without time zone",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "ingresos_historicos",
+        "column_name": "updated_at",
+        "data_type": "timestamp without time zone",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "insumos_tienda",
+        "column_name": "id",
+        "data_type": "bigint",
+        "character_maximum_length": null,
+        "column_default": "nextval('insumos_tasca_id_seq'::regclass)"
+    },
+    {
+        "table_name": "insumos_tienda",
+        "column_name": "nombre",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "column_default": null
+    },
+    {
+        "table_name": "insumos_tienda",
+        "column_name": "categoria",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "column_default": null
+    },
+    {
+        "table_name": "insumos_tienda",
+        "column_name": "created_at",
+        "data_type": "timestamp without time zone",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "insumos_tienda",
+        "column_name": "updated_at",
+        "data_type": "timestamp without time zone",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "insumos_tienda",
+        "column_name": "imagen",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "column_default": null
+    },
+    {
+        "table_name": "insumos_tienda",
+        "column_name": "tienda_id",
+        "data_type": "bigint",
+        "character_maximum_length": null,
+        "column_default": "'1'::bigint"
+    },
+    {
+        "table_name": "job_batches",
+        "column_name": "id",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "column_default": null
+    },
+    {
+        "table_name": "job_batches",
+        "column_name": "name",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "column_default": null
+    },
+    {
+        "table_name": "job_batches",
+        "column_name": "total_jobs",
+        "data_type": "integer",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "job_batches",
+        "column_name": "pending_jobs",
+        "data_type": "integer",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "job_batches",
+        "column_name": "failed_jobs",
+        "data_type": "integer",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "job_batches",
+        "column_name": "failed_job_ids",
+        "data_type": "text",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "job_batches",
+        "column_name": "options",
+        "data_type": "text",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "job_batches",
+        "column_name": "cancelled_at",
+        "data_type": "integer",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "job_batches",
+        "column_name": "created_at",
+        "data_type": "integer",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "job_batches",
+        "column_name": "finished_at",
+        "data_type": "integer",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "jobs",
+        "column_name": "id",
+        "data_type": "bigint",
+        "character_maximum_length": null,
+        "column_default": "nextval('jobs_id_seq'::regclass)"
+    },
+    {
+        "table_name": "jobs",
+        "column_name": "queue",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "column_default": null
+    },
+    {
+        "table_name": "jobs",
+        "column_name": "payload",
+        "data_type": "text",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "jobs",
+        "column_name": "attempts",
+        "data_type": "smallint",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "jobs",
+        "column_name": "reserved_at",
+        "data_type": "integer",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "jobs",
+        "column_name": "available_at",
+        "data_type": "integer",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "jobs",
+        "column_name": "created_at",
+        "data_type": "integer",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "libro_compras",
+        "column_name": "id",
+        "data_type": "integer",
+        "character_maximum_length": null,
+        "column_default": "nextval('libro_compras_id_seq'::regclass)"
+    },
+    {
+        "table_name": "libro_compras",
+        "column_name": "id_proveedor",
+        "data_type": "integer",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "libro_compras",
+        "column_name": "fecha",
+        "data_type": "date",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "libro_compras",
+        "column_name": "tipo",
+        "data_type": "character varying",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "libro_compras",
+        "column_name": "metodo_pago",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "column_default": null
+    },
+    {
+        "table_name": "libro_compras",
+        "column_name": "monto",
+        "data_type": "numeric",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "libro_compras",
+        "column_name": "monto_bs",
+        "data_type": "numeric",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "libro_compras",
+        "column_name": "referencia",
+        "data_type": "character varying",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "libro_compras",
+        "column_name": "numero_factura",
+        "data_type": "character varying",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "libro_compras",
+        "column_name": "numero_control",
+        "data_type": "character varying",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "libro_ventas",
+        "column_name": "id",
+        "data_type": "integer",
+        "character_maximum_length": null,
+        "column_default": "nextval('libro_ventas_id_seq'::regclass)"
+    },
+    {
+        "table_name": "libro_ventas",
+        "column_name": "id_pago",
+        "data_type": "integer",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "libro_ventas",
+        "column_name": "id_miembro",
+        "data_type": "integer",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "libro_ventas",
+        "column_name": "fecha",
+        "data_type": "date",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "libro_ventas",
+        "column_name": "tipo",
+        "data_type": "character varying",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "libro_ventas",
+        "column_name": "metodo_pago",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "column_default": null
+    },
+    {
+        "table_name": "libro_ventas",
+        "column_name": "monto",
+        "data_type": "numeric",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "libro_ventas",
+        "column_name": "monto_bs",
+        "data_type": "numeric",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "libro_ventas",
+        "column_name": "referencia",
+        "data_type": "character varying",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "libro_ventas",
+        "column_name": "numero_factura",
+        "data_type": "character varying",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "libro_ventas",
+        "column_name": "numero_control",
+        "data_type": "character varying",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "lotes_tienda",
+        "column_name": "id",
+        "data_type": "bigint",
+        "character_maximum_length": null,
+        "column_default": "nextval('lotes_tasca_id_seq'::regclass)"
+    },
+    {
+        "table_name": "lotes_tienda",
+        "column_name": "id_insumo",
+        "data_type": "bigint",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "lotes_tienda",
+        "column_name": "codigo_lote",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "column_default": null
+    },
+    {
+        "table_name": "lotes_tienda",
+        "column_name": "proveedor_id",
+        "data_type": "bigint",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "lotes_tienda",
+        "column_name": "cantidad_comprada",
+        "data_type": "numeric",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "lotes_tienda",
+        "column_name": "costo_unitario",
+        "data_type": "numeric",
+        "character_maximum_length": null,
+        "column_default": "'0'::numeric"
+    },
+    {
+        "table_name": "lotes_tienda",
+        "column_name": "stock_actual",
+        "data_type": "numeric",
+        "character_maximum_length": null,
+        "column_default": "'0'::numeric"
+    },
+    {
+        "table_name": "lotes_tienda",
+        "column_name": "fecha_compra",
+        "data_type": "date",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "lotes_tienda",
+        "column_name": "fecha_caducidad",
+        "data_type": "date",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "lotes_tienda",
+        "column_name": "estado",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "column_default": "'Activo'::character varying"
+    },
+    {
+        "table_name": "lotes_tienda",
+        "column_name": "created_at",
+        "data_type": "timestamp without time zone",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "lotes_tienda",
+        "column_name": "updated_at",
+        "data_type": "timestamp without time zone",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "lotes_tienda",
+        "column_name": "compra_id",
+        "data_type": "bigint",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "metodos_pago",
+        "column_name": "id",
+        "data_type": "bigint",
+        "character_maximum_length": null,
+        "column_default": "nextval('metodos_pago_id_seq'::regclass)"
+    },
+    {
+        "table_name": "metodos_pago",
+        "column_name": "nombre",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "column_default": null
+    },
+    {
+        "table_name": "metodos_pago",
+        "column_name": "id_banco",
+        "data_type": "bigint",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "metodos_pago",
+        "column_name": "created_at",
+        "data_type": "timestamp without time zone",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "metodos_pago",
+        "column_name": "updated_at",
+        "data_type": "timestamp without time zone",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "miembros",
+        "column_name": "id",
+        "data_type": "integer",
+        "character_maximum_length": null,
+        "column_default": "nextval('miembros_id_seq'::regclass)"
+    },
+    {
+        "table_name": "miembros",
+        "column_name": "razon_social",
+        "data_type": "character varying",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "miembros",
+        "column_name": "acronimo",
+        "data_type": "character varying",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "miembros",
+        "column_name": "rif",
+        "data_type": "character varying",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "miembros",
+        "column_name": "fecha_ingreso",
+        "data_type": "date",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "miembros",
+        "column_name": "tipo",
+        "data_type": "USER-DEFINED",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "miembros",
+        "column_name": "direccion",
+        "data_type": "character varying",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "miembros",
+        "column_name": "hacienda",
+        "data_type": "character varying",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "miembros",
+        "column_name": "hectareas",
+        "data_type": "numeric",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "miembros",
+        "column_name": "solvencia",
+        "data_type": "USER-DEFINED",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "miembros",
+        "column_name": "saldo_pendiente",
+        "data_type": "numeric",
+        "character_maximum_length": null,
+        "column_default": "0"
+    },
+    {
+        "table_name": "miembros",
+        "column_name": "ultimo_mes",
+        "data_type": "date",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "miembros",
+        "column_name": "correo",
+        "data_type": "character varying",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "miembros",
+        "column_name": "telefono",
+        "data_type": "character varying",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "miembros",
+        "column_name": "tipo_explotacion",
+        "data_type": "USER-DEFINED",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "miembros",
+        "column_name": "tractores",
+        "data_type": "integer",
+        "character_maximum_length": null,
+        "column_default": "0"
+    },
+    {
+        "table_name": "miembros",
+        "column_name": "plantas_electricas",
+        "data_type": "integer",
+        "character_maximum_length": null,
+        "column_default": "0"
+    },
+    {
+        "table_name": "miembros",
+        "column_name": "convenio",
+        "data_type": "boolean",
+        "character_maximum_length": null,
+        "column_default": "false"
+    },
+    {
+        "table_name": "miembros",
+        "column_name": "cupo_gasoil",
+        "data_type": "boolean",
+        "character_maximum_length": null,
+        "column_default": "false"
+    },
+    {
+        "table_name": "miembros",
+        "column_name": "distribuidor_diesel",
+        "data_type": "character varying",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "miembros",
+        "column_name": "cantidad_animales",
+        "data_type": "integer",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "miembros",
+        "column_name": "produccion_leche_diaria",
+        "data_type": "numeric",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "miembros",
+        "column_name": "token_acceso",
+        "data_type": "character varying",
+        "character_maximum_length": 32,
+        "column_default": null
+    },
+    {
+        "table_name": "miembros",
+        "column_name": "municipio",
+        "data_type": "character varying",
+        "character_maximum_length": 288,
+        "column_default": null
+    },
+    {
+        "table_name": "miembros",
+        "column_name": "parroquia",
+        "data_type": "character varying",
+        "character_maximum_length": 288,
+        "column_default": null
+    },
+    {
+        "table_name": "miembros",
+        "column_name": "password",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "column_default": null
+    },
+    {
+        "table_name": "miembros",
+        "column_name": "carnets_disponibles",
+        "data_type": "integer",
+        "character_maximum_length": null,
+        "column_default": "0"
+    },
+    {
+        "table_name": "migrations",
+        "column_name": "id",
+        "data_type": "integer",
+        "character_maximum_length": null,
+        "column_default": "nextval('migrations_id_seq'::regclass)"
+    },
+    {
+        "table_name": "migrations",
+        "column_name": "migration",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "column_default": null
+    },
+    {
+        "table_name": "migrations",
+        "column_name": "batch",
+        "data_type": "integer",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "obligaciones",
+        "column_name": "id",
+        "data_type": "bigint",
+        "character_maximum_length": null,
+        "column_default": "nextval('obligaciones_id_seq'::regclass)"
+    },
+    {
+        "table_name": "obligaciones",
+        "column_name": "tipo_obligacion",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "column_default": null
+    },
+    {
+        "table_name": "obligaciones",
+        "column_name": "categoria",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "column_default": null
+    },
+    {
+        "table_name": "obligaciones",
+        "column_name": "tercero",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "column_default": null
+    },
+    {
+        "table_name": "obligaciones",
+        "column_name": "descripcion",
+        "data_type": "text",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "obligaciones",
+        "column_name": "monto_original",
+        "data_type": "numeric",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "obligaciones",
+        "column_name": "monto_abonado",
+        "data_type": "numeric",
+        "character_maximum_length": null,
+        "column_default": "'0'::numeric"
+    },
+    {
+        "table_name": "obligaciones",
+        "column_name": "moneda",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "column_default": null
+    },
+    {
+        "table_name": "obligaciones",
+        "column_name": "fecha_emision",
+        "data_type": "date",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "obligaciones",
+        "column_name": "fecha_limite",
+        "data_type": "date",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "obligaciones",
+        "column_name": "banco_origen_id",
+        "data_type": "bigint",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "obligaciones",
+        "column_name": "estado",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "column_default": "'PENDIENTE'::character varying"
+    },
+    {
+        "table_name": "obligaciones",
+        "column_name": "created_at",
+        "data_type": "timestamp without time zone",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "obligaciones",
+        "column_name": "updated_at",
+        "data_type": "timestamp without time zone",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "obligaciones",
+        "column_name": "metodo_pago",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "column_default": null
+    },
+    {
+        "table_name": "pago_venta_tienda",
+        "column_name": "id",
+        "data_type": "bigint",
+        "character_maximum_length": null,
+        "column_default": "nextval('pago_venta_tasca_id_seq'::regclass)"
+    },
+    {
+        "table_name": "pago_venta_tienda",
+        "column_name": "id_pago",
+        "data_type": "bigint",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "pago_venta_tienda",
+        "column_name": "id_venta",
+        "data_type": "bigint",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "pago_venta_tienda",
+        "column_name": "monto_abonado_usd",
+        "data_type": "numeric",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "pago_venta_tienda",
+        "column_name": "created_at",
+        "data_type": "timestamp without time zone",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "pago_venta_tienda",
+        "column_name": "updated_at",
+        "data_type": "timestamp without time zone",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "pagos",
+        "column_name": "id",
+        "data_type": "integer",
+        "character_maximum_length": null,
+        "column_default": "nextval('pagos_id_seq'::regclass)"
+    },
+    {
+        "table_name": "pagos",
+        "column_name": "fecha",
+        "data_type": "date",
+        "character_maximum_length": null,
+        "column_default": "CURRENT_DATE"
+    },
+    {
+        "table_name": "pagos",
+        "column_name": "monto",
+        "data_type": "numeric",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "pagos",
+        "column_name": "monto_bs",
+        "data_type": "numeric",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "pagos",
+        "column_name": "tasa_cambio",
+        "data_type": "numeric",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "pagos",
+        "column_name": "metodo_pago",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "column_default": null
+    },
+    {
+        "table_name": "pagos",
+        "column_name": "factura_ugavi",
+        "data_type": "integer",
+        "character_maximum_length": null,
+        "column_default": "nextval('seq_factura_ugavi'::regclass)"
+    },
+    {
+        "table_name": "pagos",
+        "column_name": "factura_fondo",
+        "data_type": "integer",
+        "character_maximum_length": null,
+        "column_default": "nextval('seq_factura_fondo'::regclass)"
+    },
+    {
+        "table_name": "pagos",
+        "column_name": "referencia",
+        "data_type": "character varying",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "pagos",
+        "column_name": "estado",
+        "data_type": "USER-DEFINED",
+        "character_maximum_length": null,
+        "column_default": "'Vigente'::estado_pago"
+    },
+    {
+        "table_name": "pagos_carnets",
+        "column_name": "id",
+        "data_type": "bigint",
+        "character_maximum_length": null,
+        "column_default": "nextval('pagos_carnets_id_seq'::regclass)"
+    },
+    {
+        "table_name": "pagos_carnets",
+        "column_name": "id_miembro",
+        "data_type": "bigint",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "pagos_carnets",
+        "column_name": "fecha",
+        "data_type": "date",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "pagos_carnets",
+        "column_name": "monto",
+        "data_type": "numeric",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "pagos_carnets",
+        "column_name": "monto_bs",
+        "data_type": "numeric",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "pagos_carnets",
+        "column_name": "tasa_cambio",
+        "data_type": "numeric",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "pagos_carnets",
+        "column_name": "precio_unitario",
+        "data_type": "numeric",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "pagos_carnets",
+        "column_name": "metodo_pago",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "column_default": null
+    },
+    {
+        "table_name": "pagos_carnets",
+        "column_name": "referencia",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "column_default": null
+    },
+    {
+        "table_name": "pagos_carnets",
+        "column_name": "cantidad_carnets",
+        "data_type": "integer",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "pagos_carnets",
+        "column_name": "estado",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "column_default": "'Pendiente'::character varying"
+    },
+    {
+        "table_name": "pagos_carnets",
+        "column_name": "created_at",
+        "data_type": "timestamp without time zone",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "pagos_carnets",
+        "column_name": "updated_at",
+        "data_type": "timestamp without time zone",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "pagos_lote_carnets",
+        "column_name": "id",
+        "data_type": "integer",
+        "character_maximum_length": null,
+        "column_default": "nextval('pagos_lote_carnets_id_seq'::regclass)"
+    },
+    {
+        "table_name": "pagos_lote_carnets",
+        "column_name": "id_miembro",
+        "data_type": "integer",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "pagos_lote_carnets",
+        "column_name": "monto",
+        "data_type": "numeric",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "pagos_lote_carnets",
+        "column_name": "monto_bs",
+        "data_type": "numeric",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "pagos_lote_carnets",
+        "column_name": "moneda",
+        "data_type": "USER-DEFINED",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "pagos_lote_carnets",
+        "column_name": "fecha",
+        "data_type": "date",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "pagos_lote_carnets",
+        "column_name": "metodo_pago",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "column_default": null
+    },
+    {
+        "table_name": "pagos_lote_carnets",
+        "column_name": "referencia",
+        "data_type": "character varying",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "pagos_lote_carnets",
+        "column_name": "concepto",
+        "data_type": "character varying",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "pagos_lote_carnets",
+        "column_name": "tipo_pago",
+        "data_type": "USER-DEFINED",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "pagos_tienda",
+        "column_name": "id",
+        "data_type": "bigint",
+        "character_maximum_length": null,
+        "column_default": "nextval('pagos_tasca_id_seq'::regclass)"
+    },
+    {
+        "table_name": "pagos_tienda",
+        "column_name": "monto_usd",
+        "data_type": "numeric",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "pagos_tienda",
+        "column_name": "tasa",
+        "data_type": "numeric",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "pagos_tienda",
+        "column_name": "monto_bs",
+        "data_type": "numeric",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "pagos_tienda",
+        "column_name": "metodo_pago",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "column_default": null
+    },
+    {
+        "table_name": "pagos_tienda",
+        "column_name": "referencia",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "column_default": null
+    },
+    {
+        "table_name": "pagos_tienda",
+        "column_name": "fecha_pago",
+        "data_type": "date",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "pagos_tienda",
+        "column_name": "anotacion",
+        "data_type": "text",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "pagos_tienda",
+        "column_name": "created_at",
+        "data_type": "timestamp without time zone",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "pagos_tienda",
+        "column_name": "updated_at",
+        "data_type": "timestamp without time zone",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "pagos_tienda",
+        "column_name": "tienda_id",
+        "data_type": "bigint",
+        "character_maximum_length": null,
+        "column_default": "'1'::bigint"
+    },
+    {
+        "table_name": "password_reset_tokens",
+        "column_name": "email",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "column_default": null
+    },
+    {
+        "table_name": "password_reset_tokens",
+        "column_name": "token",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "column_default": null
+    },
+    {
+        "table_name": "password_reset_tokens",
+        "column_name": "created_at",
+        "data_type": "timestamp without time zone",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "personal_access_tokens",
+        "column_name": "id",
+        "data_type": "bigint",
+        "character_maximum_length": null,
+        "column_default": "nextval('personal_access_tokens_id_seq'::regclass)"
+    },
+    {
+        "table_name": "personal_access_tokens",
+        "column_name": "tokenable_type",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "column_default": null
+    },
+    {
+        "table_name": "personal_access_tokens",
+        "column_name": "tokenable_id",
+        "data_type": "bigint",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "personal_access_tokens",
+        "column_name": "name",
+        "data_type": "text",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "personal_access_tokens",
+        "column_name": "token",
+        "data_type": "character varying",
+        "character_maximum_length": 64,
+        "column_default": null
+    },
+    {
+        "table_name": "personal_access_tokens",
+        "column_name": "abilities",
+        "data_type": "text",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "personal_access_tokens",
+        "column_name": "last_used_at",
+        "data_type": "timestamp without time zone",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "personal_access_tokens",
+        "column_name": "expires_at",
+        "data_type": "timestamp without time zone",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "personal_access_tokens",
+        "column_name": "created_at",
+        "data_type": "timestamp without time zone",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "personal_access_tokens",
+        "column_name": "updated_at",
+        "data_type": "timestamp without time zone",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "personas",
+        "column_name": "id",
+        "data_type": "integer",
+        "character_maximum_length": null,
+        "column_default": "nextval('personas_id_seq'::regclass)"
+    },
+    {
+        "table_name": "personas",
+        "column_name": "nombre",
+        "data_type": "character varying",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "personas",
+        "column_name": "ci_numero",
+        "data_type": "character varying",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "personas",
+        "column_name": "fecha_nacimiento",
+        "data_type": "date",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "personas",
+        "column_name": "correo",
+        "data_type": "character varying",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "personas",
+        "column_name": "telefono",
+        "data_type": "character varying",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "personas",
+        "column_name": "genero",
+        "data_type": "USER-DEFINED",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "personas",
+        "column_name": "ex_presidente",
+        "data_type": "boolean",
+        "character_maximum_length": null,
+        "column_default": "false"
+    },
+    {
+        "table_name": "personas",
+        "column_name": "honorario",
+        "data_type": "boolean",
+        "character_maximum_length": null,
+        "column_default": "false"
+    },
+    {
+        "table_name": "productos_compuestos_detalles",
+        "column_name": "id",
+        "data_type": "bigint",
+        "character_maximum_length": null,
+        "column_default": "nextval('productos_compuestos_detalles_id_seq'::regclass)"
+    },
+    {
+        "table_name": "productos_compuestos_detalles",
+        "column_name": "id_padre",
+        "data_type": "bigint",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "productos_compuestos_detalles",
+        "column_name": "id_hijo",
+        "data_type": "bigint",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "productos_compuestos_detalles",
+        "column_name": "cantidad",
+        "data_type": "numeric",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "productos_compuestos_detalles",
+        "column_name": "created_at",
+        "data_type": "timestamp without time zone",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "productos_compuestos_detalles",
+        "column_name": "updated_at",
+        "data_type": "timestamp without time zone",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "productos_tienda",
+        "column_name": "id",
+        "data_type": "bigint",
+        "character_maximum_length": null,
+        "column_default": "nextval('productos_tasca_id_seq'::regclass)"
+    },
+    {
+        "table_name": "productos_tienda",
+        "column_name": "codigo_barras",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "column_default": null
+    },
+    {
+        "table_name": "productos_tienda",
+        "column_name": "nombre",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "column_default": null
+    },
+    {
+        "table_name": "productos_tienda",
+        "column_name": "precio",
+        "data_type": "numeric",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "productos_tienda",
+        "column_name": "categoria",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "column_default": null
+    },
+    {
+        "table_name": "productos_tienda",
+        "column_name": "created_at",
+        "data_type": "timestamp without time zone",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "productos_tienda",
+        "column_name": "updated_at",
+        "data_type": "timestamp without time zone",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "productos_tienda",
+        "column_name": "id_insumo",
+        "data_type": "bigint",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "productos_tienda",
+        "column_name": "medida_descuento",
+        "data_type": "numeric",
+        "character_maximum_length": null,
+        "column_default": "'1'::numeric"
+    },
+    {
+        "table_name": "productos_tienda",
+        "column_name": "tipo",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "column_default": "'fisico'::character varying"
+    },
+    {
+        "table_name": "productos_tienda",
+        "column_name": "precio_miembro",
+        "data_type": "numeric",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "productos_tienda",
+        "column_name": "tienda_id",
+        "data_type": "bigint",
+        "character_maximum_length": null,
+        "column_default": "'1'::bigint"
+    },
+    {
+        "table_name": "proveedor",
+        "column_name": "id",
+        "data_type": "integer",
+        "character_maximum_length": null,
+        "column_default": "nextval('proveedor_id_seq'::regclass)"
+    },
+    {
+        "table_name": "proveedor",
+        "column_name": "razon_social",
+        "data_type": "character varying",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "proveedor",
+        "column_name": "rif",
+        "data_type": "character varying",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "proveedor",
+        "column_name": "direccion",
+        "data_type": "character varying",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "proveedores_tienda",
+        "column_name": "id",
+        "data_type": "bigint",
+        "character_maximum_length": null,
+        "column_default": "nextval('proveedores_tasca_id_seq'::regclass)"
+    },
+    {
+        "table_name": "proveedores_tienda",
+        "column_name": "nombre",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "column_default": null
+    },
+    {
+        "table_name": "proveedores_tienda",
+        "column_name": "identificacion",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "column_default": null
+    },
+    {
+        "table_name": "proveedores_tienda",
+        "column_name": "telefono",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "column_default": null
+    },
+    {
+        "table_name": "proveedores_tienda",
+        "column_name": "direccion",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "column_default": null
+    },
+    {
+        "table_name": "proveedores_tienda",
+        "column_name": "created_at",
+        "data_type": "timestamp without time zone",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "proveedores_tienda",
+        "column_name": "updated_at",
+        "data_type": "timestamp without time zone",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "proveedores_tienda",
+        "column_name": "tienda_id",
+        "data_type": "bigint",
+        "character_maximum_length": null,
+        "column_default": "'1'::bigint"
+    },
+    {
+        "table_name": "relaciones_familiares",
+        "column_name": "id",
+        "data_type": "integer",
+        "character_maximum_length": null,
+        "column_default": "nextval('relaciones_familiares_id_seq'::regclass)"
+    },
+    {
+        "table_name": "relaciones_familiares",
+        "column_name": "id_persona_titular",
+        "data_type": "integer",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "relaciones_familiares",
+        "column_name": "id_persona_familiar",
+        "data_type": "integer",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "relaciones_familiares",
+        "column_name": "parentesco",
+        "data_type": "USER-DEFINED",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "sessions",
+        "column_name": "id",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "column_default": null
+    },
+    {
+        "table_name": "sessions",
+        "column_name": "user_id",
+        "data_type": "bigint",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "sessions",
+        "column_name": "ip_address",
+        "data_type": "character varying",
+        "character_maximum_length": 45,
+        "column_default": null
+    },
+    {
+        "table_name": "sessions",
+        "column_name": "user_agent",
+        "data_type": "text",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "sessions",
+        "column_name": "payload",
+        "data_type": "text",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "sessions",
+        "column_name": "last_activity",
+        "data_type": "integer",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "tasas",
+        "column_name": "id",
+        "data_type": "bigint",
+        "character_maximum_length": null,
+        "column_default": "nextval('tasas_id_seq'::regclass)"
+    },
+    {
+        "table_name": "tasas",
+        "column_name": "fecha",
+        "data_type": "date",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "tasas",
+        "column_name": "monto",
+        "data_type": "numeric",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "tasas",
+        "column_name": "created_at",
+        "data_type": "timestamp without time zone",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "tasas",
+        "column_name": "updated_at",
+        "data_type": "timestamp without time zone",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "tiendas",
+        "column_name": "id",
+        "data_type": "bigint",
+        "character_maximum_length": null,
+        "column_default": "nextval('tiendas_id_seq'::regclass)"
+    },
+    {
+        "table_name": "tiendas",
+        "column_name": "nombre",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "column_default": null
+    },
+    {
+        "table_name": "tiendas",
+        "column_name": "slug",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "column_default": null
+    },
+    {
+        "table_name": "tiendas",
+        "column_name": "tipo_negocio",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "column_default": "'restaurante_bar'::character varying"
+    },
+    {
+        "table_name": "tiendas",
+        "column_name": "activa",
+        "data_type": "boolean",
+        "character_maximum_length": null,
+        "column_default": "true"
+    },
+    {
+        "table_name": "tiendas",
+        "column_name": "created_at",
+        "data_type": "timestamp without time zone",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "tiendas",
+        "column_name": "updated_at",
+        "data_type": "timestamp without time zone",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "users",
+        "column_name": "id",
+        "data_type": "bigint",
+        "character_maximum_length": null,
+        "column_default": "nextval('users_id_seq'::regclass)"
+    },
+    {
+        "table_name": "users",
+        "column_name": "name",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "column_default": null
+    },
+    {
+        "table_name": "users",
+        "column_name": "email",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "column_default": null
+    },
+    {
+        "table_name": "users",
+        "column_name": "email_verified_at",
+        "data_type": "timestamp without time zone",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "users",
+        "column_name": "password",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "column_default": null
+    },
+    {
+        "table_name": "users",
+        "column_name": "role",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "column_default": "'visitante'::character varying"
+    },
+    {
+        "table_name": "users",
+        "column_name": "remember_token",
+        "data_type": "character varying",
+        "character_maximum_length": 100,
+        "column_default": null
+    },
+    {
+        "table_name": "users",
+        "column_name": "created_at",
+        "data_type": "timestamp without time zone",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "users",
+        "column_name": "updated_at",
+        "data_type": "timestamp without time zone",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "users",
+        "column_name": "username",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "column_default": null
+    },
+    {
+        "table_name": "users",
+        "column_name": "is_master",
+        "data_type": "boolean",
+        "character_maximum_length": null,
+        "column_default": "false"
+    },
+    {
+        "table_name": "users",
+        "column_name": "modules",
+        "data_type": "json",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "users",
+        "column_name": "default_route",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "column_default": null
+    },
+    {
+        "table_name": "ventas_tienda",
+        "column_name": "id",
+        "data_type": "bigint",
+        "character_maximum_length": null,
+        "column_default": "nextval('ventas_tasca_id_seq'::regclass)"
+    },
+    {
+        "table_name": "ventas_tienda",
+        "column_name": "id_cliente_tienda",
+        "data_type": "bigint",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "ventas_tienda",
+        "column_name": "id_cliente_miembro",
+        "data_type": "bigint",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "ventas_tienda",
+        "column_name": "total",
+        "data_type": "numeric",
+        "character_maximum_length": null,
+        "column_default": "'0'::numeric"
+    },
+    {
+        "table_name": "ventas_tienda",
+        "column_name": "descuento",
+        "data_type": "numeric",
+        "character_maximum_length": null,
+        "column_default": "'0'::numeric"
+    },
+    {
+        "table_name": "ventas_tienda",
+        "column_name": "estado",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "column_default": "'Pendiente'::character varying"
+    },
+    {
+        "table_name": "ventas_tienda",
+        "column_name": "fecha",
+        "data_type": "date",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "ventas_tienda",
+        "column_name": "created_at",
+        "data_type": "timestamp without time zone",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "ventas_tienda",
+        "column_name": "updated_at",
+        "data_type": "timestamp without time zone",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "ventas_tienda",
+        "column_name": "id_autorizador",
+        "data_type": "bigint",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "ventas_tienda",
+        "column_name": "tasa_bcv",
+        "data_type": "numeric",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "ventas_tienda",
+        "column_name": "fecha_vencimiento",
+        "data_type": "date",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "ventas_tienda",
+        "column_name": "id_persona",
+        "data_type": "bigint",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "ventas_tienda",
+        "column_name": "cargo_servicio",
+        "data_type": "numeric",
+        "character_maximum_length": null,
+        "column_default": "0"
+    },
+    {
+        "table_name": "ventas_tienda",
+        "column_name": "tienda_id",
+        "data_type": "bigint",
+        "character_maximum_length": null,
+        "column_default": "'1'::bigint"
+    },
+    {
+        "table_name": "ventas_tienda_detalles",
+        "column_name": "id",
+        "data_type": "bigint",
+        "character_maximum_length": null,
+        "column_default": "nextval('ventas_tasca_detalles_id_seq'::regclass)"
+    },
+    {
+        "table_name": "ventas_tienda_detalles",
+        "column_name": "id_venta",
+        "data_type": "bigint",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "ventas_tienda_detalles",
+        "column_name": "id_producto",
+        "data_type": "bigint",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "ventas_tienda_detalles",
+        "column_name": "cantidad",
+        "data_type": "numeric",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "ventas_tienda_detalles",
+        "column_name": "precio_unitario",
+        "data_type": "numeric",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "ventas_tienda_detalles",
+        "column_name": "subtotal",
+        "data_type": "numeric",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "ventas_tienda_detalles",
+        "column_name": "created_at",
+        "data_type": "timestamp without time zone",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "ventas_tienda_detalles",
+        "column_name": "updated_at",
+        "data_type": "timestamp without time zone",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "vinculacion",
+        "column_name": "id_miembro",
+        "data_type": "integer",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "vinculacion",
+        "column_name": "id_persona",
+        "data_type": "integer",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "vinculacion",
+        "column_name": "representante",
+        "data_type": "boolean",
+        "character_maximum_length": null,
+        "column_default": "false"
+    },
+    {
+        "table_name": "vinculacion",
+        "column_name": "director",
+        "data_type": "boolean",
+        "character_maximum_length": null,
+        "column_default": "false"
+    },
+    {
+        "table_name": "vinculacion",
+        "column_name": "accionista",
+        "data_type": "boolean",
+        "character_maximum_length": null,
+        "column_default": "false"
+    },
+    {
+        "table_name": "vinculacion",
+        "column_name": "presidente",
+        "data_type": "boolean",
+        "character_maximum_length": null,
+        "column_default": "false"
+    },
+    {
+        "table_name": "vinculacion_pagos",
+        "column_name": "id_factura",
+        "data_type": "integer",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "vinculacion_pagos",
+        "column_name": "id_pago",
+        "data_type": "integer",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "vinculacion_pagos",
+        "column_name": "monto_aplicado",
+        "data_type": "numeric",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "vinculacion_pagos",
+        "column_name": "descuento",
+        "data_type": "numeric",
+        "character_maximum_length": null,
+        "column_default": "'0'::numeric"
+    },
+    {
+        "table_name": "whatsapp_logs",
+        "column_name": "id",
+        "data_type": "bigint",
+        "character_maximum_length": null,
+        "column_default": "nextval('whatsapp_logs_id_seq'::regclass)"
+    },
+    {
+        "table_name": "whatsapp_logs",
+        "column_name": "miembro_id",
+        "data_type": "bigint",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "whatsapp_logs",
+        "column_name": "telefono",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "column_default": null
+    },
+    {
+        "table_name": "whatsapp_logs",
+        "column_name": "estado",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "column_default": "'pendiente'::character varying"
+    },
+    {
+        "table_name": "whatsapp_logs",
+        "column_name": "detalles",
+        "data_type": "text",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "whatsapp_logs",
+        "column_name": "created_at",
+        "data_type": "timestamp without time zone",
+        "character_maximum_length": null,
+        "column_default": null
+    },
+    {
+        "table_name": "whatsapp_logs",
+        "column_name": "updated_at",
+        "data_type": "timestamp without time zone",
+        "character_maximum_length": null,
+        "column_default": null
+    }
+]
