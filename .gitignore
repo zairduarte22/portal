@@ -28,3 +28,5 @@ Thumbs.db
 storage/app/public
 storage/app/private
 dump (5).sql
+.git/
+public/hot
