@@ -232,6 +232,9 @@ class EntregaController extends Controller
                 }
             }
 
+            $idUgavi = \App\Models\BeneficiarioFondo::where('nombre', 'UGAVI')->value('id');
+            $idClubUgavi = \App\Models\BeneficiarioFondo::where('nombre', 'Club UGAVI')->value('id');
+
             // Insertar pago a UGAVI en banco (USD)
             if ($request->monto_pagado_ugavi_usd > 0 && !empty($request->banco_ugavi_usd_id)) {
                 $banco = \Illuminate\Support\Facades\DB::table('bancos')->where('id', $request->banco_ugavi_usd_id)->first();
@@ -244,7 +247,7 @@ class EntregaController extends Controller
                     'tipo_operacion' => 'TRANSF',
                     'referencia' => $request->referencia_ugavi_usd ?? 'ENTREGA-U-USD-'.$entrega->id,
                     'descripcion' => 'Pago del 60% por Cuotas de Miembro (Divisas)',
-                    'beneficiario' => 'UGAVI',
+                    'beneficiario' => $idUgavi,
                     'debe' => 0,
                     'haber' => $montoReal,
                 ]);
@@ -262,7 +265,7 @@ class EntregaController extends Controller
                     'tipo_operacion' => 'TRANSF',
                     'referencia' => $request->referencia_ugavi_bs ?? 'ENTREGA-U-BS-'.$entrega->id,
                     'descripcion' => 'Pago del 60% por Cuotas de Miembro (Bolívares)',
-                    'beneficiario' => 'UGAVI',
+                    'beneficiario' => $idUgavi,
                     'debe' => 0,
                     'haber' => $montoReal,
                 ]);
@@ -280,7 +283,7 @@ class EntregaController extends Controller
                     'tipo_operacion' => 'TRANSF',
                     'referencia' => $request->referencia_club_usd ?? 'ENTREGA-C-USD-'.$entrega->id,
                     'descripcion' => 'Pago del 20% por cuotas de miembro (Divisas)',
-                    'beneficiario' => 'Club UGAVI',
+                    'beneficiario' => $idClubUgavi,
                     'debe' => 0,
                     'haber' => $montoReal,
                 ]);
@@ -298,7 +301,7 @@ class EntregaController extends Controller
                     'tipo_operacion' => 'TRANSF',
                     'referencia' => $request->referencia_club_bs ?? 'ENTREGA-C-BS-'.$entrega->id,
                     'descripcion' => 'Pago del 20% por cuotas de miembro (Bolívares)',
-                    'beneficiario' => 'Club UGAVI',
+                    'beneficiario' => $idClubUgavi,
                     'debe' => 0,
                     'haber' => $montoReal,
                 ]);
