@@ -3,15 +3,26 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use Carbon\Carbon;
+use App\Models\Tienda;
 
 class TiendaConfigController extends Controller
 {
     public function index()
     {
-        $tiendas = DB::table('tiendas')->get();
+        $tiendas = Tienda::with('bancos')->get()->map(function($tienda) {
+            $tienda->bancos_ids = $tienda->bancos->pluck('id')->toArray();
+            $tienda->bancos = $tienda->bancos_ids; // For backwards compatibility with frontend form
+            return $tienda;
+        });
         return response()->json($tiendas);
+    }
+
+    public function getBySlug($slug)
+    {
+        $tienda = Tienda::with('bancos')->where('slug', $slug)->firstOrFail();
+        $tienda->bancos_ids = $tienda->bancos->pluck('id')->toArray();
+        $tienda->bancos = $tienda->bancos_ids;
+        return response()->json($tienda);
     }
 
     public function store(Request $request)
@@ -20,17 +31,20 @@ class TiendaConfigController extends Controller
             'nombre' => 'required|string|max:255',
             'slug' => 'required|string|max:255|unique:tiendas,slug',
             'tipo_negocio' => 'required|in:restaurante_bar,tienda_general',
-            'activa' => 'required|boolean'
+            'activa' => 'required|boolean',
+            'bancos' => 'nullable|array'
         ]);
 
-        $id = DB::table('tiendas')->insertGetId([
-            'nombre' => $request->nombre,
-            'slug' => $request->slug,
-            'tipo_negocio' => $request->tipo_negocio,
-            'activa' => $request->activa,
-            'created_at' => Carbon::now(),
-            'updated_at' => Carbon::now(),
-        ]);
+        $tienda = new Tienda();
+        $tienda->nombre = $request->nombre;
+        $tienda->slug = $request->slug;
+        $tienda->tipo_negocio = $request->tipo_negocio;
+        $tienda->activa = $request->activa;
+        $tienda->save();
+
+        if ($request->has('bancos')) {
+            $tienda->bancos()->sync($request->bancos);
+        }
 
         return response()->json(['message' => 'Tienda creada exitosamente'], 201);
     }
@@ -41,23 +55,28 @@ class TiendaConfigController extends Controller
             'nombre' => 'required|string|max:255',
             'slug' => 'required|string|max:255|unique:tiendas,slug,'.$id,
             'tipo_negocio' => 'required|in:restaurante_bar,tienda_general',
-            'activa' => 'required|boolean'
+            'activa' => 'required|boolean',
+            'bancos' => 'nullable|array'
         ]);
 
-        DB::table('tiendas')->where('id', $id)->update([
-            'nombre' => $request->nombre,
-            'slug' => $request->slug,
-            'tipo_negocio' => $request->tipo_negocio,
-            'activa' => $request->activa,
-            'updated_at' => Carbon::now(),
-        ]);
+        $tienda = Tienda::findOrFail($id);
+        $tienda->nombre = $request->nombre;
+        $tienda->slug = $request->slug;
+        $tienda->tipo_negocio = $request->tipo_negocio;
+        $tienda->activa = $request->activa;
+        $tienda->save();
+
+        if ($request->has('bancos')) {
+            $tienda->bancos()->sync($request->bancos);
+        }
 
         return response()->json(['message' => 'Tienda actualizada exitosamente']);
     }
 
     public function destroy($id)
     {
-        DB::table('tiendas')->where('id', $id)->delete();
+        $tienda = Tienda::findOrFail($id);
+        $tienda->delete();
         return response()->json(['message' => 'Tienda eliminada exitosamente']);
     }
 }

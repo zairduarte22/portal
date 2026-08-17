@@ -23,6 +23,7 @@ import { UgaviBarCatalogo } from "./components/tasca/pages/UgaviBarCatalogo";
 import { UgaviBarGastos } from "./components/tasca/pages/UgaviBarGastos";
 import { UgaviBarCompras } from "./components/tasca/pages/UgaviBarCompras";
 import { TiendaBancosPanel } from "./components/TiendaBancosPanel";
+import { TiendaLayout } from "./components/tienda/TiendaLayout";
 import { Miembro, Persona, Vinculacion, RelacionFamiliar } from "./components/mockData";
 import { Settings } from "lucide-react";
 import { Login } from "./components/Login";
@@ -282,16 +283,21 @@ export default function App() {
           <Route path="conciliacion" element={<ProtectedRoute moduleId="ConciliacionPanel" user={user}><ConciliacionPanel /></ProtectedRoute>} />
           <Route path="pagos/reporte" element={<ProtectedRoute moduleId="PagosPanel" user={user}><ReporteGeneralView /></ProtectedRoute>} />
           <Route path="entregas/:id/reporte" element={<ProtectedRoute moduleId="PagosPanel" user={user}><ReporteEntregaView /></ProtectedRoute>} />
-          <Route path="ugavibar/ventas" element={<ProtectedRoute moduleId="UgaviBarVentas" user={user}><UgaviBarVentas /></ProtectedRoute>} />
-          <Route path="ugavibar/ventas/:id" element={<ProtectedRoute moduleId="UgaviBarVentas" user={user}><VentaPos /></ProtectedRoute>} />
-          <Route path="ugavibar/clientes" element={<ProtectedRoute moduleId="UgaviBarClientes" user={user}><UgaviBarClientes /></ProtectedRoute>} />
-          <Route path="ugavibar/creditos" element={<ProtectedRoute moduleId="UgaviBarCreditos" user={user}><UgaviBarCreditos /></ProtectedRoute>} />
-          <Route path="ugavibar/catalogo" element={<ProtectedRoute moduleId="UgaviBarCatalogo" user={user}><UgaviBarCatalogo /></ProtectedRoute>} />
-          <Route path="ugavibar/inventario" element={<ProtectedRoute moduleId="UgaviBarInventario" user={user}><UgaviBarInventario /></ProtectedRoute>} />
-          <Route path="ugavibar/gastos" element={<ProtectedRoute moduleId="UgaviBarGastos" user={user}><UgaviBarGastos /></ProtectedRoute>} />
-          <Route path="ugavibar/compras" element={<ProtectedRoute moduleId="UgaviBarCompras" user={user}><UgaviBarCompras /></ProtectedRoute>} />
-          <Route path="ugavibar/bancos" element={<ProtectedRoute moduleId="UgaviBarBancos" user={user}><TiendaBancosPanel tiendaId={1} /></ProtectedRoute>} />
-          <Route path="ugavibar/reportes" element={<ProtectedRoute moduleId="UgaviBarReportes" user={user}><ReportesTascaPanel /></ProtectedRoute>} />
+          
+          <Route path="tienda/:slug" element={<TiendaLayout />}>
+            <Route index element={<Navigate to="ventas" replace />} />
+            <Route path="ventas" element={<ProtectedRoute moduleId="UgaviBarVentas" user={user}><UgaviBarVentas /></ProtectedRoute>} />
+            <Route path="ventas/:id" element={<ProtectedRoute moduleId="UgaviBarVentas" user={user}><VentaPos /></ProtectedRoute>} />
+            <Route path="clientes" element={<ProtectedRoute moduleId="UgaviBarClientes" user={user}><UgaviBarClientes /></ProtectedRoute>} />
+            <Route path="creditos" element={<ProtectedRoute moduleId="UgaviBarCreditos" user={user}><UgaviBarCreditos /></ProtectedRoute>} />
+            <Route path="catalogo" element={<ProtectedRoute moduleId="UgaviBarCatalogo" user={user}><UgaviBarCatalogo /></ProtectedRoute>} />
+            <Route path="inventario" element={<ProtectedRoute moduleId="UgaviBarInventario" user={user}><UgaviBarInventario /></ProtectedRoute>} />
+            <Route path="gastos" element={<ProtectedRoute moduleId="UgaviBarGastos" user={user}><UgaviBarGastos /></ProtectedRoute>} />
+            <Route path="compras" element={<ProtectedRoute moduleId="UgaviBarCompras" user={user}><UgaviBarCompras /></ProtectedRoute>} />
+            <Route path="bancos" element={<ProtectedRoute moduleId="UgaviBarBancos" user={user}><TiendaBancosPanel /></ProtectedRoute>} />
+            <Route path="reportes" element={<ProtectedRoute moduleId="UgaviBarReportes" user={user}><ReportesTascaPanel /></ProtectedRoute>} />
+          </Route>
+
           <Route path="configuraciones" element={<ProtectedRoute moduleId="ConfiguracionesPanel" user={user}><ConfiguracionesPanel currentUser={user} /></ProtectedRoute>} />
           <Route path="reportes" element={<ProtectedRoute moduleId="Reports" user={user}><Reports members={members} personas={personas} /></ProtectedRoute>} />
           <Route path="whatsapp-logs" element={<ProtectedRoute moduleId="MembersList" user={user}><WhatsappLogsPanel /></ProtectedRoute>} />

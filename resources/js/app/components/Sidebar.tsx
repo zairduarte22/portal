@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { LayoutDashboard, Users, BarChart3, Settings, Leaf, ChevronRight, ChevronDown, Wallet, IdCard, BookOpen, Landmark, Store, Package, MessageCircle, GlassWater, CreditCard, ShoppingBag, Receipt, Users2 } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { LayoutDashboard, Users, BarChart3, Settings, Leaf, ChevronRight, ChevronDown, Wallet, IdCard, BookOpen, Landmark, Store, Package, MessageCircle, CreditCard, ShoppingBag, Receipt, Users2, ChevronLeft, Menu } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 
 interface SidebarProps {
@@ -8,7 +8,7 @@ interface SidebarProps {
   onLogout?: () => void;
 }
 
-const navGroups = [
+const navGroupsTemplate = [
   {
     title: "Principal",
     items: [
@@ -24,27 +24,7 @@ const navGroups = [
       { id: "whatsapp-logs", label: "Historial WhatsApp", icon: MessageCircle, moduleId: "MembersList" },
     ]
   },
-  {
-    title: "UGAVI BAR",
-    items: [
-      { id: "ugavibar/ventas", label: "Ventas (POS)", icon: Store, moduleId: "UgaviBarVentas" },
-      { id: "ugavibar/creditos", label: "Créditos", icon: CreditCard, moduleId: "UgaviBarCreditos" },
-      { 
-        id: "ugavibar-inventario", 
-        label: "Inventario", 
-        icon: Package, 
-        subItems: [
-          { id: "ugavibar/catalogo", label: "Catálogo", moduleId: "UgaviBarCatalogo" },
-          { id: "ugavibar/inventario", label: "Gestión", moduleId: "UgaviBarInventario" },
-        ]
-      },
-      { id: "ugavibar/gastos", label: "Gastos", icon: Receipt, moduleId: "UgaviBarGastos" },
-      { id: "ugavibar/compras", label: "Compras/Proveedores", icon: ShoppingBag, moduleId: "UgaviBarCompras" },
-      { id: "ugavibar/clientes", label: "Clientes", icon: Users2, moduleId: "UgaviBarClientes" },
-      { id: "ugavibar/bancos", label: "Bancos (Tienda)", icon: Landmark, moduleId: "UgaviBarBancos" },
-      { id: "ugavibar/reportes", label: "Reportes", icon: BarChart3, moduleId: "UgaviBarReportes" },
-    ]
-  },
+  // "Tiendas" will be injected dynamically here
   {
     title: "Administración",
     items: [
@@ -66,9 +46,19 @@ const navGroups = [
 export function Sidebar({ onCloseMobile, currentUser, onLogout }: SidebarProps) {
   const userModules = currentUser?.modules ? JSON.parse(currentUser.modules) : [];
   const location = useLocation();
-  const [expandedMenus, setExpandedMenus] = useState<Record<string, boolean>>({
-    'ugavibar-inventario': location.pathname.includes('/ugavibar/catalogo') || location.pathname.includes('/ugavibar/inventario')
-  });
+  const [expandedMenus, setExpandedMenus] = useState<Record<string, boolean>>({});
+  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [tiendas, setTiendas] = useState<any[]>([]);
+
+  useEffect(() => {
+    fetch('/api/configuraciones/tiendas')
+      .then(res => res.json())
+      .then(data => {
+        // Solo tiendas activas
+        setTiendas(data.filter((t: any) => t.activa));
+      })
+      .catch(console.error);
+  }, []);
 
   const toggleMenu = (id: string) => {
     setExpandedMenus(prev => ({ ...prev, [id]: !prev[id] }));
@@ -79,6 +69,28 @@ export function Sidebar({ onCloseMobile, currentUser, onLogout }: SidebarProps) 
     return userModules.includes(moduleId);
   };
 
+  const hasAnyTiendaAccess = () => {
+    if (currentUser?.is_master) return true;
+    // Comprobar si tiene acceso a al menos un submódulo de tienda (usamos los viejos IDs para compatibilidad)
+    return ["UgaviBarVentas", "UgaviBarCreditos", "UgaviBarCatalogo", "UgaviBarInventario", "UgaviBarGastos", "UgaviBarCompras", "UgaviBarClientes", "UgaviBarReportes"].some(m => userModules.includes(m));
+  };
+
+  let navGroups = [...navGroupsTemplate];
+  
+  if (hasAnyTiendaAccess() && tiendas.length > 0) {
+    const tiendasItems = tiendas.map(t => ({
+      id: `tienda/${t.slug}`,
+      label: t.nombre,
+      icon: Store,
+      moduleId: "TiendasAccess" // Dummy id, ya verificamos acceso global arriba
+    }));
+
+    navGroups.splice(2, 0, {
+      title: "Tiendas",
+      items: tiendasItems
+    });
+  }
+
   const filteredGroups = navGroups.map(group => {
     const items = group.items.map(item => {
       if (item.subItems) {
@@ -86,15 +98,17 @@ export function Sidebar({ onCloseMobile, currentUser, onLogout }: SidebarProps) 
         if (filteredSub.length > 0) return { ...item, subItems: filteredSub };
         return null;
       }
-      return hasAccess(item.moduleId) ? item : null;
+      return (item.moduleId === "TiendasAccess" || hasAccess(item.moduleId)) ? item : null;
     }).filter(Boolean) as typeof group.items;
 
     return { ...group, items };
   }).filter(group => group.items.length > 0);
 
+  const sidebarWidth = isCollapsed ? "w-20" : "w-64";
+
   return (
     <aside
-      className="w-64 h-screen flex flex-col relative overflow-hidden flex-shrink-0"
+      className={`${sidebarWidth} h-screen flex flex-col relative overflow-hidden flex-shrink-0 transition-all duration-300 group/sidebar`}
       style={{ backgroundColor: "var(--sidebar)" }}
     >
       {/* Decorative gradient orbs */}
@@ -107,29 +121,38 @@ export function Sidebar({ onCloseMobile, currentUser, onLogout }: SidebarProps) 
         style={{ background: "radial-gradient(circle, #4ade80, transparent)" }}
       />
 
+      <button 
+        onClick={() => setIsCollapsed(!isCollapsed)}
+        className="absolute top-8 -right-3 z-50 bg-[#16a34a] text-white p-1 rounded-full shadow-md hidden lg:flex items-center justify-center border-2 border-white hover:scale-110 transition-transform opacity-0 group-hover/sidebar:opacity-100"
+      >
+        {isCollapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
+      </button>
+
       {/* Logo */}
-      <div className="relative px-5 pt-7 pb-6 flex-shrink-0">
+      <div className={`relative pt-7 pb-6 flex-shrink-0 transition-all duration-300 ${isCollapsed ? 'px-4' : 'px-5'}`}>
         <div className="flex items-center gap-3">
           <div
-            className="w-10 h-10 rounded-2xl flex items-center justify-center shadow-lg"
+            className={`rounded-2xl flex items-center justify-center shadow-lg flex-shrink-0 transition-all duration-300 ${isCollapsed ? 'w-12 h-12' : 'w-10 h-10'}`}
             style={{
               background: "linear-gradient(135deg, #22c55e, #16a34a)",
               boxShadow: "0 4px 14px rgba(34,197,94,0.4)",
             }}
           >
-            <Leaf size={18} color="#052e16" strokeWidth={2.5} />
+            <Leaf size={isCollapsed ? 24 : 18} color="#052e16" strokeWidth={2.5} />
           </div>
-          <div>
-            <p
-              className="text-sm"
-              style={{ fontFamily: "Nunito, sans-serif", fontWeight: 800, color: "#d1fae5" }}
-            >
-              SIGAMA
-            </p>
-            <p className="text-[9px]" style={{ color: "#6ee7b7", opacity: 0.8, lineHeight: 1.1 }}>
-              Sistema de Gestión Administrativa<br />y Membresías de Agroproductores
-            </p>
-          </div>
+          {!isCollapsed && (
+            <div className="whitespace-nowrap overflow-hidden opacity-100 transition-opacity duration-300">
+              <p
+                className="text-sm"
+                style={{ fontFamily: "Nunito, sans-serif", fontWeight: 800, color: "#d1fae5" }}
+              >
+                SIGAMA
+              </p>
+              <p className="text-[9px]" style={{ color: "#6ee7b7", opacity: 0.8, lineHeight: 1.1 }}>
+                Sistema de Gestión Administrativa<br />y Membresías de Agroproductores
+              </p>
+            </div>
+          )}
         </div>
       </div>
 
@@ -137,27 +160,33 @@ export function Sidebar({ onCloseMobile, currentUser, onLogout }: SidebarProps) 
 
       {/* Nav */}
       <div className="flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar">
-        <nav className="px-3 pb-6 space-y-6 pt-2">
+        <nav className={`pb-6 pt-2 ${isCollapsed ? 'px-2 space-y-4' : 'px-3 space-y-6'}`}>
           {filteredGroups.map((group, idx) => (
             <div key={idx} className="space-y-1">
-              <p className="px-3 mb-2 text-[10px] uppercase tracking-widest" style={{ color: "#6ee7b7", opacity: 0.6, fontWeight: 700 }}>
-                {group.title}
-              </p>
+              {!isCollapsed && (
+                <p className="px-3 mb-2 text-[10px] uppercase tracking-widest whitespace-nowrap" style={{ color: "#6ee7b7", opacity: 0.6, fontWeight: 700 }}>
+                  {group.title}
+                </p>
+              )}
+              {isCollapsed && (
+                <div className="w-full border-t border-[#6ee7b7]/10 my-2" />
+              )}
               {group.items.map((item) => {
                 if (item.subItems) {
                   const isExpanded = expandedMenus[item.id];
                   const hasActiveChild = item.subItems.some(sub => location.pathname === `/gestion/${sub.id}`);
                   return (
-                    <div key={item.id}>
+                    <div key={item.id} className="relative group/menu">
                       <button
-                        onClick={() => toggleMenu(item.id)}
-                        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl transition-all duration-200 text-left group`}
+                        onClick={() => !isCollapsed && toggleMenu(item.id)}
+                        className={`w-full flex items-center ${isCollapsed ? 'justify-center p-2' : 'gap-3 px-3 py-2.5'} rounded-2xl transition-all duration-200 text-left`}
                         style={{
                           background: hasActiveChild && !isExpanded
                             ? "linear-gradient(135deg, rgba(34,197,94,0.1), rgba(22,163,74,0.05))"
                             : "transparent",
                           color: hasActiveChild ? "#4ade80" : "#6ee7b7",
                         }}
+                        title={isCollapsed ? item.label : undefined}
                       >
                         <div
                           className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
@@ -165,26 +194,31 @@ export function Sidebar({ onCloseMobile, currentUser, onLogout }: SidebarProps) 
                             backgroundColor: hasActiveChild ? "rgba(34,197,94,0.15)" : "transparent",
                           }}
                         >
-                          <item.icon size={16} />
+                          <item.icon size={isCollapsed ? 20 : 16} />
                         </div>
-                        <span
-                          style={{
-                            fontFamily: "Nunito, sans-serif",
-                            fontWeight: hasActiveChild ? 700 : 500,
-                            fontSize: "0.875rem",
-                            color: hasActiveChild ? "#4ade80" : "#a7f3d0",
-                          }}
-                        >
-                          {item.label}
-                        </span>
-                        {isExpanded ? (
-                          <ChevronDown size={13} style={{ marginLeft: "auto", color: hasActiveChild ? "#4ade80" : "#6ee7b7" }} />
-                        ) : (
-                          <ChevronRight size={13} style={{ marginLeft: "auto", color: hasActiveChild ? "#4ade80" : "#6ee7b7" }} />
+                        {!isCollapsed && (
+                          <>
+                            <span
+                              style={{
+                                fontFamily: "Nunito, sans-serif",
+                                fontWeight: hasActiveChild ? 700 : 500,
+                                fontSize: "0.875rem",
+                                color: hasActiveChild ? "#4ade80" : "#a7f3d0",
+                                whiteSpace: "nowrap"
+                              }}
+                            >
+                              {item.label}
+                            </span>
+                            {isExpanded ? (
+                              <ChevronDown size={13} style={{ marginLeft: "auto", color: hasActiveChild ? "#4ade80" : "#6ee7b7" }} />
+                            ) : (
+                              <ChevronRight size={13} style={{ marginLeft: "auto", color: hasActiveChild ? "#4ade80" : "#6ee7b7" }} />
+                            )}
+                          </>
                         )}
                       </button>
                       
-                      {isExpanded && (
+                      {isExpanded && !isCollapsed && (
                         <div className="mt-1 ml-4 pl-4 border-l border-[#6ee7b7]/20 space-y-1">
                           {item.subItems.map((sub) => (
                             <NavLink
@@ -192,7 +226,7 @@ export function Sidebar({ onCloseMobile, currentUser, onLogout }: SidebarProps) 
                               to={`/gestion/${sub.id}`}
                               onClick={onCloseMobile}
                               className={({ isActive }) =>
-                                `w-full flex items-center gap-3 px-3 py-2 rounded-xl transition-all duration-200 text-left group`
+                                `w-full flex items-center gap-3 px-3 py-2 rounded-xl transition-all duration-200 text-left`
                               }
                               style={({ isActive }) => ({
                                 background: isActive
@@ -207,6 +241,7 @@ export function Sidebar({ onCloseMobile, currentUser, onLogout }: SidebarProps) 
                                     fontFamily: "Nunito, sans-serif",
                                     fontWeight: isActive ? 700 : 500,
                                     fontSize: "0.8125rem",
+                                    whiteSpace: "nowrap"
                                   }}
                                 >
                                   {sub.label}
@@ -220,38 +255,42 @@ export function Sidebar({ onCloseMobile, currentUser, onLogout }: SidebarProps) 
                   );
                 }
 
+                // Normal Link
+                // Check active state taking into account nested paths for Tiendas
+                const isActive = location.pathname.startsWith(`/gestion/${item.id}`);
+
                 return (
                   <NavLink
                     key={item.id}
                     to={`/gestion/${item.id}`}
                     onClick={onCloseMobile}
-                    className={({ isActive }) =>
-                      `w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl transition-all duration-200 text-left group`
-                    }
-                    style={({ isActive }) => ({
+                    title={isCollapsed ? item.label : undefined}
+                    className={`w-full flex items-center ${isCollapsed ? 'justify-center p-2' : 'gap-3 px-3 py-2.5'} rounded-2xl transition-all duration-200 text-left group/link`}
+                    style={{
                       background: isActive
                         ? "linear-gradient(135deg, rgba(34,197,94,0.2), rgba(22,163,74,0.12))"
                         : "transparent",
                       border: isActive ? "1px solid rgba(34,197,94,0.25)" : "1px solid transparent",
                       color: isActive ? "#4ade80" : "#6ee7b7",
-                    })}
+                    }}
                   >
-                    {({ isActive }) => (
+                    <div
+                      className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
+                      style={{
+                        backgroundColor: isActive ? "rgba(34,197,94,0.2)" : "transparent",
+                      }}
+                    >
+                      <item.icon size={isCollapsed ? 20 : 16} />
+                    </div>
+                    {!isCollapsed && (
                       <>
-                        <div
-                          className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
-                          style={{
-                            backgroundColor: isActive ? "rgba(34,197,94,0.2)" : "transparent",
-                          }}
-                        >
-                          <item.icon size={16} />
-                        </div>
                         <span
                           style={{
                             fontFamily: "Nunito, sans-serif",
                             fontWeight: isActive ? 700 : 500,
                             fontSize: "0.875rem",
                             color: isActive ? "#4ade80" : "#a7f3d0",
+                            whiteSpace: "nowrap"
                           }}
                         >
                           {item.label}
@@ -270,25 +309,27 @@ export function Sidebar({ onCloseMobile, currentUser, onLogout }: SidebarProps) 
       </div>
 
       {/* Bottom card */}
-      <div className="px-4 pb-6 mt-4">
-        <div
-          className="rounded-2xl p-4"
-          style={{
-            background: "linear-gradient(135deg, rgba(34,197,94,0.1), rgba(16,185,129,0.07))",
-            border: "1px solid rgba(110,231,183,0.12)",
-          }}
-        >
-          <div className="flex items-center gap-2 mb-1">
-            <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: "#22c55e" }} />
-            <p style={{ color: "#6ee7b7", fontFamily: "Nunito, sans-serif", fontWeight: 700, fontSize: "0.7rem", letterSpacing: "0.08em", textTransform: "uppercase" }}>
-              Sistema Activo
+      {!isCollapsed && (
+        <div className="px-4 pb-6 mt-4 flex-shrink-0 transition-opacity duration-300">
+          <div
+            className="rounded-2xl p-4"
+            style={{
+              background: "linear-gradient(135deg, rgba(34,197,94,0.1), rgba(16,185,129,0.07))",
+              border: "1px solid rgba(110,231,183,0.12)",
+            }}
+          >
+            <div className="flex items-center gap-2 mb-1">
+              <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: "#22c55e" }} />
+              <p style={{ color: "#6ee7b7", fontFamily: "Nunito, sans-serif", fontWeight: 700, fontSize: "0.7rem", letterSpacing: "0.08em", textTransform: "uppercase", whiteSpace: "nowrap" }}>
+                Sistema Activo
+              </p>
+            </div>
+            <p style={{ color: "#a7f3d0", fontSize: "0.75rem", opacity: 0.7, whiteSpace: "nowrap" }}>
+              Fondo UGAVI · v2.1.0
             </p>
           </div>
-          <p style={{ color: "#a7f3d0", fontSize: "0.75rem", opacity: 0.7 }}>
-            Fondo UGAVI · v2.1.0
-          </p>
         </div>
-      </div>
+      )}
     </aside>
   );
 }

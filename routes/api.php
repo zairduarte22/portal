@@ -46,6 +46,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/general', [ConfiguracionController::class, 'updateGeneralConfigs']);
         
         Route::get('/tiendas', [\App\Http\Controllers\TiendaConfigController::class, 'index']);
+        Route::get('/tiendas/byslug/{slug}', [\App\Http\Controllers\TiendaConfigController::class, 'getBySlug']);
         Route::post('/tiendas', [\App\Http\Controllers\TiendaConfigController::class, 'store']);
         Route::put('/tiendas/{id}', [\App\Http\Controllers\TiendaConfigController::class, 'update']);
         Route::delete('/tiendas/{id}', [\App\Http\Controllers\TiendaConfigController::class, 'destroy']);

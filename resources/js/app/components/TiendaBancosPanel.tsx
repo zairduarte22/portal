@@ -3,7 +3,7 @@ import { Landmark, Search, Download, Loader2, DollarSign, Wallet, Eye, Edit2, Tr
 import { TiendaBancoModal } from "./TiendaBancoModal";
 import { getFirstDayOfMonth, getLastDayOfMonth } from "../utils/dateUtils";
 
-export function TiendaBancosPanel({ tiendaId }: { tiendaId: number }) {
+export function TiendaBancosPanel() {
   const [activeTab, setActiveTab] = useState<"ves" | "usd">("ves");
   const [datosVes, setDatosVes] = useState<any[]>([]);
   const [datosUsd, setDatosUsd] = useState<any[]>([]);
@@ -18,7 +18,6 @@ export function TiendaBancosPanel({ tiendaId }: { tiendaId: number }) {
   const [beneficiariosFondo, setBeneficiariosFondo] = useState<any[]>([]);
 
   const fetchHeaders = {
-    'X-Tienda-Id': tiendaId.toString(),
     'Accept': 'application/json'
   };
 
@@ -64,11 +63,11 @@ export function TiendaBancosPanel({ tiendaId }: { tiendaId: number }) {
   useEffect(() => {
     fetchCategorias();
     fetchBeneficiarios();
-  }, [tiendaId]);
+  }, []);
 
   useEffect(() => {
     fetchData();
-  }, [activeTab, fechaInicio, fechaFin, tiendaId]);
+  }, [activeTab, fechaInicio, fechaFin]);
 
   const handleDelete = async (id: number) => {
     if (!window.confirm("¿Estás seguro de que deseas eliminar este movimiento bancario?")) return;
@@ -320,7 +319,6 @@ export function TiendaBancosPanel({ tiendaId }: { tiendaId: number }) {
         refreshCategorias={fetchCategorias}
         beneficiarios={beneficiariosFondo}
         refreshBeneficiarios={fetchBeneficiarios}
-        tiendaId={tiendaId}
       />
     </div>
   );

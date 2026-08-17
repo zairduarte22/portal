@@ -12,10 +12,9 @@ interface TiendaBancoModalProps {
   refreshCategorias: () => void;
   beneficiarios: any[];
   refreshBeneficiarios: () => void;
-  tiendaId: number;
 }
 
-export function TiendaBancoModal({ isOpen, onClose, onSuccess, record, tipo, mode, categorias, refreshCategorias, beneficiarios, refreshBeneficiarios, tiendaId }: TiendaBancoModalProps) {
+export function TiendaBancoModal({ isOpen, onClose, onSuccess, record, tipo, mode, categorias, refreshCategorias, beneficiarios, refreshBeneficiarios }: TiendaBancoModalProps) {
   const [formData, setFormData] = useState<any>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [bancos, setBancos] = useState<any[]>([]);
@@ -27,7 +26,6 @@ export function TiendaBancoModal({ isOpen, onClose, onSuccess, record, tipo, mod
   const [newBeneficiarioName, setNewBeneficiarioName] = useState("");
 
   const fetchHeaders = {
-    'X-Tienda-Id': tiendaId.toString(),
     'Accept': 'application/json',
     'Content-Type': 'application/json'
   };
@@ -35,7 +33,7 @@ export function TiendaBancoModal({ isOpen, onClose, onSuccess, record, tipo, mod
   useEffect(() => {
     // Cargar bancos permitidos para la tienda en el modo crear/editar
     if (isOpen && (mode === "create" || mode === "edit")) {
-      fetch("/api/tienda/finanzas/bancos", { headers: { 'X-Tienda-Id': tiendaId.toString(), 'Accept': 'application/json' } })
+      fetch("/api/tienda/finanzas/bancos", { headers: { 'Accept': 'application/json' } })
         .then(res => res.json())
         .then(data => {
           if (Array.isArray(data)) {
@@ -44,7 +42,7 @@ export function TiendaBancoModal({ isOpen, onClose, onSuccess, record, tipo, mod
         })
         .catch(console.error);
     }
-  }, [isOpen, mode, tipo, tiendaId]);
+  }, [isOpen, mode, tipo]);
 
   useEffect(() => {
     if (isOpen) {
