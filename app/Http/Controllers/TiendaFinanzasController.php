@@ -14,9 +14,30 @@ class TiendaFinanzasController extends Controller
             $tiendaId = app(TiendaContext::class)->getTiendaId();
             if (!$tiendaId) return response()->json(['error' => 'No hay tienda en contexto'], 400);
 
-            $bancos = DB::table('bancos')
-                ->select('bancos.*')
-                ->get();
+            $bancos = \App\Models\Tienda::find($tiendaId)->bancos()->get();
+
+            // Calcular saldo de cada banco
+            foreach ($bancos as $banco) {
+                if ($banco->divisa === 'VES') {
+                    $ingresos = DB::table('cuenta_banco')->where('tienda_id', $tiendaId)->where('id_banco', $banco->id)->sum('debe');
+                    $egresos = DB::table('cuenta_banco')->where('tienda_id', $tiendaId)->where('id_banco', $banco->id)->sum('haber');
+                    $banco->saldo = $ingresos - $egresos;
+                } else if ($banco->divisa === 'USD') {
+                    $ingresos = DB::table('cuenta_moneda_extranjera')->where('tienda_id', $tiendaId)->where('id_banco', $banco->id)->sum('debe');
+                    $egresos = DB::table('cuenta_moneda_extranjera')->where('tienda_id', $tiendaId)->where('id_banco', $banco->id)->sum('haber');
+                    $banco->saldo = $ingresos - $egresos;
+                } else if ($banco->divisa === 'AMBOS') {
+                    // Para AMBOS podríamos tener saldos en ambas monedas, pero usualmente las transacciones definen en qué tabla caen.
+                    $ingresosVes = DB::table('cuenta_banco')->where('tienda_id', $tiendaId)->where('id_banco', $banco->id)->sum('debe');
+                    $egresosVes = DB::table('cuenta_banco')->where('tienda_id', $tiendaId)->where('id_banco', $banco->id)->sum('haber');
+                    $banco->saldo_ves = $ingresosVes - $egresosVes;
+
+                    $ingresosUsd = DB::table('cuenta_moneda_extranjera')->where('tienda_id', $tiendaId)->where('id_banco', $banco->id)->sum('debe');
+                    $egresosUsd = DB::table('cuenta_moneda_extranjera')->where('tienda_id', $tiendaId)->where('id_banco', $banco->id)->sum('haber');
+                    $banco->saldo_usd = $ingresosUsd - $egresosUsd;
+                    $banco->saldo = $banco->saldo_ves; // Default fallback for UI
+                }
+            }
 
             return response()->json($bancos);
         } catch (\Exception $e) {

@@ -108,18 +108,20 @@ export function Sidebar({ onCloseMobile, currentUser, onLogout }: SidebarProps) 
 
   return (
     <aside
-      className={`${sidebarWidth} h-screen flex flex-col relative overflow-hidden flex-shrink-0 transition-all duration-300 group/sidebar`}
+      className={`${sidebarWidth} h-screen flex flex-col relative flex-shrink-0 transition-all duration-300 group/sidebar`}
       style={{ backgroundColor: "var(--sidebar)" }}
     >
       {/* Decorative gradient orbs */}
-      <div
-        className="absolute -top-16 -left-16 w-48 h-48 rounded-full opacity-10 pointer-events-none"
-        style={{ background: "radial-gradient(circle, #22c55e, transparent)" }}
-      />
-      <div
-        className="absolute bottom-32 -right-12 w-36 h-36 rounded-full opacity-10 pointer-events-none"
-        style={{ background: "radial-gradient(circle, #4ade80, transparent)" }}
-      />
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div
+          className="absolute -top-16 -left-16 w-48 h-48 rounded-full opacity-10 pointer-events-none"
+          style={{ background: "radial-gradient(circle, #22c55e, transparent)" }}
+        />
+        <div
+          className="absolute bottom-32 -right-12 w-36 h-36 rounded-full opacity-10 pointer-events-none"
+          style={{ background: "radial-gradient(circle, #4ade80, transparent)" }}
+        />
+      </div>
 
       <button 
         onClick={() => setIsCollapsed(!isCollapsed)}

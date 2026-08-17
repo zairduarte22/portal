@@ -7,8 +7,12 @@ import { NuevaVentaModal } from "../NuevaVentaModal";
 import { useNavigate } from "react-router-dom";
 import { DetalleFacturaModal } from "../DetalleFacturaModal";
 import { ReporteVentasModal } from "../ReporteVentasModal";
+import { useTiendaContext } from "../../tienda/TiendaLayout";
 
 export function UgaviBarVentas() {
+  const [metodosPagoList, setMetodosPagoList] = useState<any[]>([]);
+  const { tienda } = useTiendaContext();
+  const slug = tienda?.slug || "ugavibar";
   const [ventas, setVentas] = useState<any[]>([]);
   const [estadisticas, setEstadisticas] = useState<any>(null);
   const [search, setSearch] = useState("");
@@ -60,10 +64,16 @@ export function UgaviBarVentas() {
     return "Sin Cliente";
   };
 
-  const handleVerDetalles = (v: any) => {
-    if (v.estado === 'Pendiente') {
-      navigate(`/gestion/ugavibar/ventas/${v.id}`);
-    } else {
+  const handleVerDetalles = async (v: any) => {
+    try {
+      const res = await fetch(`/api/tienda/ventas/${v.id}`);
+      const ventaData = await res.json();
+      if (ventaData.estado === 'Pendiente') {
+        navigate(`/gestion/tienda/${slug}/ventas/${v.id}`);
+      } else {
+        setVentaSeleccionada(v);
+      }
+    } catch (err: any) {
       setVentaSeleccionada(v);
     }
   };
@@ -573,7 +583,7 @@ export function UgaviBarVentas() {
           onClose={() => setShowNuevaVenta(false)}
           onVentaCreated={(ventaId) => {
             setShowNuevaVenta(false);
-            navigate(`/gestion/ugavibar/ventas/${ventaId}`);
+            navigate(`/gestion/tienda/${slug}/ventas/${ventaId}`);
           }}
         />
       )}

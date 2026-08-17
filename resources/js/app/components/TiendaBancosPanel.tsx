@@ -16,6 +16,7 @@ export function TiendaBancosPanel() {
   const [selectedRecord, setSelectedRecord] = useState<any>(null);
   const [categoriasFondo, setCategoriasFondo] = useState<any[]>([]);
   const [beneficiariosFondo, setBeneficiariosFondo] = useState<any[]>([]);
+  const [bancos, setBancos] = useState<any[]>([]);
 
   const fetchHeaders = {
     'Accept': 'application/json'
@@ -60,9 +61,19 @@ export function TiendaBancosPanel() {
     }
   };
 
+  const fetchBancos = async () => {
+    try {
+      const res = await fetch("/api/tienda/finanzas/bancos", { headers: fetchHeaders });
+      if (res.ok) setBancos(await res.json());
+    } catch (error) {
+      console.error("Error cargando bancos:", error);
+    }
+  };
+
   useEffect(() => {
     fetchCategorias();
     fetchBeneficiarios();
+    fetchBancos();
   }, []);
 
   useEffect(() => {
@@ -78,6 +89,7 @@ export function TiendaBancosPanel() {
       });
       if (res.ok) {
         fetchData();
+        fetchBancos(); // Refrescar los saldos de los bancos al eliminar
       } else {
         alert("Error al eliminar el registro.");
       }
@@ -185,6 +197,26 @@ export function TiendaBancosPanel() {
           </div>
         </div>
       </div>
+
+      {/* Saldo de Bancos por Tienda */}
+      {bancos.length > 0 && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-2">
+          {bancos.filter(b => b.divisa === (activeTab === 'ves' ? 'VES' : 'USD') || b.divisa === 'AMBOS').map(banco => (
+            <div key={banco.id} className="bg-white rounded-2xl p-4 border border-gray-200 shadow-sm flex items-center justify-between">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-wider text-gray-500">{banco.nombre}</p>
+                <h2 className="text-lg font-black mt-1 text-gray-800">
+                  {activeTab === 'ves' ? 'Bs. ' : '$'}
+                  {Number(banco.divisa === 'AMBOS' ? (activeTab === 'ves' ? banco.saldo_ves : banco.saldo_usd) : banco.saldo).toFixed(2)}
+                </h2>
+              </div>
+              <div className="w-10 h-10 rounded-full bg-orange-50 flex items-center justify-center text-orange-600">
+                <Landmark size={20} />
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -311,7 +343,10 @@ export function TiendaBancosPanel() {
       <TiendaBancoModal
         isOpen={modalOpen}
         onClose={() => setModalOpen(false)}
-        onSuccess={fetchData}
+        onSuccess={() => {
+          fetchData();
+          fetchBancos();
+        }}
         record={selectedRecord}
         tipo={activeTab}
         mode={modalMode}

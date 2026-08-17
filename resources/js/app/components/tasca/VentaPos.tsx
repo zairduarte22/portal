@@ -1,10 +1,13 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { useTiendaContext } from "../tienda/TiendaLayout";
 import { ArrowLeft, ShoppingCart, Check, Percent, CreditCard, Ban, Trash2, Search, Package } from "lucide-react";
 
 export function VentaPos() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { tienda } = useTiendaContext();
+  const slug = tienda?.slug || "ugavibar";
   const [venta, setVenta] = useState<any>(null);
   const [productos, setProductos] = useState<any[]>([]);
   const [search, setSearch] = useState("");
@@ -260,7 +263,7 @@ export function VentaPos() {
       setShowPaymentModal(false);
       setShowAuthModal(false);
       alert("Venta procesada correctamente");
-      navigate("/gestion/ugavibar/ventas");
+      navigate(`/gestion/tienda/${slug}/ventas`);
     } catch (err: any) {
       alert(err.message);
     } finally {
@@ -271,7 +274,7 @@ export function VentaPos() {
   const handleAnular = () => {
     if (confirm("¿Seguro que deseas anular esta venta?")) {
       fetch(`/api/tienda/ventas/${id}/anular`, { method: "POST" })
-        .then(() => navigate("/gestion/ugavibar/ventas"));
+        .then(() => navigate(`/gestion/tienda/${slug}/ventas`));
     }
   };
 

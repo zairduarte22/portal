@@ -1,16 +1,19 @@
 import React, { useState } from "react";
 import { AbonosCreditoTab } from "../tabs/AbonosCreditoTab";
+import { useTiendaContext } from "../../tienda/TiendaLayout";
 import { DetalleFacturaModal } from "../DetalleFacturaModal";
 import { useNavigate } from "react-router-dom";
 import { Wallet } from "lucide-react";
 
 export function UgaviBarCreditos() {
   const [ventaSeleccionada, setVentaSeleccionada] = useState<any>(null);
+  const { tienda } = useTiendaContext();
+  const slug = tienda?.slug || "ugavibar";
   const navigate = useNavigate();
 
   const handleVerDetalles = (v: any) => {
-    if (v.estado === 'Pendiente') {
-      navigate(`/gestion/ugavibar/ventas/${v.id}`);
+    if (v.estado === 'Pendiente' || v.estado === 'Parcial') {
+      navigate(`/gestion/tienda/${slug}/ventas/${v.id}`);
     } else {
       setVentaSeleccionada(v);
     }

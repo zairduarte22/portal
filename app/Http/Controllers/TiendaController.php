@@ -456,12 +456,11 @@ class TiendaController extends Controller
                             'id_banco' => $pagoData['id_banco'],
                             'referencia' => $pagoData['referencia'] ?? ('Venta POS #' . $venta->id),
                             'descripcion' => 'Venta POS a ' . $clienteNombre,
-                            'monto_ingreso' => $montoIngreso,
-                            'monto_egreso' => 0,
+                            'debe' => $montoIngreso,
+                            'haber' => 0,
+                            'tipo_operacion' => 'PUNTO DE VENTA',
                             'categoria_id' => $catId,
                             'id_pago_tienda' => $nuevoPago->id,
-                            'created_at' => now(),
-                            'updated_at' => now(),
                             'tienda_id' => $request->header('X-Tienda-Id', 1)
                         ]);
                     }
