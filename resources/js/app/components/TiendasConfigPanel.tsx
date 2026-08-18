@@ -72,8 +72,9 @@ export function TiendasConfigPanel() {
       });
       
       if (res.ok) {
-        setShowModal(false);
         fetchData();
+        setShowModal(false);
+        window.dispatchEvent(new Event('tiendas-updated'));
       } else {
         const error = await res.json();
         alert(error.message || 'Error al guardar');
@@ -88,8 +89,11 @@ export function TiendasConfigPanel() {
   const deleteTienda = async (id: number) => {
     if (!confirm('¿Seguro que deseas eliminar esta tienda? Esta acción no se puede deshacer y eliminará todos sus registros.')) return;
     try {
-      await fetch(`/api/configuraciones/tiendas/${id}`, { method: 'DELETE' });
-      fetchData();
+      const res = await fetch(`/api/configuraciones/tiendas/${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        fetchData();
+        window.dispatchEvent(new Event('tiendas-updated'));
+      }
     } catch (e) {
       console.error(e);
     }

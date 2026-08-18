@@ -8,7 +8,20 @@ interface SidebarProps {
   onLogout?: () => void;
 }
 
-const navGroupsTemplate = [
+interface NavItem {
+  id: string;
+  label: string;
+  icon: any;
+  moduleId: string;
+  subItems?: NavItem[];
+}
+
+interface NavGroup {
+  title: string;
+  items: NavItem[];
+}
+
+const navGroupsTemplate: NavGroup[] = [
   {
     title: "Principal",
     items: [
@@ -50,7 +63,7 @@ export function Sidebar({ onCloseMobile, currentUser, onLogout }: SidebarProps) 
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [tiendas, setTiendas] = useState<any[]>([]);
 
-  useEffect(() => {
+  const fetchTiendas = () => {
     fetch('/api/configuraciones/tiendas')
       .then(res => res.json())
       .then(data => {
@@ -58,6 +71,12 @@ export function Sidebar({ onCloseMobile, currentUser, onLogout }: SidebarProps) 
         setTiendas(data.filter((t: any) => t.activa));
       })
       .catch(console.error);
+  };
+
+  useEffect(() => {
+    fetchTiendas();
+    window.addEventListener('tiendas-updated', fetchTiendas);
+    return () => window.removeEventListener('tiendas-updated', fetchTiendas);
   }, []);
 
   const toggleMenu = (id: string) => {
@@ -99,7 +118,7 @@ export function Sidebar({ onCloseMobile, currentUser, onLogout }: SidebarProps) 
         return null;
       }
       return (item.moduleId === "TiendasAccess" || hasAccess(item.moduleId)) ? item : null;
-    }).filter(Boolean) as typeof group.items;
+    }).filter(Boolean) as NavItem[];
 
     return { ...group, items };
   }).filter(group => group.items.length > 0);
@@ -310,28 +329,6 @@ export function Sidebar({ onCloseMobile, currentUser, onLogout }: SidebarProps) 
         </nav>
       </div>
 
-      {/* Bottom card */}
-      {!isCollapsed && (
-        <div className="px-4 pb-6 mt-4 flex-shrink-0 transition-opacity duration-300">
-          <div
-            className="rounded-2xl p-4"
-            style={{
-              background: "linear-gradient(135deg, rgba(34,197,94,0.1), rgba(16,185,129,0.07))",
-              border: "1px solid rgba(110,231,183,0.12)",
-            }}
-          >
-            <div className="flex items-center gap-2 mb-1">
-              <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: "#22c55e" }} />
-              <p style={{ color: "#6ee7b7", fontFamily: "Nunito, sans-serif", fontWeight: 700, fontSize: "0.7rem", letterSpacing: "0.08em", textTransform: "uppercase", whiteSpace: "nowrap" }}>
-                Sistema Activo
-              </p>
-            </div>
-            <p style={{ color: "#a7f3d0", fontSize: "0.75rem", opacity: 0.7, whiteSpace: "nowrap" }}>
-              Fondo UGAVI · v2.1.0
-            </p>
-          </div>
-        </div>
-      )}
     </aside>
   );
 }
