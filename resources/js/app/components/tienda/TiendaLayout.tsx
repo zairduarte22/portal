@@ -55,16 +55,19 @@ export function TiendaLayout() {
     window.fetch = async function () {
       let [resource, config] = arguments as any;
       
+      const urlStr = typeof resource === 'string' ? resource : (resource?.url || '');
+      
       // If resource is a string and hits the tienda API or if we need to pass the header
-      if (typeof resource === 'string' && resource.startsWith('/api/tienda/')) {
+      if (urlStr.includes('/api/tienda/')) {
         config = config || {};
         config.headers = {
           ...config.headers,
           'X-Tienda-Id': tienda.id.toString(),
         };
-      } else if (resource instanceof Request && resource.url.includes('/api/tienda/')) {
-        // Handle Request objects if they are used
-        resource.headers.set('X-Tienda-Id', tienda.id.toString());
+        
+        if (resource instanceof Request) {
+          resource.headers.set('X-Tienda-Id', tienda.id.toString());
+        }
       }
       
       return originalFetch.apply(this, [resource, config]);
