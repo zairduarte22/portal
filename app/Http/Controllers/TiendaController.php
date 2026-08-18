@@ -74,7 +74,10 @@ class TiendaController extends Controller
     // ==========================================
     public function getClientes()
     {
+        $tiendaId = app(\App\Services\TiendaContext::class)->getTiendaId();
+
         $metricasForaneos = DB::table('ventas_tienda')
+            ->where('ventas_tienda.tienda_id', $tiendaId)
             ->whereNotNull('id_cliente_tienda')
             ->whereIn('estado', ['Pagada', 'Parcial', 'Credito'])
             ->select(
@@ -87,6 +90,7 @@ class TiendaController extends Controller
             ->keyBy('id_cliente_tienda');
 
         $metricasPersonas = DB::table('ventas_tienda')
+            ->where('ventas_tienda.tienda_id', $tiendaId)
             ->whereNotNull('id_persona')
             ->whereIn('estado', ['Pagada', 'Parcial', 'Credito'])
             ->select(
@@ -101,6 +105,7 @@ class TiendaController extends Controller
         $favForaneos = DB::table('ventas_tienda')
             ->join('ventas_tienda_detalles', 'ventas_tienda.id', '=', 'ventas_tienda_detalles.id_venta')
             ->join('productos_tienda', 'ventas_tienda_detalles.id_producto', '=', 'productos_tienda.id')
+            ->where('ventas_tienda.tienda_id', $tiendaId)
             ->whereNotNull('ventas_tienda.id_cliente_tienda')
             ->whereIn('ventas_tienda.estado', ['Pagada', 'Parcial', 'Credito'])
             ->select('ventas_tienda.id_cliente_tienda', 'productos_tienda.nombre', DB::raw('SUM(ventas_tienda_detalles.cantidad) as total_cantidad'))
@@ -112,6 +117,7 @@ class TiendaController extends Controller
         $favPersonas = DB::table('ventas_tienda')
             ->join('ventas_tienda_detalles', 'ventas_tienda.id', '=', 'ventas_tienda_detalles.id_venta')
             ->join('productos_tienda', 'ventas_tienda_detalles.id_producto', '=', 'productos_tienda.id')
+            ->where('ventas_tienda.tienda_id', $tiendaId)
             ->whereNotNull('ventas_tienda.id_persona')
             ->whereIn('ventas_tienda.estado', ['Pagada', 'Parcial', 'Credito'])
             ->select('ventas_tienda.id_persona', 'productos_tienda.nombre', DB::raw('SUM(ventas_tienda_detalles.cantidad) as total_cantidad'))
@@ -523,6 +529,7 @@ class TiendaController extends Controller
     {
         $startDate = $request->query('start_date', Carbon::now()->toDateString());
         $endDate = $request->query('end_date', Carbon::now()->toDateString());
+        $tiendaId = app(\App\Services\TiendaContext::class)->getTiendaId();
 
         // 1. Ventas del Periodo (Total USD de ventas cobradas o hechas en el periodo)
         $ventasHoy = VentaTienda::with('pagos')->whereBetween('fecha', [$startDate, $endDate])
@@ -534,6 +541,7 @@ class TiendaController extends Controller
         $pagosHoy = DB::table('pago_venta_tienda')
             ->join('pagos_tienda', 'pago_venta_tienda.id_pago', '=', 'pagos_tienda.id')
             ->join('ventas_tienda', 'pago_venta_tienda.id_venta', '=', 'ventas_tienda.id')
+            ->where('ventas_tienda.tienda_id', $tiendaId)
             ->whereBetween('pagos_tienda.fecha_pago', [$startDate, $endDate])
             ->select('pagos_tienda.metodo_pago', 'ventas_tienda.fecha as fecha_venta', 'pago_venta_tienda.monto_abonado_usd')
             ->get();
@@ -585,10 +593,12 @@ class TiendaController extends Controller
     {
         $startDate = $request->query('start_date', Carbon::now()->toDateString());
         $endDate = $request->query('end_date', Carbon::now()->toDateString());
+        $tiendaId = app(\App\Services\TiendaContext::class)->getTiendaId();
         
-        $pagos = DB::table('pago_venta_tienda')
+        $pagos = DB::table('pago_venta_tienda')->join('ventas_tienda', 'pago_venta_tienda.id_venta', '=', 'ventas_tienda.id')->where('ventas_tienda.tienda_id', $tiendaId)
             ->join('pagos_tienda', 'pago_venta_tienda.id_pago', '=', 'pagos_tienda.id')
             ->join('ventas_tienda', 'pago_venta_tienda.id_venta', '=', 'ventas_tienda.id')
+            ->where('ventas_tienda.tienda_id', $tiendaId)
             ->whereBetween('pagos_tienda.fecha_pago', [$startDate, $endDate])
             ->select(
                 'pagos_tienda.metodo_pago',
@@ -677,7 +687,7 @@ class TiendaController extends Controller
         $formato = $request->query('format', 'carta'); // 'carta' o 'ticket'
         
         // Pagos realizados en el rango de fechas
-        $pagos = DB::table('pago_venta_tienda')
+        $pagos = DB::table('pago_venta_tienda')->join('ventas_tienda', 'pago_venta_tienda.id_venta', '=', 'ventas_tienda.id')->where('ventas_tienda.tienda_id', $tiendaId)
             ->join('pagos_tienda', 'pago_venta_tienda.id_pago', '=', 'pagos_tienda.id')
             ->join('ventas_tienda', 'pago_venta_tienda.id_venta', '=', 'ventas_tienda.id')
             ->whereBetween('pagos_tienda.fecha_pago', [$startDate, $endDate])
@@ -1339,7 +1349,8 @@ class TiendaController extends Controller
 
         // 4. Productos olvidados (0 ventas en su historia total)
         // Obtenemos los IDs de productos que sí tienen ventas registradas en alguna venta no anulada
-        $productosConVentas = DB::table('ventas_tienda_detalles')
+        $tiendaId = app(\App\Services\TiendaContext::class)->getTiendaId();
+        $productosConVentas = DB::table('ventas_tienda_detalles')->join('ventas_tienda', 'ventas_tienda_detalles.id_venta', '=', 'ventas_tienda.id')->where('ventas_tienda.tienda_id', $tiendaId)
             ->join('ventas_tienda', 'ventas_tienda_detalles.id_venta', '=', 'ventas_tienda.id')
             ->whereNotIn('ventas_tienda.estado', ['Anulada', 'anulada'])
             ->pluck('ventas_tienda_detalles.id_producto')
@@ -1370,7 +1381,7 @@ class TiendaController extends Controller
         });
 
         // Desglose de pagos en el rango
-        $pagos = DB::table('pago_venta_tienda')
+        $pagos = DB::table('pago_venta_tienda')->join('ventas_tienda', 'pago_venta_tienda.id_venta', '=', 'ventas_tienda.id')->where('ventas_tienda.tienda_id', $tiendaId)
             ->join('pagos_tienda', 'pago_venta_tienda.id_pago', '=', 'pagos_tienda.id')
             ->whereBetween('pagos_tienda.fecha_pago', [$startDate, $endDate])
             ->select('pagos_tienda.metodo_pago', DB::raw('SUM(pago_venta_tienda.monto_abonado_usd) as total'))
@@ -1387,7 +1398,7 @@ class TiendaController extends Controller
         
         // 2. Inventario Valorizado Actual
         // Calculamos el valor real multiplicando el stock por el costo de cada lote activo para no duplicar por medida (botella, trago)
-        $inventarioValorizado = \DB::table('lotes_tienda')
+        $inventarioValorizado = \DB::table('lotes_tienda')->where('tienda_id', $tiendaId)
             ->where('estado', 'Activo')
             ->where('stock_actual', '>', 0)
             ->sum(\DB::raw('stock_actual * costo_unitario'));
@@ -1402,32 +1413,32 @@ class TiendaController extends Controller
 
         // 3. Cuentas por Pagar Históricas
         // a) Compras pendientes o abonadas parcialmente
-        $cuentasPorPagarCompras = DB::table('compras_tienda')
+        $cuentasPorPagarCompras = DB::table('compras_tienda')->where('tienda_id', $tiendaId)
             ->whereIn('estado', ['Pendiente', 'Parcial'])
             ->select(DB::raw('SUM(total_usd - abono_usd) as total'))
             ->first()->total ?? 0;
             
         // b) Gastos Por Pagar
-        $cuentasPorPagarGastos = DB::table('gastos_tienda')
+        $cuentasPorPagarGastos = DB::table('gastos_tienda')->where('tienda_id', $tiendaId)
             ->where('metodo_pago', 'Por Pagar')
             ->sum('monto_usd') ?? 0;
             
         $cuentasPorPagar = $cuentasPorPagarCompras + $cuentasPorPagarGastos;
 
         // 4. Métricas del Periodo (Gastos, Flujo)
-        $gastosPeriodo = DB::table('gastos_tienda')
+        $gastosPeriodo = DB::table('gastos_tienda')->where('tienda_id', $tiendaId)
             ->whereBetween('fecha', [$startDate, $endDate])
             ->where('categoria', '!=', 'Compra de Mercancia')
             ->sum('monto_usd') ?? 0;
 
-        $ingresosEfectivos = DB::table('pago_venta_tienda')
+        $ingresosEfectivos = DB::table('pago_venta_tienda')->join('ventas_tienda', 'pago_venta_tienda.id_venta', '=', 'ventas_tienda.id')->where('ventas_tienda.tienda_id', $tiendaId)
             ->join('pagos_tienda', 'pago_venta_tienda.id_pago', '=', 'pagos_tienda.id')
             ->whereBetween('pagos_tienda.fecha_pago', [$startDate, $endDate])
             ->sum('pago_venta_tienda.monto_abonado_usd') ?? 0;
 
         // Los pagos a proveedores por compra de mercancía ya se registran automáticamente en gastos_tienda 
         // bajo la categoría 'Compra de Mercancia', por lo que gastosPagadosPeriodo ya incluye todos los egresos.
-        $gastosPagadosPeriodo = DB::table('gastos_tienda')
+        $gastosPagadosPeriodo = DB::table('gastos_tienda')->where('tienda_id', $tiendaId)
             ->whereBetween('fecha', [$startDate, $endDate])
             ->where('metodo_pago', '!=', 'Por Pagar')
             ->sum('monto_usd') ?? 0;
@@ -1495,7 +1506,8 @@ class TiendaController extends Controller
     {
         $totalProductos = \App\Models\InsumoTienda::count();
         
-        $valorTotalCosto = \DB::table('lotes_tienda')
+        $tiendaId = app(\App\Services\TiendaContext::class)->getTiendaId();
+        $valorTotalCosto = \DB::table('lotes_tienda')->where('tienda_id', $tiendaId)
             ->where('estado', 'Activo')
             ->where('stock_actual', '>', 0)
             ->sum(\DB::raw('stock_actual * costo_unitario'));
