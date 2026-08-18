@@ -18,6 +18,31 @@ const TiendaContext = createContext<TiendaContextType>({ tienda: null, loading: 
 
 export const useTiendaContext = () => useContext(TiendaContext);
 
+let currentTiendaId: number | null = null;
+
+// Intercept fetch calls globally to automatically inject X-Tienda-Id
+const originalFetch = window.fetch;
+window.fetch = async function () {
+  let [resource, config] = arguments as any;
+  
+  const urlStr = typeof resource === 'string' ? resource : (resource?.url || '');
+  
+  // If resource is a string and hits the tienda API or if we need to pass the header
+  if (urlStr.includes('/api/tienda/') && currentTiendaId) {
+    config = config || {};
+    config.headers = {
+      ...config.headers,
+      'X-Tienda-Id': currentTiendaId.toString(),
+    };
+    
+    if (resource instanceof Request) {
+      resource.headers.set('X-Tienda-Id', currentTiendaId.toString());
+    }
+  }
+  
+  return originalFetch.apply(this, [resource, config]);
+};
+
 export function TiendaLayout() {
   const { slug } = useParams<{ slug: string }>();
   const [tienda, setTienda] = useState<Tienda | null>(null);
@@ -47,36 +72,8 @@ export function TiendaLayout() {
     fetchTienda();
   }, [slug, navigate]);
 
-  // Intercept fetch calls to automatically inject X-Tienda-Id
-  useEffect(() => {
-    if (!tienda) return;
-    
-    const originalFetch = window.fetch;
-    window.fetch = async function () {
-      let [resource, config] = arguments as any;
-      
-      const urlStr = typeof resource === 'string' ? resource : (resource?.url || '');
-      
-      // If resource is a string and hits the tienda API or if we need to pass the header
-      if (urlStr.includes('/api/tienda/')) {
-        config = config || {};
-        config.headers = {
-          ...config.headers,
-          'X-Tienda-Id': tienda.id.toString(),
-        };
-        
-        if (resource instanceof Request) {
-          resource.headers.set('X-Tienda-Id', tienda.id.toString());
-        }
-      }
-      
-      return originalFetch.apply(this, [resource, config]);
-    };
-
-    return () => {
-      window.fetch = originalFetch;
-    };
-  }, [tienda]);
+  // Update the global store ID variable
+  currentTiendaId = tienda?.id || null;
 
   if (loading) {
     return (
