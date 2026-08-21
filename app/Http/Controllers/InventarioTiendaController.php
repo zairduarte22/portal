@@ -394,19 +394,10 @@ class InventarioTiendaController extends Controller
                 'estado' => $estado
             ]);
 
+            // El bloque de GastoTienda ha sido eliminado para que la salida se registre manualmente en bancos o con el nuevo flujo automático
             if ($request->tipo_compra === 'Contado' && $request->has('pagos')) {
                 foreach ($request->pagos as $pago) {
-                    \App\Models\GastoTienda::create([
-                        'categoria' => 'Compra de Mercancia',
-                        'descripcion' => 'Pago por compra ' . ($request->referencia_factura ?? '#' . $compra->id),
-                        'monto_usd' => $pago['monto_usd'],
-                        'monto_bs' => $pago['monto_bs'] ?? null,
-                        'metodo_pago' => $pago['metodo_pago'],
-                        'referencia_pago' => $pago['referencia_pago'] ?? null,
-                        'fecha' => $request->fecha_compra,
-                        'proveedor_id' => $request->proveedor_id,
-                        'compra_id' => $compra->id
-                    ]);
+                    $this->registrarEgresoBancario($pago, $compra, $request->fecha_compra);
                 }
             }
 
@@ -435,6 +426,7 @@ class InventarioTiendaController extends Controller
         $request->validate([
             'fecha' => 'required|date',
             'pagos' => 'required|array|min:1',
+            'pagos.*.banco_id' => 'required|integer',
             'pagos.*.metodo_pago' => 'required|string',
             'pagos.*.monto_usd' => 'required|numeric|min:0.01',
             'pagos.*.monto_bs' => 'nullable|numeric|min:0',
@@ -459,18 +451,9 @@ class InventarioTiendaController extends Controller
             }
             $compra->save();
 
+            // El bloque de GastoTienda ha sido eliminado para usar el flujo automático a Bancos
             foreach ($request->pagos as $pago) {
-                \App\Models\GastoTienda::create([
-                    'categoria' => 'Compra de Mercancia',
-                    'descripcion' => 'Abono a compra ' . ($compra->referencia_factura ?? '#' . $compra->id),
-                    'monto_usd' => $pago['monto_usd'],
-                    'monto_bs' => $pago['monto_bs'] ?? null,
-                    'metodo_pago' => $pago['metodo_pago'],
-                    'referencia_pago' => $pago['referencia_pago'] ?? null,
-                    'fecha' => $request->fecha,
-                    'proveedor_id' => $compra->proveedor_id,
-                    'compra_id' => $compra->id
-                ]);
+                $this->registrarEgresoBancario($pago, $compra, $request->fecha);
             }
 
             \Illuminate\Support\Facades\DB::commit();
@@ -868,6 +851,66 @@ class InventarioTiendaController extends Controller
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }
+
+    private function registrarEgresoBancario($pago, $compra, $fecha)
+    {
+        $tiendaId = app(\App\Services\TiendaContext::class)->getTiendaId();
+        
+        $banco = \Illuminate\Support\Facades\DB::table('bancos')->where('id', $pago['banco_id'])->first();
+        if (!$banco) {
+            throw new \Exception("El banco seleccionado no existe.");
+        }
+
+        // 1. Get or create category
+        $categoria = \Illuminate\Support\Facades\DB::table('categoria_fondos')
+            ->where('categoria', 'Pago a Proveedores')
+            ->first();
+            
+        if (!$categoria) {
+            $catId = \Illuminate\Support\Facades\DB::table('categoria_fondos')->insertGetId([
+                'categoria' => 'Pago a Proveedores',
+                'created_at' => now(),
+                'updated_at' => now()
+            ]);
+        } else {
+            $catId = $categoria->id;
+        }
+
+        // 2. Get or create beneficiary (from provider)
+        $proveedor = \Illuminate\Support\Facades\DB::table('proveedores')->where('id', $compra->proveedor_id)->first();
+        $nombreProveedor = $proveedor ? $proveedor->nombre : 'Proveedor General';
+        
+        $beneficiario = \Illuminate\Support\Facades\DB::table('beneficiarios_fondo')
+            ->where('nombre', $nombreProveedor)
+            ->first();
+            
+        if (!$beneficiario) {
+            $benId = \Illuminate\Support\Facades\DB::table('beneficiarios_fondo')->insertGetId([
+                'nombre' => $nombreProveedor,
+                'created_at' => now(),
+                'updated_at' => now()
+            ]);
+        } else {
+            $benId = $beneficiario->id;
+        }
+
+        // 3. Insert transaction
+        $table = ($banco->divisa === 'VES') ? 'cuenta_banco' : 'cuenta_moneda_extranjera';
+        
+        \Illuminate\Support\Facades\DB::table($table)->insert([
+            'tienda_id' => $tiendaId,
+            'id_banco' => $banco->id,
+            'fecha' => $fecha,
+            'debe' => 0,
+            'haber' => ($banco->divisa === 'VES' && !empty($pago['monto_bs'])) ? $pago['monto_bs'] : $pago['monto_usd'],
+            'concepto' => 'Pago por compra ' . ($compra->referencia_factura ?? '#' . $compra->id),
+            'beneficiario_id' => $benId,
+            'categoria_id' => $catId,
+            'referencia' => $pago['referencia_pago'] ?? null,
+            // 'created_at' and 'updated_at' are omitted as these tables lack them based on context
+        ]);
+    }
+
     private function processAndSaveImage($file)
     {
         @ini_set('memory_limit', '256M'); // Aumentar memoria para imágenes grandes

@@ -86,6 +86,7 @@ export default function LotesTab() {
   const [insumos, setInsumos] = useState<any[]>([]);
   const [compras, setCompras] = useState<any[]>([]);
   const [proveedores, setProveedores] = useState<any[]>([]);
+  const [bancos, setBancos] = useState<any[]>([]);
   
   const [showNewCompraModal, setShowNewCompraModal] = useState(false);
   const [showPagoModal, setShowPagoModal] = useState(false);
@@ -100,7 +101,8 @@ export default function LotesTab() {
     monto_usd: "",
     monto_bs: "",
     metodo_pago: "",
-    referencia_pago: ""
+    referencia_pago: "",
+    banco_id: ""
   });
 
   // Formulario de Nueva Compra (Cabecera)
@@ -151,10 +153,20 @@ export default function LotesTab() {
       .catch(console.error);
   };
 
+  const loadBancos = () => {
+    fetch("/api/tienda/finanzas/bancos")
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data)) setBancos(data);
+      })
+      .catch(console.error);
+  };
+
   useEffect(() => {
     loadInsumos();
     loadCompras();
     loadProveedores();
+    loadBancos();
   }, []);
 
   const handleCompraPreSubmit = () => {
@@ -164,7 +176,7 @@ export default function LotesTab() {
       return;
     }
     setPagosLista([]);
-    setPagoInput({ monto_usd: "", monto_bs: "", metodo_pago: "", referencia_pago: "" });
+    setPagoInput({ monto_usd: "", monto_bs: "", metodo_pago: "", referencia_pago: "", banco_id: "" });
     setShowPagoModal(true);
   };
 
@@ -289,21 +301,13 @@ export default function LotesTab() {
     }, 0);
   };
 
-  const addPago = (isAbono: boolean = false) => {
-    const amount = parseFloat(pagoInput.monto_usd);
-    if (isNaN(amount) || amount <= 0) return alert("Ingrese un monto válido");
-    
-    if ((pagoInput.metodo_pago.includes('Transferencia') || pagoInput.metodo_pago.includes('Zelle')) && !pagoInput.referencia_pago) {
-        return alert("La referencia es obligatoria para este método de pago");
+  const agregarPago = () => {
+    if (!pagoInput.monto_usd || !pagoInput.metodo_pago || !pagoInput.banco_id) {
+      alert("Por favor indique el banco de origen, monto y método de pago.");
+      return;
     }
-
-    setPagosLista([...pagosLista, {
-      ...pagoInput,
-      monto_usd: amount,
-      monto_bs: pagoInput.monto_bs ? parseFloat(pagoInput.monto_bs) : null
-    }]);
-
-    setPagoInput({ monto_usd: "", monto_bs: "", metodo_pago: "", referencia_pago: "" });
+    setPagosLista([...pagosLista, { ...pagoInput, monto_usd: parseFloat(pagoInput.monto_usd), banco_id: parseInt(pagoInput.banco_id) }]);
+    setPagoInput({ monto_usd: "", monto_bs: "", metodo_pago: "", referencia_pago: "", banco_id: "" });
   };
 
   const removePago = (index: number) => {
@@ -729,7 +733,7 @@ export default function LotesTab() {
                 
                 <button 
                   type="button" 
-                  onClick={() => addPago(true)} 
+                  onClick={() => agregarPago()} 
                   disabled={!pagoInput.metodo_pago}
                   className={`w-full py-2 mt-2 font-bold rounded-lg transition-colors text-sm ${!pagoInput.metodo_pago ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-blue-100 text-blue-700 hover:bg-blue-200'}`}
                 >
@@ -814,8 +818,21 @@ export default function LotesTab() {
               {compraHeader.tipo_compra === 'Contado' && (
                 <div className="space-y-4 pt-2 border-t" style={{ borderColor: "var(--border)" }}>
                   <div className="space-y-3 bg-gray-50 p-4 rounded-xl border">
-                    <h3 className="font-bold text-sm text-gray-700 mb-2">Agregar Pago Parcial</h3>
+                    <h3 className="font-bold text-sm text-gray-700 mb-2">Agregar Pago</h3>
                     <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs font-bold mb-1">Banco de Origen (Egreso) *</label>
+                        <select 
+                          className="w-full p-2 text-sm rounded-lg border focus:ring-2 focus:ring-blue-500"
+                          value={pagoInput.banco_id}
+                          onChange={e => setPagoInput({...pagoInput, banco_id: e.target.value})}
+                        >
+                          <option value="" disabled>Seleccione un banco...</option>
+                          {bancos.map(b => (
+                            <option key={b.id} value={b.id}>{b.nombre} ({b.divisa}) - Saldo: {parseFloat(b.saldo).toFixed(2)}</option>
+                          ))}
+                        </select>
+                      </div>
                       <div>
                         <label className="block text-xs font-bold mb-1">Monto a Abonar (USD) *</label>
                         <input 
@@ -826,6 +843,8 @@ export default function LotesTab() {
                           placeholder="Ej: 100.00"
                         />
                       </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
                       <div>
                         <label className="block text-xs font-bold mb-1">Método de Pago *</label>
                         <select 
@@ -841,9 +860,6 @@ export default function LotesTab() {
                           <option value="Efectivo Bs.">Efectivo Bs.</option>
                         </select>
                       </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-3">
                       {!pagoInput.metodo_pago.includes('Efectivo') ? (
                         <div>
                           <label className="block text-xs font-bold mb-1">Referencia (Opcional)</label>
@@ -852,25 +868,25 @@ export default function LotesTab() {
                             className="w-full p-2 text-sm rounded-lg border focus:ring-2 focus:ring-blue-500"
                             value={pagoInput.referencia_pago}
                             onChange={e => setPagoInput({...pagoInput, referencia_pago: e.target.value})}
-                            placeholder="Ej: 123456789"
+                            placeholder="Ej: 123456"
                           />
                         </div>
-                      ) : <div></div>}
-                      <div>
-                        <label className="block text-xs font-bold mb-1">Monto Exacto Bs (Opc)</label>
-                        <input 
-                          type="number" step="0.01"
-                          className="w-full p-2 text-sm rounded-lg border focus:ring-2 focus:ring-blue-500"
-                          value={pagoInput.monto_bs}
-                          onChange={e => setPagoInput({...pagoInput, monto_bs: e.target.value})}
-                          placeholder="Ej: 3500.00"
-                        />
-                      </div>
+                      ) : (
+                        <div>
+                          <label className="block text-xs font-bold mb-1">Monto Cobrado (Bs.)</label>
+                          <input 
+                            type="number" min="0" step="0.01"
+                            className="w-full p-2 text-sm rounded-lg border focus:ring-2 focus:ring-blue-500"
+                            value={pagoInput.monto_bs}
+                            onChange={e => setPagoInput({...pagoInput, monto_bs: e.target.value})}
+                            placeholder="Ej: 3600.50"
+                          />
+                        </div>
+                      )}
                     </div>
-                    
                     <button 
                       type="button" 
-                      onClick={() => addPago(false)} 
+                      onClick={() => agregarPago()} 
                       disabled={!pagoInput.metodo_pago}
                       className={`w-full py-2 mt-2 font-bold rounded-lg transition-colors text-sm ${!pagoInput.metodo_pago ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-blue-100 text-blue-700 hover:bg-blue-200'}`}
                     >

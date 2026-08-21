@@ -10,8 +10,10 @@ class TiendaConfigController extends Controller
     public function index()
     {
         $tiendas = Tienda::with('bancos')->get()->map(function($tienda) {
-            $tienda->bancos_ids = $tienda->bancos->pluck('id')->toArray();
-            $tienda->bancos = $tienda->bancos_ids; // For backwards compatibility with frontend form
+            $bancosIds = $tienda->bancos->pluck('id')->toArray();
+            $tienda->unsetRelation('bancos'); // Remove the loaded relation
+            $tienda->bancos_ids = $bancosIds;
+            $tienda->bancos = $bancosIds; // Now it sets the attribute cleanly as an array of IDs
             return $tienda;
         });
         return response()->json($tiendas);
@@ -20,8 +22,10 @@ class TiendaConfigController extends Controller
     public function getBySlug($slug)
     {
         $tienda = Tienda::with('bancos')->where('slug', $slug)->firstOrFail();
-        $tienda->bancos_ids = $tienda->bancos->pluck('id')->toArray();
-        $tienda->bancos = $tienda->bancos_ids;
+        $bancosIds = $tienda->bancos->pluck('id')->toArray();
+        $tienda->unsetRelation('bancos');
+        $tienda->bancos_ids = $bancosIds;
+        $tienda->bancos = $bancosIds;
         return response()->json($tienda);
     }
 

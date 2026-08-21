@@ -30,10 +30,9 @@ window.fetch = async function () {
   // If resource is a string and hits the tienda API or if we need to pass the header
   if (urlStr.includes('/api/tienda/') && currentTiendaId) {
     config = config || {};
-    config.headers = {
-      ...config.headers,
-      'X-Tienda-Id': currentTiendaId.toString(),
-    };
+    const headers = new Headers(config.headers || {});
+    headers.set('X-Tienda-Id', currentTiendaId.toString());
+    config.headers = headers;
     
     if (resource instanceof Request) {
       resource.headers.set('X-Tienda-Id', currentTiendaId.toString());

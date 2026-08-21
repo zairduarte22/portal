@@ -35,7 +35,10 @@ export function NuevaVentaModal({ onClose, onVentaCreated }: { onClose: () => vo
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id_cliente_miembro, id_cliente_tienda, id_persona })
     }).then(async res => {
-      if (!res.ok) throw new Error("Error al crear venta");
+      if (!res.ok) {
+        const errText = await res.text();
+        throw new Error("Error al crear venta: " + errText);
+      }
       const data = await res.json();
       onVentaCreated(data.id);
     }).catch(err => {
